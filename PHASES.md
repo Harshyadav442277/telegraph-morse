@@ -51,15 +51,17 @@ Vercel Secret and therefore unreadable — reset it to a value you keep), and po
 - [ ] X post 2 with first real numbers — wait until the numbers are strangers', not ours (GAPS G20)
 
 ## P3 — Depth: recipes and second opinion (2026-09-03 → 09-04) [D]
-- [x] Recipes: `safe`, `wallet`, `weather`, `fact` (bot commands + web chips + MCP tools) — built,
-      unmeasured on real miners
+- [x] Recipes: `safe`, `wallet`, `weather`, `fact` — **all four verified against production**,
+      each fanning out to different #1 miners: safe → URL_SCAN + SSL_VERIFICATION + IP_GEOLOCATION,
+      weather → WEATHER_CHECK + STORM_ALERT, wallet → WALLET_BALANCE_CHECK + FRAUD_DETECTION,
+      fact → FACT_CHECK + NEWS_SEARCH
 - [x] Second opinion on every surface: low-confidence threshold in Telegram *and* web, `/second`
       command, a button on the web answer card, `POST /api/second`, `telegraph_second_opinion`.
       Both miners and both ranks are shown.
 - [x] Routing visibility: "served by #k for INTENT" on every receipt, from the live leaderboard
 - [x] Daemon "what's hot" (`/hot` in Telegram, `telegraph_hot_signals` over MCP)
-- [ ] **done when** each recipe produces one combined verdict and N ledger rows, all verifiable —
-      the single-call path is proven, recipes are the same path fanned out and are next to exercise
+- [x] **done:** each recipe produces one combined verdict and N verifiable ledger rows. Running them
+      for real found three routing bugs no unit test would have — see GAPS G14
 - [x] Measured the whole catalogue for free (`npm run catalogue`): 57% of miners declare a
       confidence field, 4 publish a *risk* score in it, 29 publish >1 endpoint. Two real bugs fixed
       as a result — risk shown as confidence, and second opinions hitting the wrong endpoint

@@ -140,7 +140,26 @@ landing page and `/api/stats`, `/keys`, `/v1/*` and `/mcp` all answer.
 - **5 intents are served by exactly one miner**, so no second opinion is possible for them at all;
   `secondOpinion` already reports that honestly rather than failing.
 
-Still open: which miners actually answer a direct request, which needs real traffic.
+**Measured on real traffic 2026-09-02/03.** Running all four recipes against production found
+three routing bugs that no unit test would have caught, because each needed the live catalogue:
+
+1. **A URL's scheme stole the safety question.** The SSL rule matched `https`, which every URL
+   contains, so `safe`'s URL_SCAN leg was routed to SSL_VERIFICATION and the recipe asked the same
+   miner the same thing twice. URL_SCAN now sits above SSL, and SSL matches certificate words only.
+2. **An ENS name outranked an explicit fraud question.** `wallet`'s risk leg went to
+   WALLET_BALANCE_CHECK because `vitalik.eth` matched first. FRAUD_DETECTION now sits above it.
+3. **A place name was sent as a wallet address.** Filling every subject-shaped parameter handed
+   chainsight-oracle `address: "Chennai"`, and the node's free pre-validation correctly predicted
+   failure. Subject keys are now a fallback only for miners that accept no prose at all — which is
+   what openweathermap (`lat`, `lon`, `q`) needs, since it answers `city not found` to a sentence.
+
+All four recipes now complete: safe (3 legs, 3 intents, 3 different #1 miners), weather, wallet and
+fact (2 legs each). The node's pre-validation is genuinely useful — it refuses bad requests for
+free rather than charging for a failure.
+
+**Also found:** recipes fired their payments concurrently, and three in flight from one wallet
+draws `batch_send_failed:missing_or_invalid_parameters` from the facilitator, silently losing a
+leg. They now run one at a time.
 
 ### G15 · A second opinion re-asks the question from its stored 200-character preview — `OPEN, accepted`
 The ledger keeps `preview` (the question clipped to 200 chars), not the full text, so `/second`,
