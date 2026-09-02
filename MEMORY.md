@@ -3,7 +3,7 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
-## 2026-09-02 15:25 UTC — HANDOFF STATE (read this first)
+## 2026-09-02 15:30 UTC — HANDOFF STATE (read this first)
 
 **The app is live and serving.** The operator's redeploy landed at ~15:00 UTC and the G13 fix is
 confirmed in production: `/`, `/api/stats`, `/api/recent`, `/api/health`, `/keys`, `/v1/intents`,
@@ -19,7 +19,12 @@ Operator, in Vercel scope `wukong4`, project `telegraph-morse`:
 `TELEGRAM_BOT_TOKEN`, then redeploy, then
 `curl -X POST https://telegraph-morse.vercel.app/admin/telegram/webhook -H "Authorization: Bearer <ADMIN_TOKEN>"`.
 
-**Shipped this session (commit ccb7c7e and the one after it):**
+**Deployed and pushed this session.** `main` is at 44d522a on GitHub; production is
+`telegraph-morse-qb899uvla` (deployed 15:22 UTC) and serves the new build — `usersAnswered` is in
+`/api/stats`, the second-opinion button is in the landing page, `telegraph_second_opinion` is in
+the MCP tool list.
+
+**Shipped this session (ccb7c7e, 044d72d, 44d522a):**
 - `e2e/judge-journey.spec.ts` + `playwright.config.ts` — the judge journey against production.
   **5 passed, 2 skipped** on 2026-09-02; the skips are the wallet-gated tests and say so. Free to
   run; the single paid step is behind `MORSE_E2E_PAID=1` so no schedule can manufacture traffic.
@@ -32,6 +37,11 @@ Operator, in Vercel scope `wukong4`, project `telegraph-morse`:
 - README quick-starts, DEMO.md rewritten with verbatim production output, X drafts with real
   numbers.
 
+**The health alarm is proven end to end.** Run 33648541786 opened issue #1 with the probe output
+verbatim; the follow-up run correctly stayed quiet ("Same problems as 2 minutes ago"). That first
+run also exposed the flaw it would have caused — 48 "still broken" comments a day on a 30-minute
+schedule — now fixed by commenting only when the problem set changes or six hours pass.
+
 **Verified for free this session, worth keeping:**
 - **x402 2.24.0 has default spend controls, and they were a live trap.** The client permits only
   assets `findDefaultAsset` recognises, capped at `DEFAULT_MAX_AMOUNT_PER_PAYMENT` = `"$1"`. Base
@@ -42,6 +52,14 @@ Operator, in Vercel scope `wukong4`, project `telegraph-morse`:
 - Network baseline 2026-09-02 15:16 UTC: **878** user-paid Telegraph calls network-wide in 24h,
   **129/129** miners active, **45** canonical intents. SSL_VERIFICATION leaderboard: livecert #1,
   preflight-ssl-verification #2, txlens #3.
+
+**Two things this session broke and fixed, so they are not re-learned:**
+- Repeated e2e runs exhausted the three-keys-per-network-per-day cap, so judge-journey test 4 now
+  skips on this machine until 00:00 UTC. The cap works — that is how it was verified live. The
+  suite caches its key in `.morse-e2e-key` now. Shared-IP judges could hit the same wall: G18.
+- Bash heredocs here still collapse backslashes, so a Python patch script matching on a string
+  containing `
+` silently fails its assert. Match on a backslash-free substring, or use Write.
 
 **Next, in order:** operator sets the two env vars → redeploy → make ONE real paid call and check
 `/verify/<hash>` shows the payer = our wallet (closes G17, G2's second half, and the wallet-gated

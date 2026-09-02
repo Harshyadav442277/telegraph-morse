@@ -9,7 +9,7 @@ Every output below was captured from the live deployment on the date stated. Ste
   unproven until the operator sets `EVM_PRIVATE_KEY` in Vercel. Nothing here is faked to look
   finished (rule 01).
 
-Last capture: **2026-09-02 15:15 UTC**, when the payer wallet was not yet configured.
+Last capture: **2026-09-02 15:29 UTC**, when the payer wallet was not yet configured.
 
 ---
 
@@ -66,13 +66,14 @@ curl -s -o /dev/null -w "%{http_code}\n" https://telegraph-morse.vercel.app/veri
 curl -s https://telegraph-morse.vercel.app/api/stats
 ```
 
-→ (2026-09-02 15:15 UTC, before funding)
+→ (2026-09-02 15:29 UTC, before funding)
 
 ```json
-{"users":1,"calls":0,"okCalls":0,"intents":0,"miners":0,"spentUsd":0,"byChannel":{},"byIntent":[],"today":{"calls":0,"users":0},"firstCallAt":null,"lastCallAt":null,"ledger":"postgres","payer":null}
+{"users":4,"usersAnswered":0,"calls":0,"okCalls":0,"intents":0,"miners":0,"spentUsd":0,"byChannel":{},"byIntent":[],"today":{"calls":0,"users":0},"firstCallAt":null,"lastCallAt":null,"ledger":"postgres","payer":null}
 ```
 
-`"ledger":"postgres"` is the claim that matters here: the ledger is durable, not a serverless
+`usersAnswered` (0) is the honest headline; `users` (4) counts every identity that asked at all,
+this session's own end-to-end runs included. `"ledger":"postgres"` is the other claim that matters: the ledger is durable, not a serverless
 scratch buffer that resets. `/api/recent?limit=200` returns the same rows the page shows, with the
 user hash stripped.
 
@@ -153,17 +154,21 @@ Running 7 tests using 1 worker
   ok 1 › 1 · the landing page states the claim and shows live counters
   ok 2 › 2 · the ledger on the page matches the API and the ledger is durable
   -  3 › 3 · every signal hash in the ledger verifies on the node
-  ok 4 › 4 · an agent can pick up a key and reach the MCP server without a wallet
+  -  4 › 4 · an agent can pick up a key and reach the MCP server without a wallet
   ok 5 › 5 · the free discovery endpoints answer from the live network
   ok 6 › 6 · an unfunded Morse says so instead of inventing an answer
   -  7 › 7 · a funded Morse answers, receipts it, and the receipt verifies
-  2 skipped
-  5 passed
+  3 skipped
+  4 passed
 ```
 
-The two skips are the wallet-dependent steps, and they say so. Once the wallet is funded, tests 3
-and 7 run — 7 only with `MORSE_E2E_PAID=1`, so no schedule can spend money or manufacture traffic
-(rule 04).
+Tests 3 and 7 need the wallet. Test 4 passed earlier the same day against production — the MCP
+handshake and all seven tools — and skips now only because this machine's network has already
+used its three keys for the UTC day (GAPS G18); the suite caches its key in `.morse-e2e-key`, so a
+fresh clone issues one and every later run reuses it. Set `MORSE_TEST_KEY` to run it regardless.
+
+Once the wallet is funded, tests 3 and 7 run — 7 only with `MORSE_E2E_PAID=1`, so no schedule can
+spend money or manufacture traffic (rule 04).
 
 Point it at any deployment with `MORSE_BASE_URL=https://… npm run e2e`.
 
@@ -176,9 +181,9 @@ node scripts/health-probe.mjs
 Expected today, verbatim:
 
 ```
-ALARM · https://telegraph-morse.vercel.app · 2026-09-02T15:15:01.393Z
+ALARM · https://telegraph-morse.vercel.app · 2026-09-02T15:29:19.421Z
 ledger postgres · payer none · ? USDC · paid false · telegram false
-?/1 people answered · 0/0 calls answered · 0 intents · 0 miners · $0 spent
+0/4 people answered · 0/0 calls answered · 0 intents · 0 miners · $0 spent
   problem: /api/health reports ok:false (HTTP 503)
   problem: paid work is disabled: no payer key, no daily budget, or the kill switch is on
   note: the Telegram bot token is not set
