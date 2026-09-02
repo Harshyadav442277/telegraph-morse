@@ -56,17 +56,15 @@ function payingFetch() {
   const client = x402Client.fromConfig({
     schemes: [{ network: BASE_SEPOLIA, client: new ExactEvmScheme(signer) }],
   });
-  // Temporary instrumentation: the same client pays successfully from a laptop and is
-  // refused from Vercel, so log what actually leaves the function (GAPS G17).
-  const traced: typeof globalThis.fetch = async (input, init) => {
-    const req = new Request(input as RequestInfo, init);
-    const hasPayment = req.headers.has("PAYMENT-SIGNATURE") || req.headers.has("X-PAYMENT");
-    console.error(`outbound ${req.method} ${req.url} | payment header: ${hasPayment ? "YES" : "no"} | node ${process.version}`);
-    const res = await globalThis.fetch(req);
-    console.error(`  <- ${res.status} | payment-response: ${res.headers.get("payment-response") ? "present" : "absent"}`);
-    return res;
-  };
-  paying = wrapFetchWithPayment(traced, client);
+  // Materialise the Request before the payment wrapper sees it. Handing it a
+  // (url, init) pair works locally but not on Vercel, where the retry went out
+  // without the payment header and the node answered with a bare challenge; building
+  // the Request first makes the wrapper's clone carry headers and body correctly.
+  // Established empirically — the exact undici interaction is not pinned down, so do
+  // not "simplify" this away without re-testing a paid call on the deployment (GAPS G17).
+  const normalising: typeof globalThis.fetch = (input, init) =>
+    globalThis.fetch(new Request(input as RequestInfo, init));
+  paying = wrapFetchWithPayment(normalising, client);
   return paying;
 }
 
