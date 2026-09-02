@@ -26,7 +26,7 @@ export function webRoutes(app: Hono<AppEnv>): void {
   app.get("/", async (c) => {
     const ledger = getLedger();
     const [stats, recent] = await Promise.all([ledger.stats(), ledger.recent(25)]);
-    return c.html(landingPage({ stats, recent, ledgerKind: ledger.kind, payer: payerAddress(), publicUrl: config().PUBLIC_URL, paid: paidWorkEnabled(), recipes: Object.values(RECIPES) }));
+    return c.html(landingPage({ stats, recent, ledgerKind: ledger.kind, payer: payerAddress(), publicUrl: config().MORSE_PUBLIC_URL, paid: paidWorkEnabled(), recipes: Object.values(RECIPES) }));
   });
 
   app.get("/api/stats", async (c) => c.json({ ...(await getLedger().stats()), ledger: getLedger().kind, payer: payerAddress() }));
@@ -95,5 +95,5 @@ export function webRoutes(app: Hono<AppEnv>): void {
     }
   });
 
-  app.get("/keys", (c) => c.html(keysPage({ publicUrl: config().PUBLIC_URL, dailyCap: config().PER_API_KEY_DAILY })));
+  app.get("/keys", (c) => c.html(keysPage({ publicUrl: config().MORSE_PUBLIC_URL, dailyCap: config().PER_API_KEY_DAILY })));
 }

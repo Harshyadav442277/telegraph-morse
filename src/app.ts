@@ -22,14 +22,16 @@ restRoutes(app);
 mcpRoutes(app);
 telegramRoutes(app);
 
-/** Operator-only: register the Telegram webhook for PUBLIC_URL. */
+/** Operator-only: register the Telegram webhook for MORSE_PUBLIC_URL. */
 app.post("/admin/telegram/webhook", async (c) => {
   const cfg = config();
   if (!cfg.ADMIN_TOKEN || !secretsMatch(bearer(c.req.header("authorization")), cfg.ADMIN_TOKEN)) {
     return c.json({ error: "unauthorized" }, 401);
   }
-  const url = cfg.PUBLIC_URL ?? new URL(c.req.url).origin;
+  const url = cfg.MORSE_PUBLIC_URL ?? new URL(c.req.url).origin;
   return c.json({ ok: true, webhook: `${url}/telegram/webhook`, result: await installWebhook(url) });
 });
 
 app.notFound((c) => c.json({ error: "not found" }, 404));
+
+export default app;

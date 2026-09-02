@@ -19,7 +19,7 @@ function text(obj: unknown) {
 
 export function buildServer(ctx: AskContext): McpServer {
   const server = new McpServer({ name: "morse", version: "0.1.0" });
-  const publicUrl = config().PUBLIC_URL ?? "";
+  const publicUrl = config().MORSE_PUBLIC_URL ?? "";
 
   server.registerTool(
     "telegraph_ask",

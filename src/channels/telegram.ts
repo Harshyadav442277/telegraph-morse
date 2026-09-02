@@ -47,7 +47,7 @@ export function getBot(): Bot {
 
   b.command("stats", async (ctx) => {
     const s = await getLedger().stats();
-    const url = c.PUBLIC_URL ? `\n${c.PUBLIC_URL}` : "";
+    const url = c.MORSE_PUBLIC_URL ? `\n${c.MORSE_PUBLIC_URL}` : "";
     await ctx.reply(
       `<b>Morse so far</b>\n${s.users} users · ${s.okCalls} answered calls · ${s.intents} intents · ${s.miners} miners · $${s.spentUsd.toFixed(2)} paid to the network\nToday: ${s.today.calls} calls from ${s.today.users} users${esc(url)}`,
       { parse_mode: "HTML", link_preview_options: { is_disabled: true } },
@@ -88,7 +88,7 @@ export function getBot(): Bot {
       defer(
         (async () => {
           const res = await runRecipe(ctxFor(ctx), recipe, input);
-          await edit(ctx, progress.message_id, recipeHtml(res, c.PUBLIC_URL));
+          await edit(ctx, progress.message_id, recipeHtml(res, c.MORSE_PUBLIC_URL));
         })(),
       );
     });
@@ -103,7 +103,7 @@ export function getBot(): Bot {
     const card: AnswerCard = second.receipt
       ? { ok: true, kind: "second-opinion", question: row.preview, receipt: second.receipt, second: null, error: null, remaining: null, rowId: null }
       : { ok: false, kind: "second-opinion", question: row.preview, receipt: null, second: null, error: second.error, remaining: null, rowId: null };
-    await ctx.reply(`<b>Second opinion</b>\n${cardHtml(card, c.PUBLIC_URL)}`, { parse_mode: "HTML", link_preview_options: { is_disabled: true } });
+    await ctx.reply(`<b>Second opinion</b>\n${cardHtml(card, c.MORSE_PUBLIC_URL)}`, { parse_mode: "HTML", link_preview_options: { is_disabled: true } });
   });
 
   b.on("message:text", async (ctx) => {
@@ -121,7 +121,7 @@ export function getBot(): Bot {
         const kb = card.ok && card.receipt?.signalHash && card.receipt.intent && !card.second
           ? new InlineKeyboard().text("Second opinion", `so:${card.receipt.signalHash.slice(0, 40)}`)
           : undefined;
-        await edit(ctx, progress.message_id, cardHtml(card, c.PUBLIC_URL), kb);
+        await edit(ctx, progress.message_id, cardHtml(card, c.MORSE_PUBLIC_URL), kb);
       })(),
     );
   });

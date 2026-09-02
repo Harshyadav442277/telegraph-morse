@@ -20,7 +20,7 @@ const schema = z.object({
     .default("false")
     .transform((v) => v === "true" || v === "1"),
   TELEGRAPH_NODE: z.string().url().default("https://devnode.telegraphprotocol.com"),
-  PUBLIC_URL: z.string().url().optional(),
+  MORSE_PUBLIC_URL: z.string().url().optional(),
   /** Confidence below which a second opinion is fetched automatically. */
   SECOND_OPINION_THRESHOLD: z.coerce.number().min(0).max(1).default(0.6),
   ASK_TIMEOUT_MS: z.coerce.number().int().min(1000).default(45_000),
