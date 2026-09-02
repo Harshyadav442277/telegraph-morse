@@ -89,8 +89,10 @@ in place.
 | `costUsd`, `durationMs` | what the call cost and how long it took |
 | `signalHash` | verify at `/verify/{hash}`, or on the node at `GET /engine/v1/signal/{hash}` |
 
-`/verify/{hash}` shows the node's record, the payer wallet (and whether it is Morse's), the USDC
-settlement transaction on Base Sepolia, and the payload the hash covers.
+`/verify/{hash}` shows the node's record, the payer wallet **and whether it is Morse's**, the
+node's own `keccak256`-over-payload attestation, and the payload the hash covers. The node does not
+publish a per-call settlement transaction (0 of 8 user-paid signals sampled on 2026-09-02 carried
+one), so the on-chain trail is the payer wallet's USDC history on BaseScan, which Morse links.
 
 ## Run it yourself
 
@@ -133,9 +135,10 @@ can manufacture traffic.
 - **"Users" means distinct salted identity hashes** — a Telegram user id, a web session cookie, or
   an API key. One person on two surfaces counts twice; ten people reading one forwarded answer
   count once. Morse publishes the method next to the number and never rounds it up (GAPS G4).
-- **The signal hash is shown, not re-derived.** Telegraph does not publish the hashing scheme, so
-  `/verify` shows the node's own record and the on-chain transfer rather than claiming to have
-  recomputed the hash (GAPS G3).
+- **The signal hash is shown, not re-derived.** The node states it is `keccak256` over the payload
+  and reports `verified: true`; eleven serialisations of the payload as served failed to reproduce
+  it, so Morse displays that attestation rather than claiming to have recomputed it (GAPS G3). What
+  Morse establishes independently is the **payer**: the wallet on the record, checked against its own.
 - **Confidence is heterogeneous.** Miners report it in different shapes or not at all; Morse
   normalises what it can and says "not reported" otherwise (GAPS G8).
 - **A second opinion may not be possible for every intent.** Direct miner calls are built from the

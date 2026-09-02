@@ -24,7 +24,7 @@ export function landingPage(d: LandingData): string {
   const s = d.stats;
   const chips = d.recipes.map((r) => `<button type="button" data-recipe="${h(r.name)}" title="${h(r.description)}">${h(r.usage)}</button>`).join("");
   const body = `
-<p class="lede">Ask a question. Telegraph's router picks the intent and the best-ranked miner, Morse pays the x402 fee, and you get the answer <b>with a receipt</b>: who answered, how confident, what it cost, and a signal hash anyone can verify on the node and on Base Sepolia.</p>
+<p class="lede">Ask a question. Telegraph's router picks the intent and the best-ranked miner, Morse pays the x402 fee, and you get the answer <b>with a receipt</b>: who answered, how confident, what it cost, and a signal hash anyone can look up on the node, with the payer wallet checked against ours.</p>
 ${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The payer wallet or daily budget is not configured, so asking is disabled until the operator funds it. Everything else on this page is live.</div>`}
 <section class="panel"><h2>Ask the network</h2>
 <form class="ask" id="ask"><input id="q" name="q" placeholder="Is the TLS certificate for github.com valid right now?" maxlength="2000" required><button id="go" type="submit">Ask</button></form>

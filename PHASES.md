@@ -36,7 +36,8 @@ exact operator sequence — wallet, faucet, BotFather, `npm run preflight`, the 
 ## P2 — Web: landing, ledger, verify (2026-09-03) [A, D, T]
 - [x] `/` landing: what Morse is, ask box, live counters, recent calls table with verify links,
       payer address, "how routing works"
-- [x] `/verify/{hash}`: node record, payer match, BaseScan link, payload
+- [x] `/verify/{hash}`: node record, payer match, the node's keccak256 attestation, payload —
+      rendering verified against a real third-party signal without spending (GAPS G3, G3b)
 - [x] `/api/stats` JSON for X screenshots and for judges; `usersAnswered` published next to `users`
       so the honest number leads (GAPS G4)
 - [x] Playwright judge journey — `e2e/judge-journey.spec.ts`, 5 passed against production

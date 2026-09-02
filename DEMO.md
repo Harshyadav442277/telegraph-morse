@@ -49,8 +49,21 @@ Click the `verify 0x…` link, landing on `/verify/{hash}`.
 
 Expected: a table with **Found on the node — yes** linking to
 `devnode.telegraphprotocol.com/engine/v1/signal/{hash}`; the miner slug; **Paid by** showing the
-wallet address with the green note `= Morse's payer wallet`; the USDC **settlement tx** linked to
-`sepolia.basescan.org`; Morse's own ledger row; and the payload the hash covers, pretty-printed.
+wallet address with the green note `= Morse's payer wallet`; the node's own check
+(`verified — keccak256 over payload`); Morse's own ledger row; and the payload the hash covers,
+pretty-printed.
+
+The **payer match is the evidence**, and it is verified free of the wallet: sampling 8 user-paid
+signals on the live node on 2026-09-02, all 8 carried `signal.wallet_address` and all 8 carried
+`verification.verified: true`. **None carried a per-call `tx_hash`** — the node does not publish
+one, so `/verify` links the payer's USDC history on BaseScan rather than a transaction that would
+not exist. The rendering path itself is ✅ verified against a real third-party signal:
+
+```bash
+curl -s https://telegraph-morse.vercel.app/api/verify/0x59a3a4693254863c72d33c7345a248d6893bfd1d125c9a4a08820a293f8c188a
+```
+
+→ `paidByMorse: false` — correctly, because that call was someone else's.
 
 An unknown hash returns HTTP 404 and says so rather than inventing a record — ✅ verified:
 

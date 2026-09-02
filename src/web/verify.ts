@@ -22,11 +22,12 @@ export function verifyPage(d: VerifyData): string {
 <tr><th>Kind</th><td>${h(d.record.kind ?? "?")}</td></tr>
 <tr><th>Miner</th><td>${h(s.miner_slug ?? "?")}${s.subnet_id ? ` <span class="badge">id ${h(s.subnet_id)}</span>` : ""}</td></tr>
 <tr><th>Paid by</th><td class="mono">${s.wallet_address ? `<a href="https://sepolia.basescan.org/address/${h(s.wallet_address)}">${h(s.wallet_address)}</a>` : "?"} ${d.paidByMorse ? `<span class="ok">= Morse's payer wallet</span>` : d.payer ? `<span class="warn">not Morse's wallet (${h(d.payer.slice(0, 10))}…)</span>` : ""}</td></tr>
-<tr><th>Settlement tx</th><td class="mono">${s.tx_hash ? `<a href="https://sepolia.basescan.org/tx/${h(s.tx_hash)}">${h(s.tx_hash)}</a>` : "<span class='muted'>not reported</span>"}</td></tr>
+<tr><th>Node's own check</th><td>${d.record.verification?.verified === true ? `<span class="ok">verified</span> — the node confirms this hash commits to the payload below (${h(d.record.verification.algorithm ?? "?")} over ${h(d.record.verification.commitment ?? "?")})` : `<span class="muted">${h(JSON.stringify(d.record.verification ?? "not reported"))}</span>`}</td></tr>
+<tr><th>Settlement tx</th><td class="mono">${s.tx_hash ? `<a href="https://sepolia.basescan.org/tx/${h(s.tx_hash)}">${h(s.tx_hash)}</a>` : "<span class='muted'>the node does not publish a per-call tx hash — see the payer's USDC history above</span>"}</td></tr>
 <tr><th>Recorded</th><td>${h(s.created_at ?? "?")}</td></tr>
 ${d.row ? `<tr><th>Morse's ledger row</th><td>${h(d.row.at)} · ${h(d.row.channel)} · ${h(d.row.kind)} · ${h(d.row.intent ?? "—")} · ${h(d.row.minerSlug ?? "—")} · ${d.row.costUsd !== null ? `$${d.row.costUsd.toFixed(2)}` : ""}</td></tr>` : ""}
 </tbody></table>
-<p class="muted">The node's record commits this hash to the request and the response below. Morse shows the record as the node returns it; the hashing scheme is not published, so Morse does not claim to have re-derived it.</p>
+<p class="muted">The node states the hash is keccak256 over the payload and reports it verified. Morse shows that attestation as the node returns it: eleven serialisations of the payload as served were tried and none reproduced the hash, so Morse does <b>not</b> claim to have re-derived it independently (GAPS G3). What Morse does establish on its own is the payer — the wallet above is checked against Morse's.</p>
 </section>
 <section class="panel"><h2>Payload the hash covers</h2><pre>${h(JSON.stringify(d.record.payload ?? d.record.result ?? {}, null, 2).slice(0, 12_000))}</pre></section>`
     : `

@@ -25,10 +25,28 @@ client with nothing on the wire to explain it.
 **Still unproven:** that the payer needs no Base Sepolia ETH (EIP-3009 authorisation, facilitator
 pays gas). Only a first real paid call settles that — see G17.
 
-### G3 · Signal hash derivation — `OPEN`
-`GET /engine/v1/signal/{hash}` returns the payload the hash commits to. The hashing scheme is not
-documented; if we cannot recompute it, `/verify` shows the node's record and the on-chain transfer
-and says so. Do not claim "re-derived" unless it is.
+### G3 · Signal hash derivation — `SHARPENED 2026-09-02; still not re-derived`
+The node **does** publish the scheme, in a `verification` object nobody had looked at:
+`{algorithm: "keccak256", commitment: "payload", verified: true}` — present and true on 8 of 8
+user-paid signals sampled.
+
+Eleven serialisations of the payload exactly as served (`JSON.stringify`, sorted keys, the raw
+substring lifted from the response body, pretty-printed, request-only, response-only, request+
+response, payload-minus-timestamp, a pipe-joined field concatenation, the result object, the signal
+object) all produced a different hash. The node most likely hashes a canonical Go struct encoding
+that differs from the JSON it serves. So: `/verify` now **shows** the node's attestation and says
+plainly that Morse did not reproduce it. Do not claim "re-derived" unless it is.
+
+**What Morse does establish independently** is the payer: `signal.wallet_address` was present on
+8/8 user-paid signals and is compared against Morse's own wallet. That is the adoption evidence,
+and it does not depend on the hashing scheme.
+
+### G3b · The node publishes no per-call settlement tx — `CLOSED as a finding, claim corrected`
+`signal.tx_hash` was **absent on 8 of 8** user-paid signals (2026-09-02). The README, the landing
+page and `/verify` all claimed a per-call "settlement transaction on Base Sepolia" that would
+almost never have rendered — a judge clicking for it would have found nothing. Corrected
+everywhere: the on-chain trail is the payer wallet's USDC history on BaseScan, which Morse links,
+and `/verify` says so explicitly instead of showing an empty row.
 
 ### G4 · "Real users" is our count of hashed identities — `DISCLOSED 2026-09-02, still an approximation`
 Telegram user ids, web session cookies and API keys are counted distinct after salting. One

@@ -117,6 +117,12 @@ export interface SignalRecord {
   signal?: { wallet_address?: string; miner_slug?: string; subnet_id?: string; tx_hash?: string; created_at?: string };
   payload?: unknown;
   result?: unknown;
+  /**
+   * The node's own attestation that the hash commits to the payload. Observed on
+   * 8/8 user-paid signals (2026-09-02): {algorithm: "keccak256", commitment:
+   * "payload", verified: true}. Morse shows it; it does not recompute it (GAPS G3).
+   */
+  verification?: { algorithm?: string; commitment?: string; verified?: boolean };
 }
 
 export function verifySignal(hash: string): Promise<SignalRecord> {
