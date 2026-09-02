@@ -34,6 +34,13 @@ and pays fine, which finally proves the gasless EIP-3009 assumption (G2 closed).
 **Integrity note (GAPS G20):** every ledger row so far is our own verification traffic, not users.
 Real, receipted, and not adoption. Do not quote user numbers in an X post until they are strangers'.
 
+**All four recipes verified against production** (safe, weather, wallet, fact), each fanning out to
+different #1 miners. Running them for real found three routing bugs that no unit test would have
+caught — a URL's `https` stealing the safety leg, an ENS name outranking a fraud question, and a
+place name being sent as a wallet address — plus concurrent recipe payments drawing
+`batch_send_failed` from the facilitator. All fixed, all covered by tests built from the real
+catalogue. **Lesson: run the thing against the live network; the catalogue is the spec.**
+
 **Operator's remaining items:** register the Telegram webhook — it needs `ADMIN_TOKEN`, which is a
 Vercel *Secret* and cannot be read back, so reset it to a value you keep; then post X draft 1,
 which needs no wallet and is ready.
