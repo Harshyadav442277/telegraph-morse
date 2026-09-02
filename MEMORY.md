@@ -3,6 +3,42 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
+## 2026-09-02 15:10 UTC — HANDOFF STATE (read this first)
+
+**Built and verified locally:** the whole codebase (core `ask`, guards, Neon/memory ledger, Telegram
+bot, web ledger + verify + keys pages, REST, hosted MCP). `npm run typecheck` clean, 23/23 tests,
+local smoke test of every route green including the MCP `initialize` and `tools/list` handshake.
+
+**Deployed once, broken, fix committed but NOT redeployed.** Vercel project `telegraph-morse`
+(scope `wukong4`), production alias `https://telegraph-morse.vercel.app`. The first deploy 504'd for
+two reasons, both fixed in commit ff99bd3: (1) Vercel's Node runtime treated Hono's web handler as a
+classic `(req,res)` export and never ended the response → `api/index.ts` now exports
+`getRequestListener(app.fetch)`; (2) Vercel auto-detected Hono as a framework preset and expected
+`src/app.ts` to default-export the app → `framework: null` in vercel.json plus `export default app`.
+A `public/` dir was added because "Other" framework requires an output directory. **Next action:
+`vercel deploy --prod --yes --scope wukong4` from this folder, then verify `/api/stats`, `/`,
+`/api/health`, `/keys`, `POST /api/keys`, `/mcp tools/list`, `/verify/<hash>`.** The operator paused
+the deploy once; ask before running it.
+
+**Infra done:** Neon project `telegraph-morse` (id `empty-moon-44512485`, db `morse`, us-east-1);
+Vercel production env has ADMIN_TOKEN, TELEGRAM_WEBHOOK_SECRET, HASH_SALT, DATABASE_URL,
+DAILY_BUDGET_CALLS=1500, MORSE_PUBLIC_URL, TELEGRAPH_NODE. Vercel rejects env names starting
+with `PUBLIC_`, hence `MORSE_PUBLIC_URL`. Deploys are CLI only (no Git integration connected).
+
+**Waiting on the operator:** `EVM_PRIVATE_KEY` (new burner, faucet-funded) and `TELEGRAM_BOT_TOKEN`
+in Vercel. After the token lands: `curl -X POST https://telegraph-morse.vercel.app/admin/telegram/webhook
+-H "Authorization: Bearer <ADMIN_TOKEN>"` registers the webhook (token is in Vercel env, read it there).
+After the key lands: make ONE real paid call and check `/verify/<hash>` shows the payer = our wallet
+(closes GAPS G2); then the first X post.
+
+**Tooling connected (user scope):** Context7, Playwright (+Chromium), Vercel MCP and Neon MCP
+(authenticated), plugins frontend-design / code-review / security-guidance / commit-commands.
+Telegraph MCP is declared in `.mcp.json` and needs `TELEGRAPH_EVM_PRIVATE_KEY` in the environment.
+
+**Then, in order (PHASES.md):** P2 Playwright judge journey against production; P3 measure the
+second-opinion heuristic on real miners (`directRequest` guesses payload keys from `input_schema` —
+expect some miners to reject it; record which); P4 README quick-starts; freeze 2026-09-05 18:00 UTC.
+
 ## 2026-09-02 — Track 3 research and plan
 
 **Decision: Morse, a consumer + agent front door, not a vertical app.** The Track 3 rubric is 45%

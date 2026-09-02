@@ -3,7 +3,7 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
-### G1 · Vercel function duration vs miner latency — `OPEN, verify on first deploy`
+### G1 · Vercel function duration vs miner latency — `OPEN, verify on first deploy` (the first deploy found a different bug first: see G13)
 Miners take up to ~45s. The design acks the Telegram webhook and finishes in `waitUntil` with
 `maxDuration: 60`. Whether the Hobby plan honours 60s for this project is unverified. Fallback:
 an always-on worker for the bot. Test with a deliberately slow intent on day 1.
@@ -57,3 +57,15 @@ Watches are stretch-only, capped, labelled, and dropped first. The MVP has no un
 `track3-certwatch/` was deleted from the miner repo on 2026-09-02 (never funded, no users). The
 Vercel project `certwatch` (`app-five-blond-45.vercel.app`) still serves an empty dashboard; delete
 it from the Vercel dashboard when convenient so judges do not find two Track 3 apps.
+
+### G13 · Vercel misread the Hono web handler and auto-detected a Hono preset — `CLOSED 2026-09-02, fix committed, redeploy pending`
+Runtime logs: "default export returned a Response — the default-export signature is (req, res) => void"
+and "Invalid export found in module /var/task/src/app.js". Fixed by exporting
+`getRequestListener(app.fetch)` from `api/index.ts`, `framework: null` in vercel.json, `export default
+app`, and a `public/` output dir. Not yet confirmed live because the operator paused the redeploy.
+
+### G14 · The second-opinion direct request is a heuristic — `OPEN, measure on real miners`
+`directRequest()` sends `{query}` plus any of `q/question/text/prompt/input/message` the miner's
+`input_schema` declares, to the miner's first endpoint. GET miners with required params (lat/lon)
+will 422 at the node's pre-validation, which costs nothing and is recorded as `error`. Record which
+miners answer and which do not, and prefer miners that accept `query` when picking the candidate.
