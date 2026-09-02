@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "telegraph": {
+      "command": "npx",
+      "args": ["-y", "telegraph-protocol-mcp"],
+      "env": {
+        "TELEGRAPH_NODE_URL": "https://devnode.telegraphprotocol.com",
+        "TELEGRAPH_ENGINE_URL": "https://devnode.telegraphprotocol.com/engine",
+        "TELEGRAPH_DAEMON_URL": "https://devnode.telegraphprotocol.com/daemon",
+        "TELEGRAPH_EVM_PRIVATE_KEY": "${TELEGRAPH_EVM_PRIVATE_KEY}"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com"
+    },
+    "neon": {
+      "type": "http",
+      "url": "https://mcp.neon.tech/mcp"
+    }
+  }
+}
