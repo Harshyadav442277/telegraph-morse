@@ -99,7 +99,11 @@ Open the site, ask *"Is the TLS certificate for github.com valid right now, and 
 
 Expect an answer plus a receipt: `served by <miner> #<rank> for SSL_VERIFICATION · confidence NN% ·
 $0.01 · NNN ms · verify 0x…`. Click **verify**. The page must show **Paid by … = Morse's payer
-wallet** in green and a settlement tx on sepolia.basescan.org.
+wallet** in green, and the node's own check as `verified — keccak256 over payload`.
+
+Do **not** expect a per-call settlement transaction: the node publishes none (0 of 8 user-paid
+signals sampled carried one, GAPS G3b). The on-chain trail is the payer wallet's USDC history,
+linked from the page.
 
 That single call closes GAPS G17, the second half of G2, and the wallet-gated half of G9.
 
@@ -126,7 +130,7 @@ and draft 2 with the receipt from step 8. Tag **@Telegraphprotoc** (hackathon ru
 
 | symptom | likely cause |
 |---|---|
-| preflight `FAIL payer key` | `EVM_PRIVATE_KEY` missing from `.env`, or not `0x` + 64 hex |
+| preflight `FAIL payer key` | expected unless you deliberately put the key in a local `.env` — the deployment's `/api/health` is the real check |
 | preflight `FAIL USDC` | faucet not arrived yet, or funded on the wrong chain — it must be **Base Sepolia** |
 | ask returns "no funded wallet" | `DAILY_BUDGET_CALLS` is 0 in Vercel, or the redeploy in step 6 was skipped |
 | 402 from the node after paying | the signature was rejected — capture the full response and check GAPS G17 |
