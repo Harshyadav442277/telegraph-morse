@@ -15,7 +15,11 @@
  */
 import { createPublicClient, http, formatEther } from "viem";
 import { baseSepolia } from "viem/chains";
-import { DEFAULT_ASSETS } from "@x402/evm";
+import * as x402evm from "@x402/evm";
+
+/** 2.11.0 does not export DEFAULT_ASSETS; 2.24.0 does. Treat it as optional. */
+const DEFAULT_ASSETS = (x402evm as { DEFAULT_ASSETS?: Record<string, Array<{ asset: string; version?: string }>> })
+  .DEFAULT_ASSETS;
 import { config, paidWorkEnabled } from "../src/config.js";
 import { payerAddress, payerUsdcBalance, USDC_BASE_SEPOLIA } from "../src/core/telegraph.js";
 
@@ -99,7 +103,7 @@ async function main(): Promise<void> {
   console.log("\nTHE NODE'S 402 CHALLENGE (fetched, not paid)");
   const accept = await challenge();
   if (accept) {
-    const dflt = DEFAULT_ASSETS[BASE_SEPOLIA_CAIP2]?.[0];
+    const dflt = DEFAULT_ASSETS?.[BASE_SEPOLIA_CAIP2]?.[0];
     const priceUsd = Number(accept.amount) / 1e6;
     check(accept.scheme === "exact", "scheme", `${accept.scheme} — we register ExactEvmScheme`);
     check(accept.network === BASE_SEPOLIA_CAIP2, "network", `${accept.network} — we register ${BASE_SEPOLIA_CAIP2}`);
@@ -108,16 +112,20 @@ async function main(): Promise<void> {
       "asset vs our constant",
       `${accept.asset}`,
     );
-    check(
-      Boolean(dflt) && accept.asset.toLowerCase() === dflt!.asset.toLowerCase(),
-      "asset vs DEFAULT_ASSETS",
-      dflt ? `${dflt.asset} — so the client's default spend controls permit it` : "Base Sepolia is absent from DEFAULT_ASSETS",
-    );
-    check(
-      accept.extra?.version === dflt?.version,
-      "EIP-712 domain version",
-      `challenge says "${accept.extra?.version}", client assumes "${dflt?.version}"`,
-    );
+    if (dflt) {
+      check(
+        accept.asset.toLowerCase() === dflt.asset.toLowerCase(),
+        "asset vs DEFAULT_ASSETS",
+        `${dflt.asset} — so the client's default spend controls permit it`,
+      );
+      check(
+        accept.extra?.version === dflt.version,
+        "EIP-712 domain version",
+        `challenge says "${accept.extra?.version}", client assumes "${dflt.version}"`,
+      );
+    } else {
+      console.log(`  note   ${"spend controls".padEnd(30)}this @x402 version exposes no DEFAULT_ASSETS table; nothing to cross-check`);
+    }
     check(priceUsd <= CLIENT_CAP_USD, "price vs client cap", `$${priceUsd.toFixed(4)} against the $${CLIENT_CAP_USD} default cap`);
     check(
       cfg.ASK_TIMEOUT_MS / 1000 <= accept.maxTimeoutSeconds,

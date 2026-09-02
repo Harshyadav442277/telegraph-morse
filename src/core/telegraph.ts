@@ -2,7 +2,7 @@ import { createPublicClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 import { ExactEvmScheme, toClientEvmSigner } from "@x402/evm";
-import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
+import { wrapFetchWithPayment, x402Client } from "@x402/fetch";
 import { config } from "../config.js";
 import type { EngineAsk, SignalMapping } from "./receipt.js";
 
@@ -48,26 +48,15 @@ function payingFetch() {
   const pk = config().EVM_PRIVATE_KEY;
   if (!pk) throw new TelegraphError("No payer wallet is configured.", "unpaid");
   const account = privateKeyToAccount(pk as `0x${string}`);
-  const publicClient = createPublicClient({ chain: baseSepolia, transport: http() });
-  const signer = toClientEvmSigner(account, publicClient);
-  // The node advertises the challenge twice: a v2 `Payment-Required` header and a
-  // v1-shaped JSON body (`price`, no `asset`). Register the scheme for both protocol
-  // versions so the client can satisfy whichever one it reads (GAPS G17).
-  paying = wrapFetchWithPaymentFromConfig(globalThis.fetch, {
-    schemes: [
-      { network: BASE_SEPOLIA, client: new ExactEvmScheme(signer) },
-      { network: BASE_SEPOLIA, client: new ExactEvmScheme(signer), x402Version: 1 },
-    ],
-    paymentRequirementsSelector: (version, requirements) => {
-      const evm = requirements.find((r) => String(r.network) === BASE_SEPOLIA);
-      console.error(
-        `x402 selector: v${version}, ${requirements.length} option(s):`,
-        JSON.stringify(requirements).slice(0, 500),
-        evm ? "-> taking the Base Sepolia one" : "-> NO Base Sepolia option",
-      );
-      return evm ?? (requirements[0] as (typeof requirements)[number]);
-    },
+  // Constructed exactly as telegraphprotocol/Telegraph-MCP does, on the same pinned
+  // @x402/* version: one-argument signer, x402Client.fromConfig, wrapFetchWithPayment.
+  // That is the only client known to be accepted by this node; a payload it does not
+  // like comes back as a bare 402, indistinguishable from sending nothing (GAPS G17).
+  const signer = toClientEvmSigner(account);
+  const client = x402Client.fromConfig({
+    schemes: [{ network: BASE_SEPOLIA, client: new ExactEvmScheme(signer) }],
   });
+  paying = wrapFetchWithPayment(globalThis.fetch, client);
   return paying;
 }
 
