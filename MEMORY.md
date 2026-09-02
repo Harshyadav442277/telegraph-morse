@@ -69,6 +69,21 @@ schedule — now fixed by commenting only when the problem set changes or six ho
 `npm run catalogue` re-measures all of it for free. It is also the material for the strongest X
 post: a real finding about the network that needs no traffic and no wallet.
 
+**Two findings from reading real signals on the node, free, before we had any of our own:**
+- **The node DOES publish the hashing scheme** — a `verification` object nobody had opened:
+  `{algorithm: "keccak256", commitment: "payload", verified: true}`, present and true on 8/8
+  user-paid signals. Eleven serialisations of the payload as served still failed to reproduce the
+  hash (Go struct encoding, most likely), so G3's "show, don't claim to re-derive" stands — but
+  `/verify` now shows the attestation, which is real evidence we were throwing away.
+- **There is no per-call settlement tx.** `signal.tx_hash` was absent on 8/8. The README, the
+  landing page and `/verify` all promised a "USDC settlement transaction on Base Sepolia" that
+  would essentially never have rendered — a judge clicking it would have found an empty row. The
+  on-chain trail is the payer wallet's USDC history, which we link. Corrected everywhere.
+  Meanwhile `signal.wallet_address` was present on 8/8, so the payer match — the actual adoption
+  evidence — is sound.
+  *(Daemon-generated signals carry neither wallet nor tx; only `source=user` ones do. Sampling a
+  daemon signal first made it look like the payer field was broken. Sample user signals.)*
+
 **Two things this session broke and fixed, so they are not re-learned:**
 - Repeated e2e runs exhausted the three-keys-per-network-per-day cap, so judge-journey test 4 now
   skips on this machine until 00:00 UTC. The cap works — that is how it was verified live. The
