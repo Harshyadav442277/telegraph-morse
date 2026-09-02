@@ -119,6 +119,7 @@ can manufacture traffic.
 
 ## Docs
 
+- [GO-LIVE.md](GO-LIVE.md) — the operator's runbook for the wallet, the bot and the first paid call
 - [PLAN.md](PLAN.md) — claim, reality checks, judging criteria, schedule, tooling
 - [PRD.md](PRD.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [PHASES.md](PHASES.md)
 - [GAPS.md](GAPS.md) — what is missing, broken, or unverified (read before trusting a claim)

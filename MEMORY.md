@@ -10,7 +10,7 @@ confirmed in production: `/`, `/api/stats`, `/api/recent`, `/api/health`, `/keys
 `/v1/leaderboard/{intent}`, `/verify/{hash}` and `/mcp` all answer. The previous handoff note said
 the redeploy was pending — it was not; check the deployment before believing a stale note.
 
-**One blocker, and only Claude cannot fix it:** Vercel production has no `EVM_PRIVATE_KEY` and no
+**One blocker, and only Claude cannot fix it** (step-by-step in [GO-LIVE.md](GO-LIVE.md))**:** Vercel production has no `EVM_PRIVATE_KEY` and no
 `TELEGRAM_BOT_TOKEN`. So `paidWorkEnabled:false`, `/api/health` returns 503, the ledger reads 0
 calls, and 45% of the Track 3 rubric (real users + call volume) is sitting at zero. Everything
 downstream of a paid call is built, typechecked and deployed but has **never executed** — GAPS G17.

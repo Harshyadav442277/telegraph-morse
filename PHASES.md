@@ -5,7 +5,8 @@ Criterion tags: A = adoption 45%, D = depth 25%, X = X 25%, T = technical 5%.
 
 **The one blocker:** `EVM_PRIVATE_KEY` and `TELEGRAM_BOT_TOKEN` are not in Vercel production.
 Claude never touches either (rule 1). Everything marked ⏳ below is built, typechecked and
-deployed, and unprovable until they land. See GAPS G17.
+deployed, and unprovable until they land. See GAPS G17, and **[GO-LIVE.md](GO-LIVE.md)** for the
+exact operator sequence — wallet, faucet, BotFather, `npm run preflight`, the first real call.
 
 ## P0 — Decide and set up (2026-09-02) — DONE
 - [x] Research Track 3 rubric, client APIs, baselines → [docs/TELEGRAPH_FACTS.md](docs/TELEGRAPH_FACTS.md)
