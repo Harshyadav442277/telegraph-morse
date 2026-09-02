@@ -193,3 +193,17 @@ of the 1,500-call daily budget behind one IP. The e2e suite now caches its key i
 instead of minting a new one per run. If a judge reports being blocked, the operator can issue a
 key from another network and hand it over; a proper fix would be an operator-only issuance route
 behind `ADMIN_TOKEN`, which is not built.
+### G19 · The health workflow's *schedule* has never been observed to fire — `OPEN, watch it`
+`.github/workflows/health.yml` declares `cron: "*/30 * * * *"`. It was pushed to `main` at
+15:26 UTC on 2026-09-02; by 17:22 UTC — nearly two hours — **zero scheduled runs had started**.
+Only the two `workflow_dispatch` runs triggered by hand exist.
+
+Configuration is not the problem: `gh workflow view` reports the workflow active, the default
+branch is `main`, and the repo is public. GitHub's scheduled runs are explicitly best-effort and
+are delayed or dropped under load, and new repositories often wait a long time for their first
+one.
+
+So what is proven is narrower than "monitored every 30 minutes": the probe script works, and the
+alarm path works on demand. Do not claim a cadence until a run appears with the event type
+`schedule`. Check with `gh run list --workflow=health`. If none has fired by the freeze, either
+say "on-demand monitoring" honestly, or move the probe to an external cron.

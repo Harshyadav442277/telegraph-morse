@@ -244,8 +244,10 @@ ledger postgres · payer none · ? USDC · paid false · telegram false
 ```
 
 Exit 1 = alarm, 0 = healthy, 2 = the probe could not run. `.github/workflows/health.yml` runs it
-every 30 minutes and opens (or comments on, or closes) one `health-alarm` issue. The probe only
-reads free endpoints, so the schedule cannot inflate call volume.
+on demand and, in principle, every 30 minutes; it opens (or comments on, or closes) one
+`health-alarm` issue. The probe only reads free endpoints, so no schedule can inflate call volume.
+**Caveat:** the cron has not yet been observed to fire — GitHub schedules are best-effort and this
+repo is hours old (GAPS G19). The on-demand path is proven.
 
 Proven on 2026-09-02: [run 33648541786](https://github.com/Harshyadav442277/telegraph-morse/actions/runs/33648541786)
 opened [issue #1](https://github.com/Harshyadav442277/telegraph-morse/issues/1) with exactly the
