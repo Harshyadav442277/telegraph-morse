@@ -1,0 +1,62 @@
+import type { CallRow, Stats } from "../core/ledger/types.js";
+import type { Recipe } from "../core/recipes.js";
+import { escapeHtml as h, page } from "./layout.js";
+
+export interface LandingData {
+  stats: Stats;
+  recent: CallRow[];
+  ledgerKind: "postgres" | "memory";
+  payer: string | null;
+  publicUrl: string | undefined;
+  paid: boolean;
+  recipes: Recipe[];
+}
+
+function row(r: CallRow): string {
+  const status = r.status === "ok" ? `<span class="ok">ok</span>` : `<span class="bad">${h(r.status)}</span>`;
+  const verify = r.signalHash ? `<a href="/verify/${h(r.signalHash)}"><code>${h(r.signalHash.slice(0, 10))}…</code></a>` : `<span class="muted">—</span>`;
+  const conf = r.confidence === null ? `<span class="muted">n/r</span>` : `${(r.confidence * 100).toFixed(0)}%`;
+  return `<tr><td class="mono muted">${h(r.at.replace("T", " ").slice(0, 19))}Z</td><td>${h(r.channel)}</td><td>${h(r.kind)}</td><td>${h(r.intent ?? "—")}</td><td>${h(r.minerSlug ?? "—")}${r.minerRank ? ` <span class="badge">#${r.minerRank}</span>` : ""}</td><td>${conf}</td><td>${r.costUsd !== null ? `$${r.costUsd.toFixed(2)}` : "—"}</td><td>${r.durationMs ?? "—"}</td><td>${status}</td><td>${verify}</td></tr>`;
+}
+
+export function landingPage(d: LandingData): string {
+  const s = d.stats;
+  const chips = d.recipes.map((r) => `<button type="button" data-recipe="${h(r.name)}" title="${h(r.description)}">${h(r.usage)}</button>`).join("");
+  const body = `
+<p class="lede">Ask a question. Telegraph's router picks the intent and the best-ranked miner, Morse pays the x402 fee, and you get the answer <b>with a receipt</b>: who answered, how confident, what it cost, and a signal hash anyone can verify on the node and on Base Sepolia.</p>
+${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The payer wallet or daily budget is not configured, so asking is disabled until the operator funds it. Everything else on this page is live.</div>`}
+<section class="panel"><h2>Ask the network</h2>
+<form class="ask" id="ask"><input id="q" name="q" placeholder="Is the TLS certificate for github.com valid right now?" maxlength="2000" required><button id="go" type="submit">Ask</button></form>
+<div class="chips">${chips}</div>
+<div id="out"></div></section>
+
+<section class="grid">
+<div class="stat"><b>${s.users}</b><span>distinct users</span></div>
+<div class="stat"><b>${s.okCalls}</b><span>answered calls</span></div>
+<div class="stat"><b>${s.intents}</b><span>intents used</span></div>
+<div class="stat"><b>${s.miners}</b><span>miners served</span></div>
+<div class="stat"><b>$${s.spentUsd.toFixed(2)}</b><span>paid to the network</span></div>
+<div class="stat"><b>${s.today.calls}</b><span>calls today · ${s.today.users} users</span></div>
+</section>
+
+<section class="panel" id="ledger"><h2>Public ledger <span class="badge">${d.ledgerKind === "postgres" ? "durable" : "ephemeral · dev"}</span></h2>
+<p class="muted">Every call Morse makes, newest first. Users are salted hashes and are not shown. Payer wallet: ${d.payer ? `<a href="https://sepolia.basescan.org/address/${h(d.payer)}"><code>${h(d.payer)}</code></a>` : "<i>not configured</i>"}. Cross-check any row at its verify link, or on the node with <code>GET /engine/v1/signal/{hash}</code>.</p>
+<div class="tablewrap"><table><thead><tr><th>time (UTC)</th><th>channel</th><th>kind</th><th>intent</th><th>miner</th><th>conf.</th><th>cost</th><th>ms</th><th>status</th><th>verify</th></tr></thead>
+<tbody>${d.recent.length ? d.recent.map(row).join("") : `<tr><td colspan="10" class="muted">No calls yet.</td></tr>`}</tbody></table></div>
+<p class="muted">JSON: <a href="/api/stats">/api/stats</a> · <a href="/api/recent">/api/recent</a> · <a href="/api/health">/api/health</a></p></section>
+
+<section class="panel"><h2>How routing works</h2>
+<p>Telegraph ranks miners per intent from validator scores every 9-hour epoch and routes 70% of traffic to #1, 20% to #2, 10% to #3. Morse never picks a miner for a first answer: it sends your plain-language question to <code>POST /engine/v1/ask</code> and shows you where the router sent it. When a miner reports low confidence, or when you ask, Morse fetches a <b>second opinion</b> from the next-ranked miner directly. Recipes fan one question out to several intents and combine the receipts.</p>
+<p>Also in Telegram: <b>${d.publicUrl ? "the bot link will appear here when it is live" : "coming with the first deployment"}</b>. For agents: <a href="/keys">hosted MCP and REST, no wallet needed</a>.</p></section>
+
+<script>
+const form=document.getElementById('ask'),q=document.getElementById('q'),out=document.getElementById('out'),go=document.getElementById('go');
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function receipt(r){if(!r)return'';const v=r.signalHash?' · <a href="/verify/'+r.signalHash+'">verify <code>'+r.signalHash.slice(0,10)+'…</code></a>':'';const c=r.confidence===null?'confidence not reported':'confidence '+Math.round(r.confidence*100)+'%';return'<div class="receipt">served by <b>'+esc(r.minerSlug||'?')+'</b>'+(r.minerRank?' #'+r.minerRank:'')+(r.intent?' for '+esc(r.intent):'')+' · '+c+' · '+(r.costUsd!=null?'$'+r.costUsd.toFixed(2):'')+' · '+(r.durationMs||'')+' ms'+v+'</div>'}
+function card(c){if(!c.ok||!c.receipt)return'<div class="card bad">'+esc(c.error||'no answer')+'</div>';let s='<div class="card">'+esc(c.receipt.answer)+receipt(c.receipt);if(c.second)s+='<div style="margin-top:10px"><b>Second opinion</b><br>'+esc(c.second.answer)+receipt(c.second)+'</div>';return s+'</div>'}
+async function run(body){go.disabled=true;out.innerHTML='<div class="card muted">Asking the Telegraph network…</div>';try{const r=await fetch('/api/ask',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(j.cards){out.innerHTML='<div class="card"><b>'+esc(j.recipe)+'</b> · '+esc(j.subject||'')+'<br>'+esc(j.verdict||j.error||'')+'</div>'+j.cards.map(card).join('')}else out.innerHTML=card(j)}catch(e){out.innerHTML='<div class="card bad">'+esc(e.message)+'</div>'}go.disabled=false}
+form.addEventListener('submit',e=>{e.preventDefault();run({question:q.value})});
+document.querySelectorAll('[data-recipe]').forEach(b=>b.addEventListener('click',()=>{const v=prompt(b.title+'\\n\\nInput for '+b.dataset.recipe+':');if(v)run({recipe:b.dataset.recipe,input:v})}));
+</script>`;
+  return page("Morse · ask Telegram, get a receipt from the Telegraph network", body);
+}

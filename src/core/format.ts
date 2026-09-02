@@ -1,0 +1,60 @@
+import type { AnswerCard } from "./ask.js";
+import type { Receipt } from "./receipt.js";
+import type { RecipeResult } from "./recipes.js";
+
+/** Telegram HTML needs only these three escaped. */
+export function esc(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+export function shortHash(h: string | null): string {
+  return h ? `${h.slice(0, 10)}…${h.slice(-6)}` : "—";
+}
+
+export function confidenceText(c: number | null): string {
+  return c === null ? "confidence not reported" : `confidence ${(c * 100).toFixed(0)}%`;
+}
+
+export function receiptLine(r: Receipt, publicUrl: string | undefined): string {
+  const who = r.minerSlug ?? "an unnamed miner";
+  const rank = r.minerRank ? ` (#${r.minerRank}` + (r.intent ? ` for ${r.intent})` : ")") : r.intent ? ` (${r.intent})` : "";
+  const cost = r.costUsd !== null ? `$${r.costUsd.toFixed(2)}` : "cost n/a";
+  const ms = r.durationMs !== null ? `${r.durationMs} ms` : "";
+  const verify = r.signalHash
+    ? publicUrl
+      ? `\n<a href="${publicUrl}/verify/${r.signalHash}">verify ${shortHash(r.signalHash)}</a>`
+      : `\nsignal ${shortHash(r.signalHash)}`
+    : "";
+  return `<i>served by <b>${esc(who)}</b>${esc(rank)} · ${confidenceText(r.confidence)} · ${cost}${ms ? ` · ${ms}` : ""}</i>${verify}`;
+}
+
+/** Telegram message body (HTML) for one answer card. */
+export function cardHtml(card: AnswerCard, publicUrl: string | undefined): string {
+  if (!card.ok || !card.receipt) {
+    return `⚠️ ${esc(card.error ?? "The network did not answer.")}`;
+  }
+  const r = card.receipt;
+  const answer = clip(r.answer, 1500);
+  let out = `${esc(answer)}\n\n${receiptLine(r, publicUrl)}`;
+  if (card.second) {
+    out += `\n\n<b>Second opinion</b>\n${esc(clip(card.second.answer, 700))}\n\n${receiptLine(card.second, publicUrl)}`;
+  }
+  return out;
+}
+
+export function recipeHtml(res: RecipeResult, publicUrl: string | undefined): string {
+  if (res.error) return `⚠️ ${esc(res.error)}`;
+  const parts = [`<b>${esc(res.recipe)}</b> · ${esc(res.subject)}\n${esc(res.verdict)}`];
+  for (const c of res.cards) {
+    if (c.ok && c.receipt) {
+      parts.push(`▸ <b>${esc(c.receipt.intent ?? "answer")}</b>\n${esc(clip(c.receipt.answer, 500))}\n${receiptLine(c.receipt, publicUrl)}`);
+    } else {
+      parts.push(`▸ <i>${esc(c.error ?? "one check failed")}</i>`);
+    }
+  }
+  return parts.join("\n\n");
+}
+
+export function clip(s: string, n: number): string {
+  return s.length > n ? `${s.slice(0, n - 1)}…` : s;
+}
