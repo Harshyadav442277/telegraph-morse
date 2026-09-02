@@ -4,8 +4,22 @@ import { z } from "zod";
  * Environment, parsed once. Every spending knob defaults to OFF so a deployment
  * without a deliberate budget cannot spend anything (ARCHITECTURE A7).
  */
+const HEX64 = /^0x[0-9a-fA-F]{64}$/;
+
+/**
+ * MetaMask exports a private key as 64 bare hex characters, with no `0x`. Accept that
+ * form, and stray whitespace from a copy-paste, rather than rejecting a key that is
+ * perfectly valid.
+ */
+export function normalisePrivateKey(raw: string | undefined): string | undefined {
+  const t = raw?.trim();
+  if (!t) return undefined;
+  const withPrefix = /^0x/i.test(t) ? `0x${t.slice(2)}` : `0x${t}`;
+  return HEX64.test(withPrefix) ? withPrefix.toLowerCase() : undefined;
+}
+
 const schema = z.object({
-  EVM_PRIVATE_KEY: z.string().regex(/^0x[0-9a-fA-F]{64}$/).optional(),
+  EVM_PRIVATE_KEY: z.string().regex(HEX64, "must be 64 hex characters, with or without a 0x prefix").optional(),
   TELEGRAM_BOT_TOKEN: z.string().min(10).optional(),
   TELEGRAM_WEBHOOK_SECRET: z.string().min(16).optional(),
   DATABASE_URL: z.string().url().optional(),
@@ -35,21 +49,47 @@ const schema = z.object({
 export type Config = z.infer<typeof schema>;
 
 let cached: Config | null = null;
+let problems: string[] = [];
+
+/**
+ * Non-fatal environment problems, surfaced by /api/health. A malformed payer key
+ * must not take the whole site down: the ledger, the docs and the free endpoints
+ * stay up and asking fails honestly, which is the same contract as an unfunded
+ * wallet (ARCHITECTURE A10).
+ */
+export function configProblems(): string[] {
+  config();
+  return problems;
+}
 
 export function config(): Config {
   if (cached) return cached;
-  const parsed = schema.safeParse(process.env);
+  const env: Record<string, unknown> = { ...process.env };
+  const found: string[] = [];
+
+  if (env["EVM_PRIVATE_KEY"] !== undefined) {
+    const key = normalisePrivateKey(String(env["EVM_PRIVATE_KEY"]));
+    if (key) env["EVM_PRIVATE_KEY"] = key;
+    else {
+      delete env["EVM_PRIVATE_KEY"];
+      found.push("EVM_PRIVATE_KEY is set but is not 64 hex characters — paid work is disabled until it is fixed");
+    }
+  }
+
+  const parsed = schema.safeParse(env);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`invalid environment: ${issues}`);
   }
   cached = parsed.data;
+  problems = found;
   return cached;
 }
 
 /** Test seam. */
 export function resetConfigForTests(): void {
   cached = null;
+  problems = [];
 }
 
 /** True when paid work is possible at all: key present, budget above zero, switch off. */

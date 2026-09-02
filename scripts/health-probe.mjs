@@ -52,6 +52,7 @@ async function main() {
   }
   if (h.paidWorkEnabled && h.budgetRemainingToday === 0) notes.push("today's call budget is spent");
   if (!h.telegram) notes.push("the Telegram bot token is not set");
+  for (const p of h.configProblems ?? []) problems.push(p);
 
   const stats = await get("/api/stats");
   const s = stats.body;

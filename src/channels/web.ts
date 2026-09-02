@@ -1,7 +1,7 @@
 import type { Context, Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { randomUUID } from "node:crypto";
-import { config, paidWorkEnabled } from "../config.js";
+import { config, configProblems, paidWorkEnabled } from "../config.js";
 import { askNetwork, secondOpinion, secondOpinionOn, shouldSeekSecondOpinion, type AskContext } from "../core/ask.js";
 import { hashId } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
@@ -52,6 +52,7 @@ export function webRoutes(app: Hono<AppEnv>): void {
         budgetRemainingToday: Math.max(0, cfg.DAILY_BUDGET_CALLS - today),
         lastCallAt: stats.lastCallAt,
         telegram: Boolean(cfg.TELEGRAM_BOT_TOKEN),
+        configProblems: configProblems(),
       },
       ok ? 200 : 503,
     );
