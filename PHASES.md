@@ -3,16 +3,14 @@
 Work top-down. A phase ships when its "done when" holds on the **live** deployment, not locally.
 Criterion tags: A = adoption 45%, D = depth 25%, X = X 25%, T = technical 5%.
 
-**Blocker as of 2026-09-02 18:00 UTC: the node refuses our payments.** The wallet is funded and
-live (`/api/health` green, payer `0xfBB3…4c9c`, 20 USDC), but every paid call returns
-`invalid_exact_evm_signature` even though the authorization matches the USDC contract's own domain
-separator and recovers to the right payer. Reproducible with `npm run diagnose-payment`, needs no
-wallet. This is node-side; see GAPS G17. Everything not behind a paid call is done.
+**Status 2026-09-02 18:15 UTC: Morse is paying and answering in production.** First live receipt
+`0x0691ca3f…0821a1` (LiveCert #1 for SSL_VERIFICATION, $0.01, settled on-chain, `paidByMorse:
+true`). `MORSE_E2E_PAID=1 npm run e2e` is **5 passed / 2 skipped**, both skips conditional by
+design (GAPS G9). Getting there needed Morse to stop using Telegraph's router, which times out at
+~47s against its own facilitator — see GAPS G17.
 
-**Previously:** `EVM_PRIVATE_KEY` and `TELEGRAM_BOT_TOKEN` were not in Vercel production.
-Claude never touches either (rule 1). Everything marked ⏳ below is built, typechecked and
-deployed, and unprovable until they land. See GAPS G17, and **[GO-LIVE.md](GO-LIVE.md)** for the
-exact operator sequence — wallet, faucet, BotFather, `npm run preflight`, the first real call.
+**Still open for the operator:** register the Telegram webhook (needs `ADMIN_TOKEN`, stored as a
+Vercel Secret and therefore unreadable — reset it to a value you keep), and post the X drafts.
 
 ## P0 — Decide and set up (2026-09-02) — DONE
 - [x] Research Track 3 rubric, client APIs, baselines → [docs/TELEGRAPH_FACTS.md](docs/TELEGRAPH_FACTS.md)
@@ -35,9 +33,9 @@ exact operator sequence — wallet, faucet, BotFather, `npm run preflight`, the 
       progress message edited in place, receipt formatting, group support
 - [x] Deployed and serving: `/`, `/api/*`, `/v1/*`, `/keys`, `/mcp` all answer in production
       (2026-09-02 15:00 UTC; GAPS G13 closed)
-- [ ] ⏳ **done when** a stranger's message in Telegram returns a live answer with a `signal_hash`
-      that resolves at `/verify/{hash}`
-- [ ] ⏳ X post 1 — draft ready with real numbers, in [docs/X_POSTS.md](docs/X_POSTS.md)
+- [x] Paying in production: real receipts, real settlement transactions, verified payer (GAPS G17)
+- [ ] **Operator:** register the Telegram webhook, then a stranger's message returns a live answer
+- [ ] X post 1 — ready to post, needs no wallet ([docs/X_POSTS.md](docs/X_POSTS.md))
 
 ## P2 — Web: landing, ledger, verify (2026-09-03) [A, D, T]
 - [x] `/` landing: what Morse is, ask box, live counters, recent calls table with verify links,
@@ -48,9 +46,9 @@ exact operator sequence — wallet, faucet, BotFather, `npm run preflight`, the 
       so the honest number leads (GAPS G4)
 - [x] Playwright judge journey — `e2e/judge-journey.spec.ts`, 5 passed against production
       2026-09-02, 2 skipped because they need the wallet
-- [ ] ⏳ **done when** the ledger on `/` matches `SELECT count(*)` **and every listed hash verifies**
-      — the first half is asserted and green, the second needs one real receipt
-- [ ] ⏳ X post 2 with first real numbers
+- [x] **done:** the ledger matches the API and every listed hash verifies as paid by Morse's wallet
+      (e2e test 3, green against production)
+- [ ] X post 2 with first real numbers — wait until the numbers are strangers', not ours (GAPS G20)
 
 ## P3 — Depth: recipes and second opinion (2026-09-03 → 09-04) [D]
 - [x] Recipes: `safe`, `wallet`, `weather`, `fact` (bot commands + web chips + MCP tools) — built,
@@ -60,7 +58,8 @@ exact operator sequence — wallet, faucet, BotFather, `npm run preflight`, the 
       Both miners and both ranks are shown.
 - [x] Routing visibility: "served by #k for INTENT" on every receipt, from the live leaderboard
 - [x] Daemon "what's hot" (`/hot` in Telegram, `telegraph_hot_signals` over MCP)
-- [ ] ⏳ **done when** each recipe produces one combined verdict and N ledger rows, all verifiable
+- [ ] **done when** each recipe produces one combined verdict and N ledger rows, all verifiable —
+      the single-call path is proven, recipes are the same path fanned out and are next to exercise
 - [x] Measured the whole catalogue for free (`npm run catalogue`): 57% of miners declare a
       confidence field, 4 publish a *risk* score in it, 29 publish >1 endpoint. Two real bugs fixed
       as a result — risk shown as confidence, and second opinions hitting the wrong endpoint
@@ -72,10 +71,10 @@ exact operator sequence — wallet, faucet, BotFather, `npm run preflight`, the 
 - [x] MCP handshake and all 7 tools verified against production with a real issued key; `/mcp`
       without a key returns 401 + `WWW-Authenticate`
 - [x] README quick-starts: Claude Code one-liner, Cursor JSON, curl
-- [ ] ⏳ **done when** `claude mcp add --transport http morse https://<host>/mcp` works from a clean
-      machine **and the call appears in the public ledger** — the transport half is proven, the
-      paid call is not
-- [ ] ⏳ X post 3
+- [ ] **done when** `claude mcp add …` works from a clean machine and the call lands in the ledger —
+      transport proven, and the paid path now works, so this needs one run from a fresh network
+      (GAPS G18 exhausted this one's key quota for the day)
+- [ ] X post 3
 
 ## P5 — Freeze, rehearse, submit (2026-09-05 18:00 UTC → 09-07 23:59 UTC) [A, X, T]
 - [ ] Feature freeze; only P1 bugs after this

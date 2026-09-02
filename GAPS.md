@@ -3,12 +3,15 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
-### G1 · Vercel function duration vs miner latency — `OPEN, verify on first deploy` (the first deploy found a different bug first: see G13)
-Miners take up to ~45s. The design acks the Telegram webhook and finishes in `waitUntil` with
-`maxDuration: 60`. Whether the Hobby plan honours 60s for this project is unverified. Fallback:
-an always-on worker for the bot. Test with a deliberately slow intent on day 1.
+### G1 · Vercel function duration vs miner latency — `MEASURED 2026-09-02`
+Real paid calls through the deployment complete in **200 ms – 4 s**, far inside the 60s ceiling —
+because Morse calls miners directly. The router would have blown it: `/engine/v1/ask` takes ~47s
+just to fail on settlement (G17). The original concern was right, and the answer was to stop using
+the router.
+The Telegram path still acks the webhook and finishes in `waitUntil` with `maxDuration: 60`, which
+remains the right shape for a slow miner.
 
-### G2 · x402 SDK 2.24.0 — `API SHAPE VERIFIED 2026-09-02; gasless payer still unproven`
+### G2 · x402 SDK 2.24.0 — `CLOSED 2026-09-02`
 **Verified against the installed 2.24.0 packages, not the docs:** `toClientEvmSigner` and
 `ExactEvmScheme` are live exports of `@x402/evm`, `wrapFetchWithPaymentFromConfig` of `@x402/fetch`,
 and its config type is `{schemes: SchemeRegistration[]}` with `SchemeRegistration = {network,
@@ -22,8 +25,9 @@ Telegraph calls cost $0.01–$0.015. So the defaults permit our payments and no 
 override is needed. Had the asset not matched, the first paid call would have failed inside our own
 client with nothing on the wire to explain it.
 
-**Still unproven:** that the payer needs no Base Sepolia ETH (EIP-3009 authorisation, facilitator
-pays gas). Only a first real paid call settles that — see G17.
+**Gasless payer CONFIRMED 2026-09-02:** the payer wallet holds **0 ETH** and has nonce 0, and it
+has settled real payments on-chain. The facilitator submits the EIP-3009 transfer and pays the gas,
+exactly as designed. G2 is closed.
 
 ### G3 · Signal hash derivation — `SHARPENED 2026-09-02; still not re-derived`
 The node **does** publish the scheme, in a `verification` object nobody had looked at:
@@ -40,13 +44,6 @@ plainly that Morse did not reproduce it. Do not claim "re-derived" unless it is.
 **What Morse does establish independently** is the payer: `signal.wallet_address` was present on
 8/8 user-paid signals and is compared against Morse's own wallet. That is the adoption evidence,
 and it does not depend on the hashing scheme.
-
-### G3b · The node publishes no per-call settlement tx — `CLOSED as a finding, claim corrected`
-`signal.tx_hash` was **absent on 8 of 8** user-paid signals (2026-09-02). The README, the landing
-page and `/verify` all claimed a per-call "settlement transaction on Base Sepolia" that would
-almost never have rendered — a judge clicking for it would have found nothing. Corrected
-everywhere: the on-chain trail is the payer wallet's USDC history on BaseScan, which Morse links,
-and `/verify` says so explicitly instead of showing an empty row.
 
 ### G4 · "Real users" is our count of hashed identities — `DISCLOSED 2026-09-02, still an approximation`
 Telegram user ids, web session cookies and API keys are counted distinct after salting. One
@@ -96,13 +93,15 @@ test/catalogue-quirks.test.ts.
 Still open: what miners put in these fields at *runtime* (strings, 0-100, nulls) can only be seen
 with real traffic.
 
-### G9 · End-to-end coverage stops at the wallet — `PARTIALLY CLOSED 2026-09-02`
-`e2e/judge-journey.spec.ts` runs the judge journey against the live deployment: landing and
-counters, ledger-vs-API agreement and the durable-ledger check, key issuance, the MCP handshake and
-tool list, free discovery, and the honest-failure path. 5 passed on 2026-09-02 against production.
-**Still unproven:** the two wallet-gated tests — every ledger hash verifying on the node (test 3)
-and the funded ask → receipt → verify → ledger loop (test 7, behind `MORSE_E2E_PAID=1`). Neither
-can run until `EVM_PRIVATE_KEY` is set.
+### G9 · End-to-end coverage — `CLOSED 2026-09-02 18:14 UTC`
+`MORSE_E2E_PAID=1 npm run e2e` against production: **5 passed, 2 skipped**. Both of the previously
+wallet-gated tests now pass — test 3 (every signal hash in the ledger verifies on the node and was
+paid by Morse's wallet) and test 7 (ask → receipt → verify → ledger row, with a real $0.01 call).
+
+The two skips are conditional by design, not gaps: test 6 only runs when the wallet is *unfunded*
+(it asserts the honest-failure path), and test 4 skipped because this machine's network had already
+spent its three API keys for the UTC day (GAPS G18) — it passed earlier the same day against the
+same deployment.
 
 ### G10 · The operator's public repo `Harshyadav442277/Telegraph` is a copy of a rival's miner — `OPEN, operator decision`
 Found 2026-09-02: that repo's README and package.json are PREFLIGHT (`preflight-ssl-verification`,
@@ -163,78 +162,41 @@ set changes**, or once every 6 hours. Verified locally against the real issue bo
 unchanged problems it stays quiet. **Still unproven:** the auto-close path, which needs the
 deployment to become healthy.
 
-### G17 · The x402 payment path has never executed — `OPEN, but substantially de-risked 2026-09-02`
-Everything downstream of a paid call is built and typechecked but has never run. One real call
-closes G2's second half, G3 (in its shown-not-derived form), most of G8 and G14, and the
-wallet-gated half of G9. Until then Morse's ledger reads 0 calls — 45% of the rubric at zero.
+### G17 · The x402 payment path — `CLOSED 2026-09-02 18:10 UTC, paying in production`
+Morse pays. First live receipt through the deployed app:
+`0x0691ca3f54514e5ea5ce342d8dadc30c58c48ada711cdfde01e171b4ee0821a1` — LiveCert #1 for
+SSL_VERIFICATION, $0.01, settled on-chain as
+`0x31b9b480548034ad571448194ea09bf12a13f3ad2903f88d3307dd191e2af007`, `paidByMorse: true`, and the
+node's own `verification.verified: true`.
 
-**What is now verified without spending** (`npm run preflight`, and the table in
-docs/TELEGRAPH_FACTS.md): the node's live 402 challenge was fetched unpaid and diffed field by
-field against our client. Scheme `exact`, network `eip155:84532`, asset
-`0x036CbD…F7e`, EIP-712 domain version `2`, price $0.01 against the client's $1 cap, and
-`maxTimeoutSeconds` 60 against our 45s abort — **every field our client must satisfy matches**,
-and the asset is the one `DEFAULT_ASSETS` recognises so the client's own spend controls permit it.
+Two real faults were in the way, and one wrong diagnosis of my own.
 
-**What remains genuinely unproven, and cannot be checked without spending:** the EIP-3009 signature
-being accepted, the facilitator settling it on-chain, and the `signal_hash` coming back and
-resolving at `/verify`. Also whether the payer needs Base Sepolia ETH — the EVM accept carries no
-`feePayer` (the Solana one does), which is suggestive, not proof.
+**Fault 1 — Telegraph's router is unusable from a serverless function.** `/engine/v1/ask` returns
+`settle request failed: Post "https://facilitator.payai.network/settle": context deadline exceeded`
+after ~47s. Vercel's ceiling is 60s, so there is no room. `/engine/v1/ask/{minerId}` settles in
+~4s. Morse therefore does its own routing (`src/core/route.ts`): keyword rules over the canonical
+intents, then the best-ranked active miner from the live leaderboard, with the choice written onto
+the receipt. Dumber than the network's classifier, but inspectable — and it works.
 
-Run `npm run preflight` the moment the key is set; make the one call only if it prints READY.
+**Fault 2 — the Request had to be materialised before the payment wrapper.** Handing
+`wrapFetchWithPayment` a `(url, init)` pair works on a laptop and fails on Vercel: the retry went
+out with no payment header and the node answered with a bare challenge. Wrapping fetch so it does
+`globalThis.fetch(new Request(input, init))` fixes it. Found by tracing outbound requests from the
+deployed function. The precise undici interaction is not pinned down, so that wrapper carries a
+comment telling the next person not to simplify it away without re-testing a paid call.
 
-**2026-09-02 ~17:45 UTC — the first real calls were attempted and the node refuses them.**
-Deployment healthy (`ok:true`, payer `0xfBB3…4c9c`, 20 USDC, `paidWorkEnabled:true`), and every
-attempt returns HTTP 402 whose body is the *original challenge*, with no `PAYMENT-RESPONSE` header
-and no `invalid_exact_evm_signature`. Telegraph's own docs say this is exactly what a malformed
-payload looks like: "the node rejects a malformed payload with a bare 402 — indistinguishable from
-having sent no payment at all."
+**The wrong diagnosis, recorded so it is not repeated.** Hours went into "the node rejects a valid
+signature", based on probing with Hardhat's unfunded test key. An unfunded payer gets
+`invalid_exact_evm_signature`; a funded one gets a settle timeout or succeeds. The test key was a
+misleading proxy for the real wallet, and generalising from it sent the investigation the wrong
+way. Probe with the real payer, or do not trust the error.
 
-Ruled out so far, each verified rather than assumed:
-- **Not the wallet.** 20 USDC on Base Sepolia, correct chain, plain EOA, nothing on mainnet.
-- **Not the EIP-712 domain.** The contract reports `name "USDC"`, `version "2"`; the challenge's
-  `extra` says the same. (The docs name a wrong domain name as the usual cause.)
-- **Not the challenge parsing.** A logging `paymentRequirementsSelector` showed the client receives
-  v2 with one Base Sepolia option, complete with asset/amount/extra, and selects it.
-- **Not payload construction.** `wrapFetchWithPayment` throws "Failed to create payment payload" if
-  it cannot build one; it does not throw, so a payload is built and sent.
-- **Not the client version or construction.** Pinned `@x402/*` to exactly 2.11.0 and rebuilt the
-  client the way telegraphprotocol/Telegraph-MCP does — one-argument `toClientEvmSigner`,
-  `x402Client.fromConfig`, `wrapFetchWithPayment`. Same refusal.
-- **Nothing settled.** Balance still exactly 20, nonce still 0 — no money moved, nothing lost.
-
-Also ruled out since, all free:
-- **The payload is correct.** Built locally (with Hardhat's published test key, unfunded, purely to
-  inspect serialisation) it is a textbook EIP-3009 authorization, and its signature **recovers to
-  the right signer** over the exact domain the USDC contract reports.
-- **Timing is fine.** `validAfter` is 10 minutes in the past, `validBefore` 60s ahead; Vercel's
-  clock is 1s and the node's 2s from real time.
-- **The header is right.** v2 emits `PAYMENT-SIGNATURE: base64(JSON(payload))`, exactly as the docs
-  specify, and the retry response is what we see — so the node received it and refused.
-- **Not a network outage.** 122 user-paid calls landed on the node in the hour we were failing,
-  the newest 10 minutes old.
-- **Not the token.** Payer is not blacklisted, the contract is not paused, EIP-3009 is live.
-- **Not the network registration.** Matching the MCP's wildcard `eip155:*` changed nothing.
-
-**RESOLVED TO A NODE-SIDE REJECTION, 2026-09-02 18:01 UTC.** `npm run diagnose-payment` reproduces
-it from any machine with no wallet and no funds, and shows both halves:
-
-1. The authorization we produce is **valid for the real token**. The EIP-712 domain we sign hashes
-   to `0x71f17a3b…c9818`, byte-identical to the USDC contract's own `DOMAIN_SEPARATOR()`, and the
-   signature recovers to the declared payer.
-2. The node answers **`invalid_exact_evm_signature`** anyway — for `@x402/*` 2.11.0 and 2.24.0, for
-   one-argument and two-argument signers, for `eip155:84532` and `eip155:*`, on the router and on a
-   direct miner call. A funded wallet gets the identical answer, so it is not about funds; the node
-   rejects before it ever checks a balance.
-
-The earlier "no payment-response header" reading was wrong: the node **does** send a
-`payment-response` header carrying the reason. It was missed because the first probes went through
-our own error path, which only logged the body.
-
-This is not something Morse can fix from the client side — the signature is correct by the token's
-own definition. It needs the node operators. Evidence to hand them is the output of
-`npm run diagnose-payment`. Meanwhile Morse behaves exactly as designed for an unpayable network:
-the site, ledger, verification and free endpoints stay up, and asking fails honestly with the
-node's own reason rather than inventing an answer (rule 01).
+### G3b · Per-call settlement transaction — `CORRECTED 2026-09-02`
+Earlier entry claimed the node publishes no per-call `tx_hash`. Wrong: it is in the
+`payment-response` **header** on the paying request, not in the signal record served afterwards.
+Morse now captures it there, stores it on the ledger row, and links it to BaseScan from receipts
+and `/verify`. The signal-record observation stands — `signal.tx_hash` really is absent — but the
+conclusion drawn from it did not.
 
 ### G18 · Three API keys per network per UTC day will bite shared IPs — `OPEN, accepted for now`
 `issueKey` caps issuance at three per salted client IP per UTC day. Judges behind one shared NAT —
@@ -261,3 +223,20 @@ So what is proven is narrower than "monitored every 30 minutes": the probe scrip
 alarm path works on demand. Do not claim a cadence until a run appears with the event type
 `schedule`. Check with `gh run list --workflow=health`. If none has fired by the freeze, either
 say "on-demand monitoring" honestly, or move the probe to an external cron.
+
+### G20 · The first ledger rows are our own verification, not users — `DISCLOSED 2026-09-02`
+Every call in the ledger before the bot and the site were shared with anyone was made while
+proving the payment path worked: a handful of `web` rows on 2026-09-02 between 18:10 and 18:15 UTC,
+plus whatever the paid end-to-end test spends when it is run deliberately. They are real calls with
+real receipts — nothing is fabricated — but they are **not adoption**, and must never be presented
+as it.
+
+Two consequences, both binding:
+- X posts quote `usersAnswered`, and the first post that quotes a user number waits until the
+  numbers are actually strangers'. Publishing "4 people asked" when three of them were us would be
+  exactly the metric inflation rule 04 forbids.
+- The ledger shows `channel`, so anyone can see the early rows are `web`. When Telegram and MCP
+  traffic arrives the mix becomes self-evident. Do not delete the early rows to make the numbers
+  look cleaner; deleting evidence is worse than explaining it.
+
+If a judge asks "how many of these are yours", the answer must be available and honest.
