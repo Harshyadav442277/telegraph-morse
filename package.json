@@ -18,7 +18,8 @@
     "x:numbers": "node scripts/x-numbers.mjs",
     "preflight": "tsx scripts/preflight.ts",
     "catalogue": "node scripts/catalogue-stats.mjs",
-    "first-call": "tsx scripts/first-call.ts"
+    "first-call": "tsx scripts/first-call.ts",
+    "diagnose-payment": "tsx scripts/diagnose-payment.ts"
   },
   "dependencies": {
     "@hono/mcp": "^0.3.2",
@@ -26,9 +27,9 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@neondatabase/serverless": "^1.1.0",
     "@vercel/functions": "^3.9.5",
-    "@x402/core": "2.11.0",
-    "@x402/evm": "2.11.0",
-    "@x402/fetch": "2.11.0",
+    "@x402/core": "2.24.0",
+    "@x402/evm": "2.24.0",
+    "@x402/fetch": "2.24.0",
     "grammy": "^1.46.0",
     "hono": "^4.13.5",
     "viem": "^2.56.3",

@@ -18,8 +18,9 @@ import { baseSepolia } from "viem/chains";
 import * as x402evm from "@x402/evm";
 
 /** 2.11.0 does not export DEFAULT_ASSETS; 2.24.0 does. Treat it as optional. */
-const DEFAULT_ASSETS = (x402evm as { DEFAULT_ASSETS?: Record<string, Array<{ asset: string; version?: string }>> })
-  .DEFAULT_ASSETS;
+const DEFAULT_ASSETS = (x402evm as unknown as {
+  DEFAULT_ASSETS?: Record<string, ReadonlyArray<{ asset: string; version?: string }>>;
+}).DEFAULT_ASSETS;
 import { config, paidWorkEnabled } from "../src/config.js";
 import { payerAddress, payerUsdcBalance, USDC_BASE_SEPOLIA } from "../src/core/telegraph.js";
 

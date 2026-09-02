@@ -3,7 +3,13 @@
 Work top-down. A phase ships when its "done when" holds on the **live** deployment, not locally.
 Criterion tags: A = adoption 45%, D = depth 25%, X = X 25%, T = technical 5%.
 
-**The one blocker:** `EVM_PRIVATE_KEY` and `TELEGRAM_BOT_TOKEN` are not in Vercel production.
+**Blocker as of 2026-09-02 18:00 UTC: the node refuses our payments.** The wallet is funded and
+live (`/api/health` green, payer `0xfBB3…4c9c`, 20 USDC), but every paid call returns
+`invalid_exact_evm_signature` even though the authorization matches the USDC contract's own domain
+separator and recovers to the right payer. Reproducible with `npm run diagnose-payment`, needs no
+wallet. This is node-side; see GAPS G17. Everything not behind a paid call is done.
+
+**Previously:** `EVM_PRIVATE_KEY` and `TELEGRAM_BOT_TOKEN` were not in Vercel production.
 Claude never touches either (rule 1). Everything marked ⏳ below is built, typechecked and
 deployed, and unprovable until they land. See GAPS G17, and **[GO-LIVE.md](GO-LIVE.md)** for the
 exact operator sequence — wallet, faucet, BotFather, `npm run preflight`, the first real call.

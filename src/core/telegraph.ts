@@ -25,12 +25,6 @@ export class TelegraphError extends Error {
 }
 
 const BASE_SEPOLIA = "eip155:84532" as const;
-/**
- * telegraphprotocol/Telegraph-MCP registers the scheme against a wildcard chain
- * (`EVM_NETWORK || "eip155:*"`) rather than a fixed chain id, and it is the only
- * client known to be accepted by this node. Match it (GAPS G17).
- */
-const EVM_WILDCARD = "eip155:*" as const;
 export const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
 
 let paying: ((input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) | null = null;
@@ -60,7 +54,7 @@ function payingFetch() {
   // like comes back as a bare 402, indistinguishable from sending nothing (GAPS G17).
   const signer = toClientEvmSigner(account);
   const client = x402Client.fromConfig({
-    schemes: [{ network: EVM_WILDCARD, client: new ExactEvmScheme(signer) }],
+    schemes: [{ network: BASE_SEPOLIA, client: new ExactEvmScheme(signer) }],
   });
   paying = wrapFetchWithPayment(globalThis.fetch, client);
   return paying;

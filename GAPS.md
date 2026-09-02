@@ -215,10 +215,26 @@ Also ruled out since, all free:
 - **Not the token.** Payer is not blacklisted, the contract is not paused, EIP-3009 is live.
 - **Not the network registration.** Matching the MCP's wildcard `eip155:*` changed nothing.
 
-Not yet distinguished: **our client versus the Vercel serverless runtime.** `npm run first-call`
-runs the identical client locally and tries both the router and a direct miner call; a failure
-there points at the client, a success points at the runtime. That needs the operator's key on a
-local machine, so it is theirs to run.
+**RESOLVED TO A NODE-SIDE REJECTION, 2026-09-02 18:01 UTC.** `npm run diagnose-payment` reproduces
+it from any machine with no wallet and no funds, and shows both halves:
+
+1. The authorization we produce is **valid for the real token**. The EIP-712 domain we sign hashes
+   to `0x71f17a3b…c9818`, byte-identical to the USDC contract's own `DOMAIN_SEPARATOR()`, and the
+   signature recovers to the declared payer.
+2. The node answers **`invalid_exact_evm_signature`** anyway — for `@x402/*` 2.11.0 and 2.24.0, for
+   one-argument and two-argument signers, for `eip155:84532` and `eip155:*`, on the router and on a
+   direct miner call. A funded wallet gets the identical answer, so it is not about funds; the node
+   rejects before it ever checks a balance.
+
+The earlier "no payment-response header" reading was wrong: the node **does** send a
+`payment-response` header carrying the reason. It was missed because the first probes went through
+our own error path, which only logged the body.
+
+This is not something Morse can fix from the client side — the signature is correct by the token's
+own definition. It needs the node operators. Evidence to hand them is the output of
+`npm run diagnose-payment`. Meanwhile Morse behaves exactly as designed for an unpayable network:
+the site, ledger, verification and free endpoints stay up, and asking fails honestly with the
+node's own reason rather than inventing an answer (rule 01).
 
 ### G18 · Three API keys per network per UTC day will bite shared IPs — `OPEN, accepted for now`
 `issueKey` caps issuance at three per salted client IP per UTC day. Judges behind one shared NAT —
