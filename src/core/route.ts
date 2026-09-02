@@ -21,8 +21,12 @@ import { getIntents, leaderboard } from "./telegraph.js";
  * general-purpose intent rather than being forced into a bad fit.
  */
 const RULES: Array<{ intent: string; re: RegExp }> = [
-  { intent: "SSL_VERIFICATION", re: /\b(ssl|tls|certificate|cert|https)\b/i },
-  { intent: "URL_SCAN", re: /\b(safe to visit|phishing|malware|scan (this )?(url|site|link)|is .* safe)\b/i },
+  // URL_SCAN first: a "is this link safe" question usually contains a URL, and a URL
+  // contains "https", so an SSL rule matching the scheme would steal it. It did.
+  // No bare `scam` — "is this wallet a scam" is a fraud question, not a URL scan.
+  { intent: "URL_SCAN", re: /\b(safe to visit|phishing|malware|scan (this )?(url|site|link)|is .{0,40} safe)\b/i },
+  // Deliberately no `https` here — see above. Certificate words only.
+  { intent: "SSL_VERIFICATION", re: /\b(ssl|tls|certificate|cert|cipher suite|chain of trust)\b/i },
   { intent: "IP_GEOLOCATION", re: /\b(where is .*\bip\b|geolocat|which country .*\bip\b|\bip\b .*(located|location))/i },
   { intent: "CVE_LOOKUP", re: /\b(cve-\d{4}-\d+|vulnerability|exploit)\b/i },
   { intent: "STORM_ALERT", re: /\b(storm|hurricane|cyclone|typhoon|severe weather|gale)\b/i },
@@ -33,8 +37,11 @@ const RULES: Array<{ intent: string; re: RegExp }> = [
   { intent: "TVL_LOOKUP", re: /\b(tvl|total value locked)\b/i },
   { intent: "TOKEN_HOLDER_COUNT", re: /\b(holders?|holder count)\b/i },
   { intent: "ONCHAIN_TX_LOOKUP", re: /\b0x[0-9a-fA-F]{64}\b|\btransaction (hash|lookup)\b/i },
-  { intent: "WALLET_BALANCE_CHECK", re: /\b(balance of|wallet balance|how much .*(hold|own)|\b0x[0-9a-fA-F]{40}\b|\b[a-z0-9-]+\.eth\b)/i },
+  // Above WALLET_BALANCE_CHECK: an ENS name or 0x address appears in both kinds of
+  // question, so an explicit fraud word has to win or the wallet recipe's risk leg
+  // silently becomes a second balance check.
   { intent: "FRAUD_DETECTION", re: /\b(fraud|scam|rug ?pull|illicit|launder|risk (score|assessment))\b/i },
+  { intent: "WALLET_BALANCE_CHECK", re: /\b(balance of|wallet balance|how much .*(hold|own)|\b0x[0-9a-fA-F]{40}\b|\b[a-z0-9-]+\.eth\b)/i },
   { intent: "STOCK_PRICE", re: /\b(stock|share price|nasdaq|nyse|ticker)\b/i },
   { intent: "CURRENCY_EXCHANGE", re: /\b(exchange rate|convert \d+ .*to|usd to|eur to|inr to)\b/i },
   { intent: "FINANCIAL_DATA", re: /\b(revenue|earnings|market cap|balance sheet)\b/i },

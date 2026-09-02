@@ -150,6 +150,10 @@ export async function runRecipe(
   if ("error" in plan) return { recipe: recipe.name, subject: input, cards: [], verdict: "", error: plan.error };
   const g = await guard(ctx, plan.questions.length);
   if (!g.allowed) return { recipe: recipe.name, subject: plan.subject, cards: [], verdict: "", error: g.reason ?? "Not allowed." };
-  const cards = await Promise.all(plan.questions.map((q) => asker(ctx, q, recipe.name, true)));
+  // Sequentially, not in parallel: three payments in flight at once from one wallet
+  // draws `batch_send_failed:missing_or_invalid_parameters` from the facilitator and a
+  // recipe silently loses a leg. A few seconds slower, and every leg lands.
+  const cards: AnswerCard[] = [];
+  for (const q of plan.questions) cards.push(await asker(ctx, q, recipe.name, true));
   return { recipe: recipe.name, subject: plan.subject, cards, verdict: recipe.verdict(cards), error: null };
 }
