@@ -56,7 +56,17 @@ function payingFetch() {
   const client = x402Client.fromConfig({
     schemes: [{ network: BASE_SEPOLIA, client: new ExactEvmScheme(signer) }],
   });
-  paying = wrapFetchWithPayment(globalThis.fetch, client);
+  // Temporary instrumentation: the same client pays successfully from a laptop and is
+  // refused from Vercel, so log what actually leaves the function (GAPS G17).
+  const traced: typeof globalThis.fetch = async (input, init) => {
+    const req = new Request(input as RequestInfo, init);
+    const hasPayment = req.headers.has("PAYMENT-SIGNATURE") || req.headers.has("X-PAYMENT");
+    console.error(`outbound ${req.method} ${req.url} | payment header: ${hasPayment ? "YES" : "no"} | node ${process.version}`);
+    const res = await globalThis.fetch(req);
+    console.error(`  <- ${res.status} | payment-response: ${res.headers.get("payment-response") ? "present" : "absent"}`);
+    return res;
+  };
+  paying = wrapFetchWithPayment(traced, client);
   return paying;
 }
 
