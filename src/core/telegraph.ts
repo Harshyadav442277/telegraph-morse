@@ -50,8 +50,23 @@ function payingFetch() {
   const account = privateKeyToAccount(pk as `0x${string}`);
   const publicClient = createPublicClient({ chain: baseSepolia, transport: http() });
   const signer = toClientEvmSigner(account, publicClient);
+  // The node advertises the challenge twice: a v2 `Payment-Required` header and a
+  // v1-shaped JSON body (`price`, no `asset`). Register the scheme for both protocol
+  // versions so the client can satisfy whichever one it reads (GAPS G17).
   paying = wrapFetchWithPaymentFromConfig(globalThis.fetch, {
-    schemes: [{ network: BASE_SEPOLIA, client: new ExactEvmScheme(signer) }],
+    schemes: [
+      { network: BASE_SEPOLIA, client: new ExactEvmScheme(signer) },
+      { network: BASE_SEPOLIA, client: new ExactEvmScheme(signer), x402Version: 1 },
+    ],
+    paymentRequirementsSelector: (version, requirements) => {
+      const evm = requirements.find((r) => String(r.network) === BASE_SEPOLIA);
+      console.error(
+        `x402 selector: v${version}, ${requirements.length} option(s):`,
+        JSON.stringify(requirements).slice(0, 500),
+        evm ? "-> taking the Base Sepolia one" : "-> NO Base Sepolia option",
+      );
+      return evm ?? (requirements[0] as (typeof requirements)[number]);
+    },
   });
   return paying;
 }
