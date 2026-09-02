@@ -82,6 +82,7 @@ export function computeStats(calls: CallRow[], users: number): Stats {
   }
   return {
     users,
+    usersAnswered: new Set(ok.map((c) => c.userHash)).size,
     calls: calls.length,
     okCalls: ok.length,
     intents: byIntentMap.size,

@@ -132,7 +132,7 @@ export class PostgresLedger implements Ledger {
   }
 
   async stats(): Promise<Stats> {
-    const [totals, channels, intents, today, users] = await Promise.all([
+    const [totals, channels, intents, today, users, answered] = await Promise.all([
       this.q(`select count(*)::int as calls,
                      count(*) filter (where status = 'ok')::int as ok_calls,
                      count(distinct intent) filter (where status = 'ok')::int as intents,
@@ -147,12 +147,14 @@ export class PostgresLedger implements Ledger {
       this.q(`select count(*)::int as calls, count(distinct user_hash)::int as users from calls
               where status = 'ok' and at >= date_trunc('day', now() at time zone 'utc')`),
       this.q(`select count(*)::int as n from users`),
+      this.q(`select count(distinct user_hash)::int as n from calls where status = 'ok'`),
     ]);
     const t = totals[0] ?? {};
     const byChannel: Record<string, number> = {};
     for (const r of channels) byChannel[String(r["channel"])] = Number(r["n"]);
     return {
       users: Number(users[0]?.["n"] ?? 0),
+      usersAnswered: Number(answered[0]?.["n"] ?? 0),
       calls: Number(t["calls"] ?? 0),
       okCalls: Number(t["ok_calls"] ?? 0),
       intents: Number(t["intents"] ?? 0),

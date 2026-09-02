@@ -31,7 +31,7 @@ ${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The pay
 <div id="out"></div></section>
 
 <section class="grid">
-<div class="stat"><b>${s.users}</b><span>distinct users</span></div>
+<div class="stat"><b>${s.usersAnswered}</b><span>people answered<br><span class="muted">of ${s.users} who asked</span></span></div>
 <div class="stat"><b>${s.okCalls}</b><span>answered calls</span></div>
 <div class="stat"><b>${s.intents}</b><span>intents used</span></div>
 <div class="stat"><b>${s.miners}</b><span>miners served</span></div>
@@ -40,7 +40,7 @@ ${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The pay
 </section>
 
 <section class="panel" id="ledger"><h2>Public ledger <span class="badge">${d.ledgerKind === "postgres" ? "durable" : "ephemeral · dev"}</span></h2>
-<p class="muted">Every call Morse makes, newest first. Users are salted hashes and are not shown. Payer wallet: ${d.payer ? `<a href="https://sepolia.basescan.org/address/${h(d.payer)}"><code>${h(d.payer)}</code></a>` : "<i>not configured</i>"}. Cross-check any row at its verify link, or on the node with <code>GET /engine/v1/signal/{hash}</code>.</p>
+<p class="muted">Every call Morse makes, newest first. Users are salted hashes and are not shown; "people answered" counts distinct identities that received at least one answer, "who asked" includes attempts that failed. Payer wallet: ${d.payer ? `<a href="https://sepolia.basescan.org/address/${h(d.payer)}"><code>${h(d.payer)}</code></a>` : "<i>not configured</i>"}. Cross-check any row at its verify link, or on the node with <code>GET /engine/v1/signal/{hash}</code>.</p>
 <div class="tablewrap"><table><thead><tr><th>time (UTC)</th><th>channel</th><th>kind</th><th>intent</th><th>miner</th><th>conf.</th><th>cost</th><th>ms</th><th>status</th><th>verify</th></tr></thead>
 <tbody>${d.recent.length ? d.recent.map(row).join("") : `<tr><td colspan="10" class="muted">No calls yet.</td></tr>`}</tbody></table></div>
 <p class="muted">JSON: <a href="/api/stats">/api/stats</a> · <a href="/api/recent">/api/recent</a> · <a href="/api/health">/api/health</a></p></section>

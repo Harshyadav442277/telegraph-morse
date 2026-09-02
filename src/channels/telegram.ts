@@ -51,7 +51,7 @@ export function getBot(): Bot {
     const s = await getLedger().stats();
     const url = c.MORSE_PUBLIC_URL ? `\n${c.MORSE_PUBLIC_URL}` : "";
     await ctx.reply(
-      `<b>Morse so far</b>\n${s.users} users · ${s.okCalls} answered calls · ${s.intents} intents · ${s.miners} miners · $${s.spentUsd.toFixed(2)} paid to the network\nToday: ${s.today.calls} calls from ${s.today.users} users${esc(url)}`,
+      `<b>Morse so far</b>\n${s.usersAnswered} people answered (${s.users} asked) · ${s.okCalls} answered calls · ${s.intents} intents · ${s.miners} miners · $${s.spentUsd.toFixed(2)} paid to the network\nToday: ${s.today.calls} calls from ${s.today.users} users${esc(url)}`,
       { parse_mode: "HTML", link_preview_options: { is_disabled: true } },
     );
   });

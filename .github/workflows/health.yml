@@ -1,0 +1,79 @@
+name: health
+
+# Reads /api/health, /api/stats and / every 30 minutes. All three are free: the probe
+# never asks the Telegraph network, so this schedule cannot inflate call volume (rule 04).
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Deployment to probe
+        default: https://telegraph-morse.vercel.app
+
+permissions:
+  issues: write
+
+concurrency:
+  group: health
+  cancel-in-progress: false
+
+env:
+  MORSE_URL: ${{ github.event.inputs.url || 'https://telegraph-morse.vercel.app' }}
+  ALARM_LABEL: health-alarm
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Probe
+        id: probe
+        run: |
+          set +e
+          node scripts/health-probe.mjs --url "$MORSE_URL" > probe.txt 2>&1
+          status=$?
+          cat probe.txt
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Build the issue body
+        run: |
+          {
+            echo "Probe of \`$MORSE_URL\` at $(date -u +%FT%TZ), run [#${GITHUB_RUN_NUMBER}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})."
+            echo
+            echo '```'
+            cat probe.txt
+            echo '```'
+            echo
+            echo "Reproduce locally: \`node scripts/health-probe.mjs --url $MORSE_URL\`"
+          } > body.md
+
+      - name: Ensure the alarm label exists
+        run: gh label create "$ALARM_LABEL" --color B60205 --description "Morse health probe" || true
+
+      - name: Open or update the alarm issue
+        if: steps.probe.outputs.status != '0'
+        run: |
+          existing="$(gh issue list --label "$ALARM_LABEL" --state open --limit 1 --json number --jq '.[0].number')"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file body.md
+          else
+            gh issue create --label "$ALARM_LABEL" --title "Morse health alarm: $MORSE_URL" --body-file body.md
+          fi
+
+      - name: Close the alarm issue when healthy again
+        if: steps.probe.outputs.status == '0'
+        run: |
+          for n in $(gh issue list --label "$ALARM_LABEL" --state open --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "$(cat body.md)"
+          done
+
+      - name: Fail the run so the alarm shows in the Actions tab
+        if: steps.probe.outputs.status != '0'
+        run: exit 1

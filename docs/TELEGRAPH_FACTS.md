@@ -91,3 +91,19 @@ example is drifted from the shipped exports — read the `.d.ts`. Facilitator
 
 `https://submissions.telegraphprotocol.com` — tabs "TRACK 1 — MINER", "TRACK 2 — WASM",
 "**TRACK 3 — COMING SOON**". Wallet connect required to submit. Field list for Track 3 unknown.
+
+## x402 client 2.24.0, read from the installed packages (2026-09-02 15:20 UTC)
+
+Read from `node_modules`, not from docs — the docs show a `createSigner` helper this version does
+not export.
+
+- `@x402/evm` 2.24.0 exports `toClientEvmSigner(account, publicClient)` and `ExactEvmScheme`.
+- `@x402/fetch` 2.24.0 exports `wrapFetchWithPaymentFromConfig(fetch, config)`, where
+  `config: {schemes: SchemeRegistration[], policies?, spendControls?, …}` and
+  `SchemeRegistration = {network: Network, client: SchemeNetworkClient, …}`.
+- Network ids are CAIP-2: Base Sepolia is `eip155:84532`.
+- **Default spend controls are on unless disabled.** Only assets `findDefaultAsset` recognises are
+  allowed, capped at `DEFAULT_MAX_AMOUNT_PER_PAYMENT` = `"$1"`. `DEFAULT_ASSETS["eip155:84532"]` is
+  USDC `0x036CbD53842c5426634e7929541eC2318f3dCF7e`, 6 decimals, EIP-712 version `"2"`. Telegraph
+  calls cost $0.01 (rising to $0.015 above 1,000 requests/24h per intent), so the defaults permit
+  them. `spendControls: false` would disable all caps — Morse does not, deliberately.

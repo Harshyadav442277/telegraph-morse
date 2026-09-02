@@ -3,41 +3,51 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
-## 2026-09-02 15:10 UTC — HANDOFF STATE (read this first)
+## 2026-09-02 15:25 UTC — HANDOFF STATE (read this first)
 
-**Built and verified locally:** the whole codebase (core `ask`, guards, Neon/memory ledger, Telegram
-bot, web ledger + verify + keys pages, REST, hosted MCP). `npm run typecheck` clean, 23/23 tests,
-local smoke test of every route green including the MCP `initialize` and `tools/list` handshake.
+**The app is live and serving.** The operator's redeploy landed at ~15:00 UTC and the G13 fix is
+confirmed in production: `/`, `/api/stats`, `/api/recent`, `/api/health`, `/keys`, `/v1/intents`,
+`/v1/leaderboard/{intent}`, `/verify/{hash}` and `/mcp` all answer. The previous handoff note said
+the redeploy was pending — it was not; check the deployment before believing a stale note.
 
-**Deployed once, broken, fix committed but NOT redeployed.** Vercel project `telegraph-morse`
-(scope `wukong4`), production alias `https://telegraph-morse.vercel.app`. The first deploy 504'd for
-two reasons, both fixed in commit ff99bd3: (1) Vercel's Node runtime treated Hono's web handler as a
-classic `(req,res)` export and never ended the response → `api/index.ts` now exports
-`getRequestListener(app.fetch)`; (2) Vercel auto-detected Hono as a framework preset and expected
-`src/app.ts` to default-export the app → `framework: null` in vercel.json plus `export default app`.
-A `public/` dir was added because "Other" framework requires an output directory. **Next action:
-`vercel deploy --prod --yes --scope wukong4` from this folder, then verify `/api/stats`, `/`,
-`/api/health`, `/keys`, `POST /api/keys`, `/mcp tools/list`, `/verify/<hash>`.** The operator paused
-the deploy once; ask before running it.
+**One blocker, and only Claude cannot fix it:** Vercel production has no `EVM_PRIVATE_KEY` and no
+`TELEGRAM_BOT_TOKEN`. So `paidWorkEnabled:false`, `/api/health` returns 503, the ledger reads 0
+calls, and 45% of the Track 3 rubric (real users + call volume) is sitting at zero. Everything
+downstream of a paid call is built, typechecked and deployed but has **never executed** — GAPS G17.
+Operator, in Vercel scope `wukong4`, project `telegraph-morse`:
+`npx vercel env add EVM_PRIVATE_KEY production --scope wukong4` and the same for
+`TELEGRAM_BOT_TOKEN`, then redeploy, then
+`curl -X POST https://telegraph-morse.vercel.app/admin/telegram/webhook -H "Authorization: Bearer <ADMIN_TOKEN>"`.
 
-**Infra done:** Neon project `telegraph-morse` (id `empty-moon-44512485`, db `morse`, us-east-1);
-Vercel production env has ADMIN_TOKEN, TELEGRAM_WEBHOOK_SECRET, HASH_SALT, DATABASE_URL,
-DAILY_BUDGET_CALLS=1500, MORSE_PUBLIC_URL, TELEGRAPH_NODE. Vercel rejects env names starting
-with `PUBLIC_`, hence `MORSE_PUBLIC_URL`. Deploys are CLI only (no Git integration connected).
+**Shipped this session (commit ccb7c7e and the one after it):**
+- `e2e/judge-journey.spec.ts` + `playwright.config.ts` — the judge journey against production.
+  **5 passed, 2 skipped** on 2026-09-02; the skips are the wallet-gated tests and say so. Free to
+  run; the single paid step is behind `MORSE_E2E_PAID=1` so no schedule can manufacture traffic.
+- Second opinion on every surface: `/second` in Telegram, a button on the web answer card,
+  `POST /api/second`, the `telegraph_second_opinion` MCP tool, and the low-confidence threshold now
+  firing on web as well as Telegram. Both miners and both ranks are shown. Two new ledger lookups
+  (`lastAnswerFor`, `answerByHashPrefix`) back it. 29/29 unit tests.
+- `usersAnswered` published next to `users`, so the honest smaller number leads everywhere.
+- `scripts/health-probe.mjs` + `.github/workflows/health.yml`; `scripts/x-numbers.mjs`.
+- README quick-starts, DEMO.md rewritten with verbatim production output, X drafts with real
+  numbers.
 
-**Waiting on the operator:** `EVM_PRIVATE_KEY` (new burner, faucet-funded) and `TELEGRAM_BOT_TOKEN`
-in Vercel. After the token lands: `curl -X POST https://telegraph-morse.vercel.app/admin/telegram/webhook
--H "Authorization: Bearer <ADMIN_TOKEN>"` registers the webhook (token is in Vercel env, read it there).
-After the key lands: make ONE real paid call and check `/verify/<hash>` shows the payer = our wallet
-(closes GAPS G2); then the first X post.
+**Verified for free this session, worth keeping:**
+- **x402 2.24.0 has default spend controls, and they were a live trap.** The client permits only
+  assets `findDefaultAsset` recognises, capped at `DEFAULT_MAX_AMOUNT_PER_PAYMENT` = `"$1"`. Base
+  Sepolia's USDC `0x036CbD…F7e` *is* in `DEFAULT_ASSETS["eip155:84532"]` and matches
+  `USDC_BASE_SEPOLIA`, so our $0.01 calls pass. Had it not matched, the first paid call would have
+  failed inside our own client with nothing on the wire to explain it. Read the installed package,
+  not the docs — the docs show a `createSigner` that 2.24.0 does not export.
+- Network baseline 2026-09-02 15:16 UTC: **878** user-paid Telegraph calls network-wide in 24h,
+  **129/129** miners active, **45** canonical intents. SSL_VERIFICATION leaderboard: livecert #1,
+  preflight-ssl-verification #2, txlens #3.
 
-**Tooling connected (user scope):** Context7, Playwright (+Chromium), Vercel MCP and Neon MCP
-(authenticated), plugins frontend-design / code-review / security-guidance / commit-commands.
-Telegraph MCP is declared in `.mcp.json` and needs `TELEGRAPH_EVM_PRIVATE_KEY` in the environment.
-
-**Then, in order (PHASES.md):** P2 Playwright judge journey against production; P3 measure the
-second-opinion heuristic on real miners (`directRequest` guesses payload keys from `input_schema` —
-expect some miners to reject it; record which); P4 README quick-starts; freeze 2026-09-05 18:00 UTC.
+**Next, in order:** operator sets the two env vars → redeploy → make ONE real paid call and check
+`/verify/<hash>` shows the payer = our wallet (closes G17, G2's second half, and the wallet-gated
+half of G9) → run `npm run e2e` with `MORSE_E2E_PAID=1` once → X post 1 (ready now, needs no
+wallet) → measure G14 on real miners → prove the health alarm fires once (GAPS G16) → freeze
+2026-09-05 18:00 UTC.
 
 ## 2026-09-02 — Track 3 research and plan
 

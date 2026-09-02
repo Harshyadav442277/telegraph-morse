@@ -28,7 +28,10 @@ export interface CallRow {
 }
 
 export interface Stats {
+  /** Distinct salted identities that asked at least once, answered or not. */
   users: number;
+  /** Distinct salted identities that received at least one answer. The stricter number. */
+  usersAnswered: number;
   calls: number;
   okCalls: number;
   intents: number;
