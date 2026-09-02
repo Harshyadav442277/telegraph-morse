@@ -39,9 +39,14 @@ all, failures included) and `usersAnswered` (identities that actually got an ans
 the Telegram `/stats` command and the X drafts lead with the smaller one. The approximation in the
 paragraph above is unchanged and stays disclosed.
 
-### G5 · Track 3 submission form unknown — `OPEN`
-submissions.telegraphprotocol.com shows "TRACK 3 — COMING SOON" (2026-09-02). Field list unknown.
-Keep ready: repo URL, live URL, X handle, payer wallet address, short description, gif. Check daily.
+### G5 · Track 3 submission form unknown — `OPEN, re-checked 2026-09-02 15:31 UTC`
+submissions.telegraphprotocol.com still shows "TRACK 3 — COMING SOON" and the tab's button is
+`disabled: true` in the DOM, so nothing is hidden behind it. Field list unknown. Keep ready: repo
+URL, live URL, X handle, payer wallet address, short description, gif. Check daily.
+
+Noted on the same page: **Track 1 submissions are CLOSED**, deadline shown as
+"Wed, 02 Sep 2026 11:59:59 UTC" — a *submission* deadline distinct from the Aug 31 track window in
+the miner repo's CLAUDE.md. That concerns the other repo, not Morse; flagging it, not acting on it.
 
 ### G6 · Exact Track 3 deadline — `OPEN`
 The rules site's countdown says Sep 7 23:59 UTC. The exact wording is posted in Discord

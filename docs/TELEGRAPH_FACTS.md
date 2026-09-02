@@ -92,6 +92,10 @@ example is drifted from the shipped exports — read the `.d.ts`. Facilitator
 `https://submissions.telegraphprotocol.com` — tabs "TRACK 1 — MINER", "TRACK 2 — WASM",
 "**TRACK 3 — COMING SOON**". Wallet connect required to submit. Field list for Track 3 unknown.
 
+Re-checked in the browser pane 2026-09-02 15:31 UTC: the Track 3 tab is still `disabled: true`, so
+no form exists yet. The Track 1 tab reads "SUBMISSIONS CLOSED (deadline: Wed, 02 Sep 2026
+11:59:59 UTC)" — the submission deadline is a separate date from the track window.
+
 ## x402 client 2.24.0, read from the installed packages (2026-09-02 15:20 UTC)
 
 Read from `node_modules`, not from docs — the docs show a `createSigner` helper this version does
