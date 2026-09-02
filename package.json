@@ -17,7 +17,8 @@
     "health": "node scripts/health-probe.mjs",
     "x:numbers": "node scripts/x-numbers.mjs",
     "preflight": "tsx scripts/preflight.ts",
-    "catalogue": "node scripts/catalogue-stats.mjs"
+    "catalogue": "node scripts/catalogue-stats.mjs",
+    "first-call": "tsx scripts/first-call.ts"
   },
   "dependencies": {
     "@hono/mcp": "^0.3.2",

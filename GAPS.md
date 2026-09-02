@@ -182,6 +182,31 @@ resolving at `/verify`. Also whether the payer needs Base Sepolia ETH — the EV
 
 Run `npm run preflight` the moment the key is set; make the one call only if it prints READY.
 
+**2026-09-02 ~17:45 UTC — the first real calls were attempted and the node refuses them.**
+Deployment healthy (`ok:true`, payer `0xfBB3…4c9c`, 20 USDC, `paidWorkEnabled:true`), and every
+attempt returns HTTP 402 whose body is the *original challenge*, with no `PAYMENT-RESPONSE` header
+and no `invalid_exact_evm_signature`. Telegraph's own docs say this is exactly what a malformed
+payload looks like: "the node rejects a malformed payload with a bare 402 — indistinguishable from
+having sent no payment at all."
+
+Ruled out so far, each verified rather than assumed:
+- **Not the wallet.** 20 USDC on Base Sepolia, correct chain, plain EOA, nothing on mainnet.
+- **Not the EIP-712 domain.** The contract reports `name "USDC"`, `version "2"`; the challenge's
+  `extra` says the same. (The docs name a wrong domain name as the usual cause.)
+- **Not the challenge parsing.** A logging `paymentRequirementsSelector` showed the client receives
+  v2 with one Base Sepolia option, complete with asset/amount/extra, and selects it.
+- **Not payload construction.** `wrapFetchWithPayment` throws "Failed to create payment payload" if
+  it cannot build one; it does not throw, so a payload is built and sent.
+- **Not the client version or construction.** Pinned `@x402/*` to exactly 2.11.0 and rebuilt the
+  client the way telegraphprotocol/Telegraph-MCP does — one-argument `toClientEvmSigner`,
+  `x402Client.fromConfig`, `wrapFetchWithPayment`. Same refusal.
+- **Nothing settled.** Balance still exactly 20, nonce still 0 — no money moved, nothing lost.
+
+Not yet distinguished: **our client versus the Vercel serverless runtime.** `npm run first-call`
+runs the identical client locally and tries both the router and a direct miner call; a failure
+there points at the client, a success points at the runtime. That needs the operator's key on a
+local machine, so it is theirs to run.
+
 ### G18 · Three API keys per network per UTC day will bite shared IPs — `OPEN, accepted for now`
 `issueKey` caps issuance at three per salted client IP per UTC day. Judges behind one shared NAT —
 a company, a university, a conference wifi — would exhaust that between them and see "Key limit
