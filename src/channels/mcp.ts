@@ -3,7 +3,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Hono } from "hono";
 import { z } from "zod";
 import { config } from "../config.js";
-import { askNetwork, type AskContext } from "../core/ask.js";
+import { askNetwork, secondOpinionOn, type AskContext } from "../core/ask.js";
+import { getLedger } from "../core/ledger/index.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
 import { getIntents, hotSignals, leaderboard, verifySignal } from "../core/telegraph.js";
 import { authenticateKey, type AppEnv } from "./rest.js";
@@ -45,6 +46,26 @@ export function buildServer(ctx: AskContext): McpServer {
       const r = RECIPES[recipe];
       if (!r) return text({ error: "unknown recipe" });
       return text(await runRecipe(ctx, r, input));
+    },
+  );
+
+  server.registerTool(
+    "telegraph_second_opinion",
+    {
+      title: "Second opinion on an answer",
+      description:
+        "Re-ask a previous Morse answer's question directly to the next-ranked active miner for the same intent, and return both miners with their ranks. Give it the signal_hash from an earlier telegraph_ask receipt. Costs one paid call.",
+      inputSchema: { signal_hash: z.string().regex(/^0x[0-9a-fA-F]{8,64}$/) },
+    },
+    async ({ signal_hash }) => {
+      const res = await secondOpinionOn(ctx, await getLedger().answerByHashPrefix(signal_hash));
+      return text({
+        first: res.first
+          ? { minerSlug: res.first.minerSlug, minerRank: res.first.minerRank, intent: res.first.intent, confidence: res.first.confidence, signalHash: res.first.signalHash }
+          : null,
+        second: res.second,
+        error: res.error,
+      });
     },
   );
 

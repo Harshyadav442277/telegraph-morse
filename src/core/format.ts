@@ -1,4 +1,5 @@
 import type { AnswerCard } from "./ask.js";
+import type { CallRow } from "./ledger/types.js";
 import type { Receipt } from "./receipt.js";
 import type { RecipeResult } from "./recipes.js";
 
@@ -40,6 +41,27 @@ export function cardHtml(card: AnswerCard, publicUrl: string | undefined): strin
     out += `\n\n<b>Second opinion</b>\n${esc(clip(card.second.answer, 700))}\n\n${receiptLine(card.second, publicUrl)}`;
   }
   return out;
+}
+
+/**
+ * A second opinion is only meaningful next to the first one, so both miners and both
+ * ranks are named. The ledger keeps the first answer's receipt, not its text, so the
+ * first miner is shown as a receipt line and the second in full.
+ */
+export function secondOpinionHtml(
+  first: CallRow,
+  second: Receipt | null,
+  error: string | null,
+  publicUrl: string | undefined,
+): string {
+  const rank = (n: number | null) => (n ? ` #${n}` : "");
+  const head =
+    `<b>Second opinion</b> · <i>${esc(clip(first.preview, 160))}</i>\n\n` +
+    `<b>1.</b> ${esc(first.minerSlug ?? "?")}${rank(first.minerRank)}` +
+    `${first.intent ? ` for ${esc(first.intent)}` : ""} · ${confidenceText(first.confidence)}` +
+    (first.signalHash && publicUrl ? ` · <a href="${publicUrl}/verify/${first.signalHash}">receipt</a>` : "");
+  if (!second) return `${head}\n\n⚠️ ${esc(error ?? "No other miner could answer.")}`;
+  return `${head}\n\n<b>2.</b> ${esc(second.minerSlug ?? "?")}${rank(second.minerRank)}\n${esc(clip(second.answer, 1200))}\n${receiptLine(second, publicUrl)}`;
 }
 
 export function recipeHtml(res: RecipeResult, publicUrl: string | undefined): string {

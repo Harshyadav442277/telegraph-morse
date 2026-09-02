@@ -107,6 +107,28 @@ export async function secondOpinion(
   }
 }
 
+export interface SecondOpinionResult {
+  first: CallRow | null;
+  second: Receipt | null;
+  error: string | null;
+}
+
+/**
+ * Second opinion on an answer already in the ledger, shared by every channel. The
+ * question is re-asked from the row's stored preview, so a question longer than 200
+ * characters is re-asked in its clipped form (GAPS G15).
+ */
+export async function secondOpinionOn(ctx: AskContext, row: CallRow | null): Promise<SecondOpinionResult> {
+  if (!row) {
+    return { first: null, second: null, error: "I have no earlier answer of yours to compare against — ask something first." };
+  }
+  if (!row.intent) {
+    return { first: row, second: null, error: "That answer did not name an intent, so there is no leaderboard to draw a second miner from." };
+  }
+  const r = await secondOpinion(ctx, row.preview, row.intent, row.minerSlug);
+  return { first: row, second: r.receipt, error: r.error };
+}
+
 const QUESTION_KEYS = ["query", "q", "question", "text", "prompt", "input", "message"];
 
 /** Shape a direct request from the miner's first endpoint and its declared inputs. */

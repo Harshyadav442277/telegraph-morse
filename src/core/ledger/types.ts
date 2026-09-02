@@ -59,6 +59,10 @@ export interface Ledger {
   /** All paid calls network-wide (ours) in the current UTC day. */
   callsToday(): Promise<number>;
   recent(limit: number): Promise<CallRow[]>;
+  /** This identity's newest answered call that named an intent, for "/second". */
+  lastAnswerFor(userHash: string): Promise<CallRow | null>;
+  /** One call by signal hash or by a unique prefix of one (Telegram callback data is capped at 64 bytes). */
+  answerByHashPrefix(prefix: string): Promise<CallRow | null>;
   stats(): Promise<Stats>;
   insertApiKey(row: ApiKeyRow): Promise<void>;
   findApiKey(keyHash: string): Promise<ApiKeyRow | null>;

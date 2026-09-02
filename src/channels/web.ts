@@ -2,7 +2,7 @@ import type { Context, Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { randomUUID } from "node:crypto";
 import { config, paidWorkEnabled } from "../config.js";
-import { askNetwork, type AskContext } from "../core/ask.js";
+import { askNetwork, secondOpinion, secondOpinionOn, shouldSeekSecondOpinion, type AskContext } from "../core/ask.js";
 import { hashId } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
@@ -69,7 +69,31 @@ export function webRoutes(app: Hono<AppEnv>): void {
     const q = String(body.question ?? "").trim();
     if (q.length < 3 || q.length > 2000) return c.json({ error: "Ask a question between 3 and 2000 characters." }, 400);
     const card = await askNetwork(ctx, q, "ask");
+    // Same rule as Telegram: a miner that reports low confidence gets checked against
+    // the next-ranked one, in the same response.
+    if (card.ok && card.receipt && shouldSeekSecondOpinion(card.receipt) && card.receipt.intent) {
+      const s = await secondOpinion(ctx, q, card.receipt.intent, card.receipt.minerSlug);
+      card.second = s.receipt;
+    }
     return c.json(card, card.ok ? 200 : 502);
+  });
+
+  /** Explicit second opinion on a receipt already in the ledger. */
+  app.post("/api/second", async (c) => {
+    const ctx = sessionCtx(c);
+    const { hash } = (await c.req.json().catch(() => ({}))) as { hash?: string };
+    if (!hash || !/^0x[0-9a-fA-F]{8,64}$/.test(hash)) return c.json({ error: "Send {\"hash\": \"0x…\"}." }, 400);
+    const res = await secondOpinionOn(ctx, await getLedger().answerByHashPrefix(hash));
+    return c.json(
+      {
+        first: res.first
+          ? { minerSlug: res.first.minerSlug, minerRank: res.first.minerRank, intent: res.first.intent, confidence: res.first.confidence, signalHash: res.first.signalHash }
+          : null,
+        second: res.second,
+        error: res.error,
+      },
+      res.second ? 200 : res.first ? 502 : 404,
+    );
   });
 
   app.get("/api/verify/:hash", async (c) => {

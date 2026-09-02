@@ -12,7 +12,8 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:live": "MORSE_LIVE=1 vitest run"
+    "test:live": "MORSE_LIVE=1 vitest run",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@hono/mcp": "^0.3.2",
@@ -29,6 +30,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^22.20.1",
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",

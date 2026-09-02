@@ -12,7 +12,7 @@ export function keysPage(d: { publicUrl: string | undefined; dailyCap: number })
 
 <section class="panel"><h2>2. Claude Code</h2>
 <pre>claude mcp add --transport http morse ${h(base)}/mcp --header "Authorization: Bearer morse_…"</pre>
-<p class="muted">Then ask Claude anything the network can answer, e.g. <i>"Use telegraph_ask: is the TLS certificate for github.com valid?"</i>. Tools: <code>telegraph_ask</code>, <code>telegraph_recipe</code>, <code>telegraph_verify_signal</code>, <code>telegraph_intents</code>, <code>telegraph_leaderboard</code>, <code>telegraph_hot_signals</code>.</p></section>
+<p class="muted">Then ask Claude anything the network can answer, e.g. <i>"Use telegraph_ask: is the TLS certificate for github.com valid?"</i>. Tools: <code>telegraph_ask</code>, <code>telegraph_recipe</code>, <code>telegraph_second_opinion</code>, <code>telegraph_verify_signal</code>, <code>telegraph_intents</code>, <code>telegraph_leaderboard</code>, <code>telegraph_hot_signals</code>.</p></section>
 
 <section class="panel"><h2>Cursor / any MCP client (Streamable HTTP)</h2>
 <pre>{

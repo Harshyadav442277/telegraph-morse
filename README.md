@@ -1,16 +1,17 @@
-# Morse — ask Telegram, get a receipt from the Telegraph network
+# Morse — ask in plain language, get a receipt from the Telegraph network
 
 A Telegraph Hackathon Season I, **Track 3** application.
+**Live: <https://telegraph-morse.vercel.app>** · [public ledger](https://telegraph-morse.vercel.app/#ledger) · [API & MCP](https://telegraph-morse.vercel.app/keys)
 
 Morse lets anyone use the [Telegraph](https://telegraphprotocol.com) miner network without a
-wallet: ask a question in Telegram or on the web, or call one hosted MCP/REST endpoint from your
-agent. Morse pays the x402 fee from one app-owned wallet, routes the question through Telegraph's
-engine, and returns the answer with a **receipt** — the miner that served it, the intent the
-router chose, the miner's confidence, cost, latency, and a `signal_hash` you can verify on the node
-and on Base Sepolia. Every call Morse makes is listed in a public ledger.
+wallet: ask a question in Telegram or on the web, or point an agent at one hosted MCP/REST
+endpoint. Morse pays the x402 fee from one app-owned wallet, routes the question through
+Telegraph's engine, and returns the answer with a **receipt** — the miner that served it, the
+intent the router chose, that miner's rank for the intent, its confidence, the cost, the latency,
+and a `signal_hash` you can verify on the node and on Base Sepolia.
 
-**Status (2026-09-02):** planning complete, build starting. Live URL and bot link will appear here
-when P1 ships. See [PLAN.md](PLAN.md) and [PHASES.md](PHASES.md).
+Every call Morse makes is in a public ledger, so "people used it" is checkable rather than
+claimed.
 
 ## Why
 
@@ -18,6 +19,103 @@ Consuming Telegraph today needs a wallet, testnet USDC from a faucet, and an x40
 keeps out everyone who is not already a developer with a burner key, and it means the network's
 "real usage" is mostly machines calling one miner. Morse is the missing front door, and because
 every answer carries a verifiable receipt, its usage is evidence rather than a claim.
+
+## Quick start
+
+### Claude Code (MCP, no wallet)
+
+Get a free key at [/keys](https://telegraph-morse.vercel.app/keys), then:
+
+```bash
+claude mcp add --transport http morse https://telegraph-morse.vercel.app/mcp --header "Authorization: Bearer morse_YOURKEY"
+```
+
+Then ask Claude anything the network can answer — *"use telegraph_ask: is the TLS certificate for
+github.com valid, and who issued it?"*. Tools: `telegraph_ask`, `telegraph_recipe`,
+`telegraph_second_opinion`, `telegraph_verify_signal`, `telegraph_intents`,
+`telegraph_leaderboard`, `telegraph_hot_signals`.
+
+### Cursor, or any Streamable-HTTP MCP client
+
+```json
+{
+  "mcpServers": {
+    "morse": {
+      "url": "https://telegraph-morse.vercel.app/mcp",
+      "headers": { "Authorization": "Bearer morse_YOURKEY" }
+    }
+  }
+}
+```
+
+### curl
+
+```bash
+curl -X POST https://telegraph-morse.vercel.app/api/keys -H "content-type: application/json" -d '{"label":"my-laptop"}'
+```
+
+```bash
+curl -X POST https://telegraph-morse.vercel.app/v1/ask -H "Authorization: Bearer morse_YOURKEY" -H "content-type: application/json" -d '{"question":"What is the current weather in Chennai?"}'
+```
+
+Free, no key needed — the discovery endpoints and the ledger:
+
+```bash
+curl -s https://telegraph-morse.vercel.app/v1/intents
+```
+
+```bash
+curl -s https://telegraph-morse.vercel.app/v1/leaderboard/SSL_VERIFICATION
+```
+
+```bash
+curl -s https://telegraph-morse.vercel.app/api/stats
+```
+
+### Telegram
+
+The bot answers free text, and has `/safe`, `/wallet`, `/weather`, `/fact`, `/second`, `/hot`,
+`/verify`, `/stats`. The link is published here and on the site once the operator's bot token is
+in place.
+
+## What a receipt contains
+
+| field | meaning |
+| --- | --- |
+| `minerSlug`, `minerId` | which miner the Engine routed to |
+| `intent` | the canonical intent the router classified the question as |
+| `minerRank` | that miner's current leaderboard rank for the intent |
+| `confidence` | the miner's own confidence, read from its declared `signal_mapping` — or "not reported" |
+| `costUsd`, `durationMs` | what the call cost and how long it took |
+| `signalHash` | verify at `/verify/{hash}`, or on the node at `GET /engine/v1/signal/{hash}` |
+
+`/verify/{hash}` shows the node's record, the payer wallet (and whether it is Morse's), the USDC
+settlement transaction on Base Sepolia, and the payload the hash covers.
+
+## Run it yourself
+
+```bash
+git clone https://github.com/Harshyadav442277/telegraph-morse && cd telegraph-morse && npm ci
+```
+
+```bash
+npm run typecheck && npm test
+```
+
+```bash
+cp .env.example .env && npm run dev
+```
+
+Without `EVM_PRIVATE_KEY` and a non-zero `DAILY_BUDGET_CALLS`, asking is refused with an honest
+message; the site, the ledger and the free discovery endpoints all still work. The end-to-end
+judge journey runs against any deployment:
+
+```bash
+npm run e2e
+```
+
+That suite is free to run. The single paid step is gated behind `MORSE_E2E_PAID=1` so no schedule
+can manufacture traffic.
 
 ## Docs
 
@@ -30,7 +128,18 @@ every answer carries a verifiable receipt, its usage is evidence rather than a c
 
 ## Assumptions and limitations
 
-Copied from [GAPS.md](GAPS.md) as they are resolved. Nothing here is verified until it is.
+- **Testnet.** Base Sepolia, testnet USDC. Answers are real; the money is not.
+- **"Users" means distinct salted identity hashes** — a Telegram user id, a web session cookie, or
+  an API key. One person on two surfaces counts twice; ten people reading one forwarded answer
+  count once. Morse publishes the method next to the number and never rounds it up (GAPS G4).
+- **The signal hash is shown, not re-derived.** Telegraph does not publish the hashing scheme, so
+  `/verify` shows the node's own record and the on-chain transfer rather than claiming to have
+  recomputed the hash (GAPS G3).
+- **Confidence is heterogeneous.** Miners report it in different shapes or not at all; Morse
+  normalises what it can and says "not reported" otherwise (GAPS G8).
+- **A second opinion may not be possible for every intent.** Direct miner calls are built from the
+  miner's declared input schema, and some miners reject a request they did not shape themselves —
+  which fails honestly and costs nothing (GAPS G14).
 
 ## License
 

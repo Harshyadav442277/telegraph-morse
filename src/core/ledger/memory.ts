@@ -39,6 +39,18 @@ export class MemoryLedger implements Ledger {
     return this.calls.slice(-limit).reverse();
   }
 
+  async lastAnswerFor(userHash: string): Promise<CallRow | null> {
+    return (
+      [...this.calls]
+        .reverse()
+        .find((c) => c.userHash === userHash && c.status === "ok" && c.intent && c.kind !== "second-opinion") ?? null
+    );
+  }
+
+  async answerByHashPrefix(prefix: string): Promise<CallRow | null> {
+    return [...this.calls].reverse().find((c) => c.signalHash?.startsWith(prefix)) ?? null;
+  }
+
   async stats(): Promise<Stats> {
     return computeStats(this.calls, this.users.size);
   }

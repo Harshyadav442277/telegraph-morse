@@ -2,11 +2,12 @@ import { Bot, InlineKeyboard, webhookCallback, type Context } from "grammy";
 import type { Hono } from "hono";
 import type { AppEnv } from "./rest.js";
 import { config } from "../config.js";
-import { askNetwork, secondOpinion, shouldSeekSecondOpinion, type AnswerCard, type AskContext } from "../core/ask.js";
+import { askNetwork, secondOpinion, secondOpinionOn, shouldSeekSecondOpinion, type AskContext } from "../core/ask.js";
 import { defer } from "../core/defer.js";
-import { cardHtml, esc, recipeHtml } from "../core/format.js";
+import { cardHtml, esc, recipeHtml, secondOpinionHtml } from "../core/format.js";
 import { hashId } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
+import type { CallRow } from "../core/ledger/types.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
 import { hotSignals, verifySignal } from "../core/telegraph.js";
 
@@ -30,6 +31,7 @@ const HELP = [
   "<b>Recipes</b> (several intents combined):",
   ...Object.values(RECIPES).map((r) => `${esc(r.usage)} — ${esc(r.description)}`),
   "",
+  "/second — ask the next-ranked miner the same question, and compare",
   "/hot — what the network is talking about right now",
   "/verify &lt;signal hash&gt; — check any receipt on the node",
   "/stats — public usage numbers",
@@ -94,16 +96,34 @@ export function getBot(): Bot {
     });
   }
 
+  /** Ask the next-ranked miner for the same intent, and show both miners side by side. */
+  async function replyWithSecondOpinion(ctx: Context, row: CallRow | null): Promise<void> {
+    const res = await secondOpinionOn(ctxFor(ctx), row);
+    const html = res.first
+      ? secondOpinionHtml(res.first, res.second, res.error, c.MORSE_PUBLIC_URL)
+      : `⚠️ ${esc(res.error ?? "Nothing to compare.")}`;
+    await ctx.reply(html, { parse_mode: "HTML", link_preview_options: { is_disabled: true } });
+  }
+
+  b.command("second", async (ctx) => {
+    const progress = await ctx.reply("Asking the next-ranked miner…");
+    defer(
+      (async () => {
+        const row = await getLedger().lastAnswerFor(ctxFor(ctx).userHash);
+        const res = await secondOpinionOn(ctxFor(ctx), row);
+        await edit(
+          ctx,
+          progress.message_id,
+          res.first ? secondOpinionHtml(res.first, res.second, res.error, c.MORSE_PUBLIC_URL) : `⚠️ ${esc(res.error ?? "Nothing to compare.")}`,
+        );
+      })(),
+    );
+  });
+
   b.callbackQuery(/^so:(.+)$/, async (ctx) => {
     const prefix = ctx.match[1] ?? "";
     await ctx.answerCallbackQuery({ text: "Asking the next-ranked miner…" });
-    const row = (await getLedger().recent(200)).find((r) => r.signalHash?.startsWith(prefix));
-    if (!row?.intent) return ctx.reply("I could not find that answer any more.");
-    const second = await secondOpinion(ctxFor(ctx), row.preview, row.intent, row.minerSlug);
-    const card: AnswerCard = second.receipt
-      ? { ok: true, kind: "second-opinion", question: row.preview, receipt: second.receipt, second: null, error: null, remaining: null, rowId: null }
-      : { ok: false, kind: "second-opinion", question: row.preview, receipt: null, second: null, error: second.error, remaining: null, rowId: null };
-    await ctx.reply(`<b>Second opinion</b>\n${cardHtml(card, c.MORSE_PUBLIC_URL)}`, { parse_mode: "HTML", link_preview_options: { is_disabled: true } });
+    await replyWithSecondOpinion(ctx, await getLedger().answerByHashPrefix(prefix));
   });
 
   b.on("message:text", async (ctx) => {
