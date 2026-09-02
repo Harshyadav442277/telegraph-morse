@@ -41,7 +41,7 @@ export async function guard(ctx: AskContext, wanted: number) {
   return guardPaid(config(), getLedger(), ctx.channel, ctx.userHash, wanted, ctx.keyCap);
 }
 
-export async function askNetwork(ctx: AskContext, question: string, kind = "ask", skipGuard = false): Promise<AnswerCard> {
+export async function askNetwork(ctx: AskContext, question: string, kind = "ask", skipGuard = false, subject?: string): Promise<AnswerCard> {
   const ledger = getLedger();
   await ledger.touchUser(ctx.userHash, ctx.channel);
   let remaining: number | null = null;
@@ -61,7 +61,7 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
     if (!chosen) {
       throw new TelegraphError("No active miner serves a question like this right now.", "engine");
     }
-    const raw = await askMiner(chosen.miner.id, directRequest(chosen.miner, question, chosen.intent));
+    const raw = await askMiner(chosen.miner.id, directRequest(chosen.miner, question, chosen.intent, subject));
     raw.intent ??= chosen.intent;
     raw.miner_name ??= chosen.miner.slug;
     const receipt = buildReceipt(raw, chosen.miner.signal_mapping ?? null, chosen.rank);
@@ -139,7 +139,14 @@ export async function secondOpinionOn(ctx: AskContext, row: CallRow | null): Pro
   return { first: row, second: r.receipt, error: r.error };
 }
 
-const QUESTION_KEYS = ["query", "q", "question", "text", "prompt", "input", "message"];
+/** Keys that want the whole question as prose. */
+const PROSE_KEYS = ["query", "question", "text", "prompt", "input", "message"];
+/**
+ * Keys that want a bare subject, not a sentence. openweathermap is #1 for
+ * WEATHER_CHECK and declares only `lat`, `lon`, `q`; handed "What is the current
+ * weather in Chennai?" as `q` it answers `city not found`. Handed "Chennai" it works.
+ */
+const SUBJECT_KEYS = ["q", "city", "location", "place", "domain", "host", "hostname", "address", "symbol"];
 
 /**
  * Pick the endpoint that serves `intent`. 29 of the 129 active miners publish more
@@ -162,12 +169,18 @@ export function directRequest(
   miner: Miner,
   question: string,
   intent: string | null = null,
+  subject?: string,
 ): { method: "GET" | "POST"; endpoint: string; payload: Record<string, unknown> } {
   const ep = endpointFor(miner, intent);
   const method = (ep?.method ?? "GET").toUpperCase() === "POST" ? "POST" : "GET";
   const props = Object.keys(miner.input_schema?.properties ?? {});
   const payload: Record<string, unknown> = { query: question };
-  for (const k of props) if (QUESTION_KEYS.includes(k)) payload[k] = question;
+  for (const k of props) {
+    if (PROSE_KEYS.includes(k)) payload[k] = question;
+    // Only fill a subject key when we actually have a subject: guessing one from the
+    // sentence would be worse than leaving it out and letting the miner say so.
+    else if (subject && SUBJECT_KEYS.includes(k)) payload[k] = subject;
+  }
   return { method, endpoint: ep?.path ?? "/", payload };
 }
 

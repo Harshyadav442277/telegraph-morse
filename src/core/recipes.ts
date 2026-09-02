@@ -24,7 +24,7 @@ export interface RecipeResult {
   error: string | null;
 }
 
-export type Asker = (ctx: AskContext, question: string, kind: string, skipGuard: boolean) => Promise<AnswerCard>;
+export type Asker = (ctx: AskContext, question: string, kind: string, skipGuard: boolean, subject?: string) => Promise<AnswerCard>;
 
 const RED_FLAGS = /\b(malicious|phishing|scam|unsafe|dangerous|suspicious|expired|invalid|revoked|mismatch|high risk|fraud)/i;
 
@@ -154,6 +154,6 @@ export async function runRecipe(
   // draws `batch_send_failed:missing_or_invalid_parameters` from the facilitator and a
   // recipe silently loses a leg. A few seconds slower, and every leg lands.
   const cards: AnswerCard[] = [];
-  for (const q of plan.questions) cards.push(await asker(ctx, q, recipe.name, true));
+  for (const q of plan.questions) cards.push(await asker(ctx, q, recipe.name, true, plan.subject));
   return { recipe: recipe.name, subject: plan.subject, cards, verdict: recipe.verdict(cards), error: null };
 }
