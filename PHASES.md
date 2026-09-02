@@ -69,8 +69,8 @@ deployed, and unprovable until they land. See GAPS G17.
       production, every ⏳ line named as unproven
 - [x] GitHub Actions health probe (`scripts/health-probe.mjs` + `.github/workflows/health.yml`),
       free-endpoint only so it cannot inflate call volume
-- [ ] Prove the alarm fires once: one `workflow_dispatch` run opening a real `health-alarm` issue
-      (needs the operator's go-ahead — it writes to the public repo; GAPS G16)
+- [x] Alarm proven end to end: run 33648541786 opened issue #1 with the probe output; the
+      workflow now de-duplicates "still broken" comments (GAPS G16)
 - [ ] Closing X thread with ledger numbers and receipts
 - [ ] Submission when the Track 3 tab opens; confirm it shows (GAPS G5)
 

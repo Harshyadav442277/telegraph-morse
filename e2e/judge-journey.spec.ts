@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 /**
  * The journey a judge takes: land, read the claim, see the ledger, verify a receipt,
@@ -118,8 +119,8 @@ test.describe("judge journey", () => {
     await expect(page.getByText("no wallet needed")).toBeVisible();
     await expect(page.locator("pre").first()).toContainText("claude mcp add");
 
-    const key = process.env.MORSE_TEST_KEY ?? (await issueKey(page));
-    test.skip(!key, "key issuing is rate-limited from this network today");
+    const key = process.env.MORSE_TEST_KEY ?? cachedKey() ?? (await issueKey(page));
+    test.skip(!key, "no key: this network has used its three for today, and none is cached. Set MORSE_TEST_KEY, or rerun after 00:00 UTC.");
 
     // Unauthenticated MCP must refuse.
     const anon = await request.post("/mcp", {
@@ -218,6 +219,18 @@ test.describe("judge journey", () => {
   });
 });
 
+/**
+ * Keys are capped at three per network per UTC day, so a suite that issued a fresh one
+ * every run would exhaust the quota and then skip itself. Issue once, cache, reuse.
+ */
+const KEY_CACHE = ".morse-e2e-key";
+
+function cachedKey(): string | null {
+  if (!existsSync(KEY_CACHE)) return null;
+  const key = readFileSync(KEY_CACHE, "utf8").trim();
+  return key.startsWith("morse_") ? key : null;
+}
+
 async function issueKey(page: Page): Promise<string | null> {
   await page.locator("#label").fill(`e2e-${Date.now()}`);
   await page.locator("#kf button").click();
@@ -225,7 +238,9 @@ async function issueKey(page: Page): Promise<string | null> {
   await expect(out).not.toContainText("Issuing…", { timeout: 20_000 });
   const text = await out.innerText();
   const m = text.match(/morse_[A-Za-z0-9_-]+/);
-  return m ? m[0] : null;
+  if (!m) return null;
+  writeFileSync(KEY_CACHE, m[0], "utf8");
+  return m[0];
 }
 
 interface Rpc {

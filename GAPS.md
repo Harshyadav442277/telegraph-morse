@@ -99,13 +99,18 @@ every real question is shorter than that. Storing the full text would put user p
 table, which is worse. If a clipped re-ask ever produces a visibly different answer, say so on the
 card rather than hiding it.
 
-### G16 · The health alarm's issue-opening step is unproven — `OPEN, needs one workflow run`
-`scripts/health-probe.mjs` is proven: run against production on 2026-09-02 it correctly returned
-ALARM and exit 1 for the unfunded wallet, and the workflow YAML parses with the expected steps.
-What is **not** proven is `.github/workflows/health.yml` actually creating the `health-alarm`
-issue, because that writes to the public repo and needs the operator's go-ahead. Prove it with one
-`workflow_dispatch` run while the deployment is still unhealthy — it should open exactly one issue,
-and close it once the wallet is funded.
+### G16 · Health alarm — `CLOSED 2026-09-02, fired end to end`
+Proven with one `workflow_dispatch` run against the live unfunded deployment
+([run 33648541786](https://github.com/Harshyadav442277/telegraph-morse/actions/runs/33648541786)):
+the probe returned ALARM/exit 1, the workflow opened
+[issue #1](https://github.com/Harshyadav442277/telegraph-morse/issues/1) labelled `health-alarm`
+with the probe output verbatim, and failed the run so the Actions tab shows it.
+
+That first run exposed a second problem, since fixed: on a 30-minute schedule a long outage would
+have posted ~48 "still broken" comments a day. The workflow now comments only when the **problem
+set changes**, or once every 6 hours. Verified locally against the real issue body — with today's
+unchanged problems it stays quiet. **Still unproven:** the auto-close path, which needs the
+deployment to become healthy.
 
 ### G17 · The x402 payment path has never executed — `OPEN, the single biggest risk`
 Everything downstream of a paid call is built and typechecked but has never run: the EIP-3009
@@ -114,3 +119,15 @@ back, the receipt extraction, the ledger row, `/verify` matching the payer. This
 what it actually blocks. One real call closes G2, G3 (in its shown-not-derived form), most of G8
 and G14, and the wallet-gated half of G9. Until then Morse's ledger reads 0 calls, which is 45% of
 the Track 3 rubric sitting at zero.
+
+### G18 · Three API keys per network per UTC day will bite shared IPs — `OPEN, accepted for now`
+`issueKey` caps issuance at three per salted client IP per UTC day. Judges behind one shared NAT —
+a company, a university, a conference wifi — would exhaust that between them and see "Key limit
+reached for today from this network." Verified live on 2026-09-02: the cap works, and this
+session's own repeated e2e runs hit it, which is how it was found.
+
+Raising it is the wrong fix: each key carries 100 paid calls a day, so three keys already put 300
+of the 1,500-call daily budget behind one IP. The e2e suite now caches its key in `.morse-e2e-key`
+instead of minting a new one per run. If a judge reports being blocked, the operator can issue a
+key from another network and hand it over; a proper fix would be an operator-only issuance route
+behind `ADMIN_TOKEN`, which is not built.

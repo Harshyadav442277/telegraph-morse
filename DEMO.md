@@ -186,7 +186,11 @@ ledger postgres · payer none · ? USDC · paid false · telegram false
 
 Exit 1 = alarm, 0 = healthy, 2 = the probe could not run. `.github/workflows/health.yml` runs it
 every 30 minutes and opens (or comments on, or closes) one `health-alarm` issue. The probe only
-reads free endpoints.
+reads free endpoints, so the schedule cannot inflate call volume.
+
+Proven on 2026-09-02: [run 33648541786](https://github.com/Harshyadav442277/telegraph-morse/actions/runs/33648541786)
+opened [issue #1](https://github.com/Harshyadav442277/telegraph-morse/issues/1) with exactly the
+output above. Repeat runs stay quiet unless the problem set changes or six hours pass.
 
 ## Fresh clone, dead network
 

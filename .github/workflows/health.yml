@@ -61,10 +61,22 @@ jobs:
         if: steps.probe.outputs.status != '0'
         run: |
           existing="$(gh issue list --label "$ALARM_LABEL" --state open --limit 1 --json number --jq '.[0].number')"
-          if [ -n "$existing" ]; then
+          if [ -z "$existing" ]; then
+            gh issue create --label "$ALARM_LABEL" --title "Morse health alarm: $MORSE_URL" --body-file body.md
+            exit 0
+          fi
+          # A long outage must not bury the repo in half-hourly "still broken" comments.
+          # Comment only when the problem set changed, or once every 6 hours.
+          updated="$(gh issue view "$existing" --json updatedAt --jq .updatedAt)"
+          age=$(( ( $(date -u +%s) - $(date -u -d "$updated" +%s) ) / 60 ))
+          gh issue view "$existing" --json body,comments \
+            --jq '(.comments[-1].body // .body)' > last.md
+          if ! diff -q <(grep '^  problem:' last.md | sort) <(grep '^  problem:' probe.txt | sort) >/dev/null; then
+            gh issue comment "$existing" --body-file body.md
+          elif [ "$age" -ge 360 ]; then
             gh issue comment "$existing" --body-file body.md
           else
-            gh issue create --label "$ALARM_LABEL" --title "Morse health alarm: $MORSE_URL" --body-file body.md
+            echo "Same problems as $age minutes ago; not commenting again yet."
           fi
 
       - name: Close the alarm issue when healthy again
