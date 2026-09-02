@@ -167,17 +167,41 @@ test.describe("judge journey", () => {
     expect([...ranked].sort((a, b) => a - b)).toEqual(ranked);
   });
 
-  test("6 · an unfunded Morse says so instead of inventing an answer", async ({ page, request }) => {
-    const h = await health(request);
-    test.skip(h.paidWorkEnabled, "the wallet is funded — the honest-failure path is covered by test 5 of the funded run");
+  test("6 · Morse fails honestly instead of inventing an answer", async ({ page, request }) => {
+    // The honest-failure contract holds whether or not the wallet is funded, so this
+    // asserts it both ways rather than skipping once Morse can pay. The always-on half
+    // costs nothing: a second opinion on a hash that does not exist.
+    const res = await request.post("/api/second", {
+      headers: { "content-type": "application/json" },
+      data: { hash: `0x${"0".repeat(64)}` },
+    });
+    expect([404, 502]).toContain(res.status());
+    const body = (await res.json()) as { first: unknown; second: unknown; error: string | null };
+    expect(body.second, "no receipt may be invented for a call that never happened").toBeNull();
+    expect(body.error, "the failure must be explained").toBeTruthy();
 
+    const h = await health(request);
+    if (h.paidWorkEnabled) {
+      // Funded: an over-long question is refused by the server, and the page shows the
+      // refusal rather than rendering something that looks like an answer.
+      const bad = await request.post("/api/ask", {
+        headers: { "content-type": "application/json" },
+        data: { question: "x" },
+      });
+      expect(bad.status()).toBe(400);
+      const j = (await bad.json()) as { error?: string; receipt?: unknown };
+      expect(j.error).toBeTruthy();
+      expect(j.receipt ?? null).toBeNull();
+      return;
+    }
+
+    // Unfunded: asking through the UI must say so, with no receipt anywhere.
     await page.goto("/");
     await page.locator("#q").fill("Is the TLS certificate for github.com valid right now?");
     await page.locator("#go").click();
     const card = page.locator("#out .card");
     await expect(card).toBeVisible();
     await expect(card).toContainText(/no funded wallet|no daily budget|paused/i);
-    // Nothing that looks like an answer, and no receipt.
     await expect(page.locator("#out .receipt")).toHaveCount(0);
   });
 
