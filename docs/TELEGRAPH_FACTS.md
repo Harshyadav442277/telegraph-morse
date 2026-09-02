@@ -111,3 +111,24 @@ not export.
   USDC `0x036CbD53842c5426634e7929541eC2318f3dCF7e`, 6 decimals, EIP-712 version `"2"`. Telegraph
   calls cost $0.01 (rising to $0.015 above 1,000 requests/24h per intent), so the defaults permit
   them. `spendControls: false` would disable all caps — Morse does not, deliberately.
+
+## The node's live 402 challenge (fetched unpaid, 2026-09-02 15:33 UTC)
+
+`POST /engine/v1/ask` without payment returns **402** with a base64 `Payment-Required` header.
+Decoded, `x402Version: 2`, resource "Payment required for LLM-routed inference.", and two accepts:
+
+| field | EVM accept | matches Morse? |
+|---|---|---|
+| `scheme` | `exact` | yes — we register `ExactEvmScheme` |
+| `network` | `eip155:84532` | yes — our `BASE_SEPOLIA` constant |
+| `asset` | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | yes — `USDC_BASE_SEPOLIA`, and it is the `DEFAULT_ASSETS` entry, so the client's own spend controls permit it |
+| `amount` | `10000` (= $0.01, 6 decimals) | yes — far under the $1 default per-payment cap |
+| `payTo` | `0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8` | the node's collector |
+| `maxTimeoutSeconds` | `60` | yes — we abort at 45s, Vercel's `maxDuration` is 60 |
+| `extra` | `{name: "USDC", version: "2"}` | yes — EIP-712 domain version 2, same as `DEFAULT_ASSETS` |
+
+The second accept is Solana (`solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1`) and carries a `feePayer`;
+the EVM accept carries none. Morse registers only the EVM scheme, so the selector takes accept[0].
+
+Reproduce with `npm run preflight`, which re-fetches this challenge and diffs it against the live
+client config. Fetching a challenge is free — no payment is made and no miner is engaged.

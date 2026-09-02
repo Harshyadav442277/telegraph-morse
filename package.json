@@ -15,7 +15,8 @@
     "test:live": "MORSE_LIVE=1 vitest run",
     "e2e": "playwright test",
     "health": "node scripts/health-probe.mjs",
-    "x:numbers": "node scripts/x-numbers.mjs"
+    "x:numbers": "node scripts/x-numbers.mjs",
+    "preflight": "tsx scripts/preflight.ts"
   },
   "dependencies": {
     "@hono/mcp": "^0.3.2",

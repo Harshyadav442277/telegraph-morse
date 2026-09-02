@@ -19,6 +19,8 @@ deployed, and unprovable until they land. See GAPS G17.
       catalogue + intents cache, confidence extraction via `signal_mapping`
 - [x] x402 2.24.0 API shape verified against the installed packages, including the client's own
       default spend controls (GAPS G2)
+- [x] The node's live 402 challenge fetched unpaid and diffed against our client — scheme, network,
+      asset, EIP-712 version, price and timeout all match (`npm run preflight`; GAPS G17)
 - [x] `core/ledger.ts`: Neon schema + migrations, `recordCall()`, counters
 - [x] `core/guards.ts`: per-user/per-key/global limits, kill switch
 - [x] `channels/telegram.ts`: webhook (secret-checked), free text → ask, `/help /stats /verify`,

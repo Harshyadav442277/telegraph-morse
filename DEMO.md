@@ -172,6 +172,35 @@ spend money or manufacture traffic (rule 04).
 
 Point it at any deployment with `MORSE_BASE_URL=https://… npm run e2e`.
 
+## Preflight, before the first paid call
+
+```bash
+npm run preflight
+```
+
+Spends nothing. It derives the payer from `EVM_PRIVATE_KEY`, reads its USDC and ETH balances over a
+public RPC, fetches the node's 402 challenge **without paying it**, and diffs that challenge against
+what our own x402 client is configured to satisfy. Verified output today, with no key set:
+
+```
+WALLET
+  FAIL payer key                     EVM_PRIVATE_KEY is not set or malformed
+  FAIL paid work enabled             blocked: no payer key
+
+THE NODE'S 402 CHALLENGE (fetched, not paid)
+  x402 version 2, 2 payment options offered
+  ok   scheme                        exact — we register ExactEvmScheme
+  ok   network                       eip155:84532 — we register eip155:84532
+  ok   asset vs our constant         0x036CbD53842c5426634e7929541eC2318f3dCF7e
+  ok   asset vs DEFAULT_ASSETS       0x036CbD53842c5426634e7929541eC2318f3dCF7e — so the client's default spend controls permit it
+  ok   EIP-712 domain version        challenge says "2", client assumes "2"
+  ok   price vs client cap           $0.0100 against the $1 default cap
+  ok   our timeout vs theirs         we abort at 45s, the node allows 60s
+```
+
+Every field the client must satisfy already matches. Only the EIP-3009 signature, the on-chain
+settlement and the returned `signal_hash` need a real call.
+
 ## Health probe
 
 ```bash

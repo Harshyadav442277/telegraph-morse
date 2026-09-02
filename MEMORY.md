@@ -61,6 +61,14 @@ schedule — now fixed by commenting only when the problem set changes or six ho
   containing `
 ` silently fails its assert. Match on a backslash-free substring, or use Write.
 
+**The first paid call is now close to a formality, and there is a script for it.** `npm run
+preflight` (scripts/preflight.ts) fetches the node's real 402 challenge *without paying it* and
+diffs it against our client: scheme `exact`, network `eip155:84532`, asset `0x036CbD…F7e`, EIP-712
+version `2`, $0.01 against the client's $1 cap, 60s against our 45s abort — **all match**, and the
+asset is the `DEFAULT_ASSETS` entry so the client's own spend controls permit it. What is left is
+only the EIP-3009 signature, the settlement, and the returned hash. Run preflight the moment the
+key lands; make the one call only if it prints READY.
+
 **Next, in order:** operator sets the two env vars → redeploy → make ONE real paid call and check
 `/verify/<hash>` shows the payer = our wallet (closes G17, G2's second half, and the wallet-gated
 half of G9) → run `npm run e2e` with `MORSE_E2E_PAID=1` once → X post 1 (ready now, needs no

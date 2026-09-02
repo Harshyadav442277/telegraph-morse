@@ -117,13 +117,24 @@ set changes**, or once every 6 hours. Verified locally against the real issue bo
 unchanged problems it stays quiet. **Still unproven:** the auto-close path, which needs the
 deployment to become healthy.
 
-### G17 · The x402 payment path has never executed — `OPEN, the single biggest risk`
-Everything downstream of a paid call is built and typechecked but has never run: the EIP-3009
-signing in `payingFetch()`, the 402 challenge/response, the settlement tx, the `signal_hash` coming
-back, the receipt extraction, the ledger row, `/verify` matching the payer. This is G2 restated as
-what it actually blocks. One real call closes G2, G3 (in its shown-not-derived form), most of G8
-and G14, and the wallet-gated half of G9. Until then Morse's ledger reads 0 calls, which is 45% of
-the Track 3 rubric sitting at zero.
+### G17 · The x402 payment path has never executed — `OPEN, but substantially de-risked 2026-09-02`
+Everything downstream of a paid call is built and typechecked but has never run. One real call
+closes G2's second half, G3 (in its shown-not-derived form), most of G8 and G14, and the
+wallet-gated half of G9. Until then Morse's ledger reads 0 calls — 45% of the rubric at zero.
+
+**What is now verified without spending** (`npm run preflight`, and the table in
+docs/TELEGRAPH_FACTS.md): the node's live 402 challenge was fetched unpaid and diffed field by
+field against our client. Scheme `exact`, network `eip155:84532`, asset
+`0x036CbD…F7e`, EIP-712 domain version `2`, price $0.01 against the client's $1 cap, and
+`maxTimeoutSeconds` 60 against our 45s abort — **every field our client must satisfy matches**,
+and the asset is the one `DEFAULT_ASSETS` recognises so the client's own spend controls permit it.
+
+**What remains genuinely unproven, and cannot be checked without spending:** the EIP-3009 signature
+being accepted, the facilitator settling it on-chain, and the `signal_hash` coming back and
+resolving at `/verify`. Also whether the payer needs Base Sepolia ETH — the EVM accept carries no
+`feePayer` (the Solana one does), which is suggestive, not proof.
+
+Run `npm run preflight` the moment the key is set; make the one call only if it prints READY.
 
 ### G18 · Three API keys per network per UTC day will bite shared IPs — `OPEN, accepted for now`
 `issueKey` caps issuance at three per salted client IP per UTC day. Judges behind one shared NAT —
