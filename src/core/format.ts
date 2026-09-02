@@ -29,7 +29,8 @@ export function receiptLine(r: Receipt, publicUrl: string | undefined): string {
       ? `\n<a href="${publicUrl}/verify/${r.signalHash}">verify ${shortHash(r.signalHash)}</a>`
       : `\nsignal ${shortHash(r.signalHash)}`
     : "";
-  return `<i>served by <b>${esc(who)}</b>${esc(rank)} · ${confidenceText(r.confidence, r.confidenceIsRisk)} · ${cost}${ms ? ` · ${ms}` : ""}</i>${verify}`;
+  const tx = r.settlementTx ? ` · <a href="https://sepolia.basescan.org/tx/${r.settlementTx}">paid on-chain</a>` : "";
+  return `<i>served by <b>${esc(who)}</b>${esc(rank)} · ${confidenceText(r.confidence, r.confidenceIsRisk)} · ${cost}${ms ? ` · ${ms}` : ""}</i>${verify}${tx}`;
 }
 
 /** Telegram message body (HTML) for one answer card. */

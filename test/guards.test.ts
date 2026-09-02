@@ -18,7 +18,7 @@ const base: Config = {
 };
 
 function okRow(userHash: string): CallRow {
-  return { id: Math.random().toString(36), at: new Date().toISOString(), channel: "telegram", userHash, kind: "ask", preview: "q", intent: "X", minerSlug: "m", minerId: "1", minerRank: 1, confidence: null, costUsd: 0.01, durationMs: 1, signalHash: "0x1", status: "ok", error: null };
+  return { id: Math.random().toString(36), at: new Date().toISOString(), channel: "telegram", userHash, kind: "ask", preview: "q", intent: "X", minerSlug: "m", minerId: "1", minerRank: 1, confidence: null, costUsd: 0.01, durationMs: 1, signalHash: "0x1", settlementTx: null, status: "ok", error: null };
 }
 
 describe("paid guards", () => {

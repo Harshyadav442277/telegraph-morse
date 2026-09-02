@@ -4,7 +4,8 @@ import { guardPaid } from "./guards.js";
 import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
-import { ask, askMiner, leaderboard, minerBySlug, rankOf, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
+import { askMiner, leaderboard, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
+import { route } from "./route.js";
 
 /**
  * The one path every channel uses to ask the network. Guards first, then the paid
@@ -53,9 +54,18 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
   }
   const row = baseRow(ctx, kind, question);
   try {
-    const raw = await ask(question);
-    const miner = await minerBySlug(raw.miner_name);
-    const receipt = buildReceipt(raw, miner?.signal_mapping ?? null, rankOf(miner, raw.intent ?? null));
+    // Telegraph's own router is unusable from a 60s serverless function: its settlement
+    // call times out at ~47s while a direct miner call settles in ~4s (GAPS G17). So
+    // Morse routes, and says on the receipt how it chose.
+    const chosen = await route(question);
+    if (!chosen) {
+      throw new TelegraphError("No active miner serves a question like this right now.", "engine");
+    }
+    const raw = await askMiner(chosen.miner.id, directRequest(chosen.miner, question, chosen.intent));
+    raw.intent ??= chosen.intent;
+    raw.miner_name ??= chosen.miner.slug;
+    const receipt = buildReceipt(raw, chosen.miner.signal_mapping ?? null, chosen.rank);
+    receipt.routerReasoning = `Morse routed this: ${chosen.why}, then called the #${chosen.rank ?? "?"} miner for ${chosen.intent}.`;
     fillRow(row, receipt, "ok");
     await ledger.recordCall(row);
     return { ok: true, kind, question, receipt, second: null, error: null, remaining, rowId: row.id };
@@ -184,6 +194,7 @@ function baseRow(ctx: AskContext, kind: string, question: string): CallRow {
     costUsd: null,
     durationMs: null,
     signalHash: null,
+    settlementTx: null,
     status: "error",
     error: null,
   };
@@ -198,5 +209,6 @@ function fillRow(row: CallRow, r: Receipt, status: CallRow["status"]): void {
   row.costUsd = r.costUsd;
   row.durationMs = r.durationMs;
   row.signalHash = r.signalHash;
+  row.settlementTx = r.settlementTx;
   row.status = status;
 }

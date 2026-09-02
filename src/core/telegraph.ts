@@ -75,10 +75,12 @@ async function paidPost(path: string, body: unknown, timeoutMs: number): Promise
     if (res.status === 402) {
       // Keep what the node actually said: a bare "payment refused" is undiagnosable,
       // and this path only runs when a payment attempt has already been made.
-      const settlement = res.headers.get("x-payment-response") ?? res.headers.get("payment-response");
-      console.error("402 after payment attempt:", snippet(text), settlement ? `| settlement: ${settlement.slice(0, 400)}` : "| no settlement header");
+      const settled = decodeSettlement(res.headers.get("payment-response") ?? res.headers.get("x-payment-response"));
+      console.error("402 after payment attempt:", settled?.errorReason ?? snippet(text));
       throw new TelegraphError(
-        `Payment was not accepted by the node: ${snippet(text)}${settlement ? ` [${settlement.slice(0, 200)}]` : ""}`,
+        settled?.errorReason
+          ? `The node refused the payment: ${settled.errorReason}`
+          : `Payment was not accepted by the node: ${snippet(text)}`,
         "unpaid",
         402,
       );
@@ -89,6 +91,9 @@ async function paidPost(path: string, body: unknown, timeoutMs: number): Promise
     if (!res.ok) throw new TelegraphError(`Engine returned ${res.status}: ${snippet(text)}`, "engine", res.status);
     const parsed = JSON.parse(text) as EngineAsk;
     if (typeof parsed.duration_ms !== "number") parsed.duration_ms = Date.now() - started;
+    // The settlement transaction is published only here, in the payment-response
+    // header — the signal record the node serves later does not carry it (GAPS G3b).
+    parsed.settlement = decodeSettlement(res.headers.get("payment-response") ?? res.headers.get("x-payment-response"));
     return parsed;
   } catch (e) {
     if (e instanceof TelegraphError) throw e;
@@ -106,6 +111,34 @@ async function paidPost(path: string, body: unknown, timeoutMs: number): Promise
     throw new TelegraphError(`Could not reach the Telegraph node: ${msg}`, "network");
   } finally {
     clearTimeout(timer);
+  }
+}
+
+export interface Settlement {
+  success: boolean;
+  txHash: string | null;
+  payer: string | null;
+  errorReason: string | null;
+}
+
+/** The node's `payment-response` header: base64 JSON, present on success and failure. */
+export function decodeSettlement(header: string | null): Settlement | null {
+  if (!header) return null;
+  try {
+    const j = JSON.parse(Buffer.from(header, "base64").toString("utf8")) as {
+      success?: boolean;
+      transaction?: string;
+      payer?: string;
+      errorReason?: string;
+    };
+    return {
+      success: j.success === true,
+      txHash: j.transaction && /^0x[0-9a-fA-F]{64}$/.test(j.transaction) ? j.transaction : null,
+      payer: j.payer ?? null,
+      errorReason: j.errorReason ?? null,
+    };
+  } catch {
+    return null;
   }
 }
 

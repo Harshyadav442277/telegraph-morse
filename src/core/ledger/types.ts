@@ -23,6 +23,8 @@ export interface CallRow {
   costUsd: number | null;
   durationMs: number | null;
   signalHash: string | null;
+  /** On-chain USDC settlement transaction, when the node reported one. */
+  settlementTx: string | null;
   status: CallStatus;
   error: string | null;
 }

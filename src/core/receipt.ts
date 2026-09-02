@@ -23,6 +23,8 @@ export interface EngineAsk {
   intent?: string;
   signal_hash?: string;
   warnings?: string[];
+  /** Filled from the node's payment-response header, not from its JSON body. */
+  settlement?: { success: boolean; txHash: string | null; payer: string | null; errorReason: string | null } | null;
 }
 
 export interface Receipt {
@@ -44,6 +46,8 @@ export interface Receipt {
   costUsd: number | null;
   durationMs: number | null;
   signalHash: string | null;
+  /** On-chain USDC settlement for this call, from the payment-response header. */
+  settlementTx: string | null;
   routerReasoning: string | null;
   warnings: string[];
   raw: unknown;
@@ -145,6 +149,7 @@ export function buildReceipt(
     costUsd: typeof ask.cost_usd === "number" ? ask.cost_usd : null,
     durationMs: typeof ask.duration_ms === "number" ? ask.duration_ms : null,
     signalHash: ask.signal_hash ?? null,
+    settlementTx: ask.settlement?.txHash ?? null,
     routerReasoning: ask.reasoning ?? null,
     warnings: Array.isArray(ask.warnings) ? ask.warnings.filter((w) => typeof w === "string") : [],
     raw: r ?? null,
