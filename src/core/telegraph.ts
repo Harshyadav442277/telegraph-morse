@@ -68,7 +68,17 @@ async function paidPost(path: string, body: unknown, timeoutMs: number): Promise
       signal: ac.signal,
     });
     const text = await res.text();
-    if (res.status === 402) throw new TelegraphError("Payment was not accepted by the node.", "unpaid", 402);
+    if (res.status === 402) {
+      // Keep what the node actually said: a bare "payment refused" is undiagnosable,
+      // and this path only runs when a payment attempt has already been made.
+      const settlement = res.headers.get("x-payment-response") ?? res.headers.get("payment-response");
+      console.error("402 after payment attempt:", snippet(text), settlement ? `| settlement: ${settlement.slice(0, 400)}` : "| no settlement header");
+      throw new TelegraphError(
+        `Payment was not accepted by the node: ${snippet(text)}${settlement ? ` [${settlement.slice(0, 200)}]` : ""}`,
+        "unpaid",
+        402,
+      );
+    }
     if (res.status === 422) {
       throw new TelegraphError(`The node predicted this request would fail: ${snippet(text)}`, "engine", 422);
     }
@@ -81,7 +91,15 @@ async function paidPost(path: string, body: unknown, timeoutMs: number): Promise
     if ((e as Error).name === "AbortError") {
       throw new TelegraphError(`The network did not answer within ${Math.round(timeoutMs / 1000)}s.`, "timeout");
     }
-    throw new TelegraphError(`Could not reach the Telegraph node: ${(e as Error).message}`, "network");
+    const msg = (e as Error).message;
+    // x402 throws before the wire when it cannot build a payment (no matching scheme,
+    // spend controls, signing failure). That is not a network problem and must not
+    // be reported as one.
+    if (/payment|scheme|signer|sign|spend|insufficient|authoriz/i.test(msg)) {
+      console.error("payment construction failed:", msg);
+      throw new TelegraphError(`Could not construct a payment: ${msg}`, "unpaid");
+    }
+    throw new TelegraphError(`Could not reach the Telegraph node: ${msg}`, "network");
   } finally {
     clearTimeout(timer);
   }
