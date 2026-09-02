@@ -5,11 +5,12 @@ Live: **<https://telegraph-morse.vercel.app>** · repo: <https://github.com/Hars
 Every output below was captured from the live deployment on the date stated. Steps are marked:
 
 - **✅ verified** — run against production, output pasted verbatim.
-- **⏳ needs the wallet** — the code path is built and typechecked, but it spends USDC, so it is
-  unproven until the operator sets `EVM_PRIVATE_KEY` in Vercel. Nothing here is faked to look
-  finished (rule 01).
+- **⏳ operator step** — needs an action only the operator can take.
 
-Last capture: **2026-09-02 15:29 UTC**, when the payer wallet was not yet configured.
+Last capture: **2026-09-02 18:15 UTC**, with the wallet funded and Morse paying.
+
+**Integrity note:** the ledger rows visible today are our own verification calls, not users. Real
+and receipted, but not adoption — see GAPS G20.
 
 ---
 
@@ -22,56 +23,53 @@ Open <https://telegraph-morse.vercel.app>.
 Expected: the M·O·R·S·E header; a one-paragraph claim mentioning **receipt**; six counters (people
 answered / of who asked, answered calls, intents used, miners served, USDC paid, calls today); the
 **Public ledger** table with a `durable` badge; a "How routing works" panel. While the wallet is
-unfunded, a yellow panel says so in the first screenful:
+funded, there is no warning panel; when it is not, a yellow panel says so in the first screenful
+rather than letting a visitor discover it by asking.
 
-> **Morse is not funded yet.** The payer wallet or daily budget is not configured, so asking is
-> disabled until the operator funds it. Everything else on this page is live.
+### 2 · Ask a question — ✅ verified
 
-### 2 · Ask a question — ⏳ needs the wallet
+Type `Is the TLS certificate for github.com valid right now, and who issued it?` and press **Ask**.
 
-Type `Is the TLS certificate for github.com valid right now?` and press **Ask**.
+Verified against production, 2026-09-02 18:13 UTC:
 
-Expected when funded, within ~15 s: an answer card, then a receipt line reading
-`served by <miner> #<rank> for SSL_VERIFICATION · confidence NN% · $0.01 · NNN ms · verify 0x…`,
-and a **Second opinion from the next-ranked miner** button.
-
-Expected today, verbatim from production:
-
-```json
-{"ok":false,"kind":"ask","question":"Is the TLS certificate for github.com valid right now?","receipt":null,"second":null,"error":"Morse has no funded wallet or no daily budget yet, so it cannot ask the network.","remaining":0,"rowId":null}
+```
+miner  : LiveCert Operational Signals #1 for SSL_VERIFICATION
+routing: Morse routed this: matched the SSL_VERIFICATION rule, then called the #1 miner
+conf   : 100%   cost: $0.01   latency: ~1s
+hash   : 0x0691ca3f54514e5ea5ce342d8dadc30c58c48ada711cdfde01e171b4ee0821a1
+tx     : 0x31b9b480548034ad571448194ea09bf12a13f3ad2903f88d3307dd191e2af007
+answer : "…the certificate is currently valid, expiring in 88 days on 2026-11-29, issued by
+          Sectigo Limited…"
 ```
 
-That is the whole point of the honest-failure path: no canned answer ever appears.
+**Morse does its own routing, and says so.** Telegraph's `/engine/v1/ask` router is unusable from a
+serverless function — its settlement call times out after ~47s against Vercel's 60s ceiling — so
+Morse classifies the intent itself, picks the best-ranked live miner, and calls it directly in
+~200ms–4s. The receipt names the rule that fired and the rank that answered, which is more
+transparent than a router's black box, and honestly weaker at classification. See GAPS G17.
 
-### 3 · Verify the receipt — ⏳ needs the wallet
+### 3 · Verify the receipt — ✅ verified
 
-Click the `verify 0x…` link, landing on `/verify/{hash}`.
-
-Expected: a table with **Found on the node — yes** linking to
-`devnode.telegraphprotocol.com/engine/v1/signal/{hash}`; the miner slug; **Paid by** showing the
-wallet address with the green note `= Morse's payer wallet`; the node's own check
-(`verified — keccak256 over payload`); Morse's own ledger row; and the payload the hash covers,
-pretty-printed.
-
-The **payer match is the evidence**, and it is verified free of the wallet: sampling 8 user-paid
-signals on the live node on 2026-09-02, all 8 carried `signal.wallet_address` and all 8 carried
-`verification.verified: true`. **None carried a per-call `tx_hash`** — the node does not publish
-one, so `/verify` links the payer's USDC history on BaseScan rather than a transaction that would
-not exist. The rendering path itself is ✅ verified against a real third-party signal:
+Click the `verify 0x…` link.
 
 ```bash
-curl -s https://telegraph-morse.vercel.app/api/verify/0x59a3a4693254863c72d33c7345a248d6893bfd1d125c9a4a08820a293f8c188a
+curl -s https://telegraph-morse.vercel.app/api/verify/0x0691ca3f54514e5ea5ce342d8dadc30c58c48ada711cdfde01e171b4ee0821a1
 ```
 
-→ `paidByMorse: false` — correctly, because that call was someone else's.
+→ `paidByMorse: true`, `wallet_address: 0xfBB3C3bd51EC6E19BDECc786945d83719b6b4c9c`,
+`miner_slug: livecert`, `verification.verified: true`.
 
-An unknown hash returns HTTP 404 and says so rather than inventing a record — ✅ verified:
+The page shows **Found on the node — yes**, **Paid by … = Morse's payer wallet** in green, the
+node's own check (`verified — keccak256 over payload`), the **settlement tx** on BaseScan, Morse's
+own ledger row, and the payload the hash covers.
 
-```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://telegraph-morse.vercel.app/verify/0x0000000000000000000000000000000000000000000000000000000000000000
-```
+Two honest limits. The settlement transaction is published only in the node's `payment-response`
+header on the paying request, never in the signal record served afterwards — Morse captures it
+there and stores it (GAPS G3b). And the hash itself is *shown, not re-derived*: eleven
+serialisations of the payload as served failed to reproduce it, so Morse displays the node's
+attestation rather than claiming to have recomputed it (GAPS G3).
 
-→ `404`
+An unknown hash returns 404 rather than inventing a record — ✅ verified.
 
 ### 4 · Read the public ledger — ✅ verified
 
@@ -79,14 +77,14 @@ curl -s -o /dev/null -w "%{http_code}\n" https://telegraph-morse.vercel.app/veri
 curl -s https://telegraph-morse.vercel.app/api/stats
 ```
 
-→ (2026-09-02 15:29 UTC, before funding)
+→ (2026-09-02 18:14 UTC, paying)
 
 ```json
-{"users":4,"usersAnswered":0,"calls":0,"okCalls":0,"intents":0,"miners":0,"spentUsd":0,"byChannel":{},"byIntent":[],"today":{"calls":0,"users":0},"firstCallAt":null,"lastCallAt":null,"ledger":"postgres","payer":null}
+{"users":16,"usersAnswered":4,"calls":12,"okCalls":6,"intents":2,"miners":2,"spentUsd":0.06,"byChannel":{"web":6},"byIntent":[{"intent":"CRYPTO_PRICE","calls":4},{"intent":"SSL_VERIFICATION","calls":2}],"today":{"calls":6,"users":4},"firstCallAt":"2026-09-02T18:10:28.790Z","lastCallAt":"2026-09-02T18:14:15.781Z","ledger":"postgres","payer":"0xfBB3C3bd51EC6E19BDECc786945d83719b6b4c9c"}
 ```
 
-`usersAnswered` (0) is the honest headline; `users` (4) counts every identity that asked at all,
-this session's own end-to-end runs included. `"ledger":"postgres"` is the other claim that matters: the ledger is durable, not a serverless
+`usersAnswered` (4) is the honest headline; `users` (16) counts every identity that asked at all,
+failures and this session's own test runs included — and today **all of them are ours** (GAPS G20). `"ledger":"postgres"` is the other claim that matters: the ledger is durable, not a serverless
 scratch buffer that resets. `/api/recent?limit=200` returns the same rows the page shows, with the
 user hash stripped.
 
@@ -160,28 +158,28 @@ git clone https://github.com/Harshyadav442277/telegraph-morse && cd telegraph-mo
 npm run e2e
 ```
 
-Expected today, verbatim (2026-09-02, production unfunded):
+Verified against production, 2026-09-02 18:14 UTC, with `MORSE_E2E_PAID=1`:
 
 ```
 Running 7 tests using 1 worker
-  ok 1 › 1 · the landing page states the claim and shows live counters
-  ok 2 › 2 · the ledger on the page matches the API and the ledger is durable
-  -  3 › 3 · every signal hash in the ledger verifies on the node
-  -  4 › 4 · an agent can pick up a key and reach the MCP server without a wallet
-  ok 5 › 5 · the free discovery endpoints answer from the live network
-  ok 6 › 6 · an unfunded Morse says so instead of inventing an answer
-  -  7 › 7 · a funded Morse answers, receipts it, and the receipt verifies
-  3 skipped
-  4 passed
+  ok 1 › the landing page states the claim and shows live counters
+  ok 2 › the ledger on the page matches the API and the ledger is durable
+  ok 3 › every signal hash in the ledger verifies on the node
+  -  4 › an agent can pick up a key and reach the MCP server without a wallet
+  ok 5 › the free discovery endpoints answer from the live network
+  -  6 › an unfunded Morse says so instead of inventing an answer
+  ok 7 › a funded Morse answers, receipts it, and the receipt verifies
+  2 skipped
+  5 passed
 ```
 
-Tests 3 and 7 need the wallet. Test 4 passed earlier the same day against production — the MCP
-handshake and all seven tools — and skips now only because this machine's network has already
-used its three keys for the UTC day (GAPS G18); the suite caches its key in `.morse-e2e-key`, so a
-fresh clone issues one and every later run reuses it. Set `MORSE_TEST_KEY` to run it regardless.
+Without `MORSE_E2E_PAID=1` the suite is free to run and test 7 skips, so no schedule can ever spend
+money or manufacture traffic (rule 04).
 
-Once the wallet is funded, tests 3 and 7 run — 7 only with `MORSE_E2E_PAID=1`, so no schedule can
-spend money or manufacture traffic (rule 04).
+Both skips are conditional by design. Test 6 asserts the honest-failure path and only runs when the
+wallet is *unfunded*. Test 4 skipped because this machine's network had already used its three API
+keys for the UTC day (GAPS G18); it passed earlier the same day against the same deployment, and
+the suite now caches its key so repeat runs stop burning the quota.
 
 Point it at any deployment with `MORSE_BASE_URL=https://… npm run e2e`.
 
