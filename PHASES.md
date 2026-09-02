@@ -83,8 +83,8 @@ Vercel Secret and therefore unreadable — reset it to a value you keep), and po
 - [x] Health probe (`scripts/health-probe.mjs` + `.github/workflows/health.yml`), free-endpoint
       only so it cannot inflate call volume. Works on demand; **the 30-minute schedule has not yet
       been observed to fire** (GAPS G19)
-- [x] Alarm proven end to end: run 33648541786 opened issue #1 with the probe output; the
-      workflow now de-duplicates "still broken" comments (GAPS G16)
+- [x] Alarm proven end to end, all three paths: run 33648541786 opened issue #1, a repeat run
+      stayed quiet, and run 33666604042 closed it once the deployment went healthy (GAPS G16)
 - [ ] Closing X thread with ledger numbers and receipts
 - [ ] Submission when the Track 3 tab opens; confirm it shows (GAPS G5)
 

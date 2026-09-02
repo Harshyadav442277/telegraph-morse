@@ -159,8 +159,12 @@ with the probe output verbatim, and failed the run so the Actions tab shows it.
 That first run exposed a second problem, since fixed: on a 30-minute schedule a long outage would
 have posted ~48 "still broken" comments a day. The workflow now comments only when the **problem
 set changes**, or once every 6 hours. Verified locally against the real issue body — with today's
-unchanged problems it stays quiet. **Still unproven:** the auto-close path, which needs the
-deployment to become healthy.
+unchanged problems it stays quiet.
+
+**Auto-close proven 2026-09-02 18:20 UTC:** once the wallet was funded and the probe went HEALTHY,
+[run 33666604042](https://github.com/Harshyadav442277/telegraph-morse/actions/runs/33666604042)
+closed issue #1 with the healthy output attached. Open, de-duplicate and close are all now
+exercised against the real deployment. G16 is fully closed.
 
 ### G17 · The x402 payment path — `CLOSED 2026-09-02 18:10 UTC, paying in production`
 Morse pays. First live receipt through the deployed app:

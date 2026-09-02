@@ -38,6 +38,10 @@ Real, receipted, and not adoption. Do not quote user numbers in an X post until 
 Vercel *Secret* and cannot be read back, so reset it to a value you keep; then post X draft 1,
 which needs no wallet and is ready.
 
+**Health monitoring is fully proven:** the alarm opened an issue while broken, stayed quiet on a
+repeat run, and closed itself once the wallet was funded (G16). The 30-minute *schedule* still has
+not been observed to fire — GitHub's cron is best-effort and this repo is hours old (G19).
+
 **Numbers at 18:14 UTC:** 6 answered calls of 12 attempted, 4 identities, 2 intents, 2 miners,
 $0.06 spent. Network context: 1,092 user-paid Telegraph calls in 24h, 129/129 miners active,
 45 intents.
