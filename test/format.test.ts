@@ -7,7 +7,7 @@ const card: AnswerCard = {
   ok: true,
   kind: "ask",
   question: "q",
-  receipt: { minerSlug: "livecert", minerId: "4433", intent: "SSL_VERIFICATION", minerRank: 2, confidence: 0.93, label: "valid", answer: "<b>bold</b> & valid", costUsd: 0.01, durationMs: 412, signalHash: "0x" + "ab".repeat(32), routerReasoning: null, warnings: [], raw: {} },
+  receipt: { minerSlug: "livecert", minerId: "4433", intent: "SSL_VERIFICATION", minerRank: 2, confidence: 0.93, confidenceIsRisk: false, label: "valid", answer: "<b>bold</b> & valid", costUsd: 0.01, durationMs: 412, signalHash: "0x" + "ab".repeat(32), routerReasoning: null, warnings: [], raw: {} },
   second: null,
   error: null,
   remaining: 3,

@@ -32,6 +32,12 @@ export interface Receipt {
   /** Leaderboard rank of the serving miner for this intent, when known. */
   minerRank: number | null;
   confidence: number | null;
+  /**
+   * True when the miner's declared `confidence_field` is really a risk metric, so a
+   * high number means more danger, not more certainty. Three active miners do this
+   * (GAPS G8). Never render such a value as "confidence".
+   */
+  confidenceIsRisk: boolean;
   label: string | null;
   /** Human-readable answer text extracted from the miner's result. */
   answer: string;
@@ -51,6 +57,17 @@ export function getPath(obj: unknown, path: string | null | undefined): unknown 
     cur = (cur as Record<string, unknown>)[part];
   }
   return cur;
+}
+
+/**
+ * Field names that mean "how bad", not "how sure". Observed live on 2026-09-02:
+ * amanat-weather-risk and skywire-storm-alert declare `risk`, elcaro-ipi-detection
+ * declares `risk_score`.
+ */
+const RISK_FIELD = /(^|[._])(risk|danger|threat|severity|exploit_probability)/i;
+
+export function isRiskField(field: string | null | undefined): boolean {
+  return Boolean(field && RISK_FIELD.test(field));
 }
 
 /** Normalises 0-1, 0-100 and string confidences; anything else is "not reported". */
@@ -105,8 +122,13 @@ export function buildReceipt(
   minerRank: number | null = null,
 ): Receipt {
   const r = ask.result;
+  const mapped = toConfidence(getPath(r, mapping?.confidence_field));
+  // A few miners map a risk/severity score into confidence_field. Reading that as
+  // confidence inverts its meaning, so it is kept but labelled for what it is, and
+  // it never drives the second-opinion threshold.
+  const confidenceIsRisk = mapped !== null && isRiskField(mapping?.confidence_field);
   const confidence =
-    toConfidence(getPath(r, mapping?.confidence_field)) ??
+    mapped ??
     toConfidence(getPath(r, "confidence")) ??
     toConfidence(getPath(r, "confidence_score")) ??
     toConfidence(getPath(r, "score"));
@@ -117,6 +139,7 @@ export function buildReceipt(
     intent: ask.intent ?? null,
     minerRank,
     confidence,
+    confidenceIsRisk,
     label: typeof labelRaw === "string" || typeof labelRaw === "number" ? String(labelRaw) : null,
     answer: extractAnswer(r, mapping),
     costUsd: typeof ask.cost_usd === "number" ? ask.cost_usd : null,

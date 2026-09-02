@@ -76,25 +76,40 @@ itself is what still needs the wallet.
 **Fill from:** `scripts/x-numbers.mjs`. Post the count of people **answered**, never the count of
 people who merely asked — Morse publishes both and the smaller one is the honest headline (GAPS G4).
 
-## Post 5 — a non-obvious finding (needs real traffic; pick whichever the data supports)
+## Post 5 — the depth post: what the catalogue actually says (ready now, no wallet needed)
 
-Candidates, each answerable from the ledger once calls exist:
+Measured over all 129 active miners with `npm run catalogue` on 2026-09-02. Nothing here needs
+traffic, a wallet, or permission — it is all in the public `/api/miners`.
 
-- how often the router's #1 pick and the next-ranked miner disagree on the same question
-  (`kind = 'second-opinion'` rows next to their originals)
-- how many miners report a usable confidence at all, per intent (GAPS G8 is the measurement)
-- which miners accept a direct request and which reject a payload they did not shape (GAPS G14)
-- median latency per intent as a real user experiences it
-
-Draft shape:
-
-> «N» of the «M» miners Morse called report a confidence number at all. The rest answer well and
-> say nothing about how sure they are.
+> I read all 129 @Telegraphprotoc miners before trusting any of them.
 >
-> That gap is why Morse asks the next-ranked miner whenever confidence is low or missing.
+> 57% publish a confidence field. 4 publish a *risk* score in it — high means more danger, not
+> more certainty. Read naively, a calm forecast looks like an unsure miner.
+>
+> Morse labels those as risk.
 
-*(This is the "depth" post — 25% of the score is usefulness and depth, and a measurement nobody
-else has is the cheapest way to show it.)*
+*(264 chars + link.)* This is the strongest post in the set: it is a real finding, it shows the
+integration is deep rather than surface-level (the 25% criterion), and it is honest about a trap
+rather than boasting.
+
+Second one available immediately, same source:
+
+> Asking a second @Telegraphprotoc miner is harder than it looks.
+>
+> 22% publish more than one endpoint — degenlens-onchain publishes 33 — and only a quarter of
+> those name the intent they serve. Send a fraud question to endpoints[0] and you hit transaction
+> lookup.
+
+*(260 chars.)* Both fit inside 280.
+
+**Verified inputs (2026-09-02, `npm run catalogue`):** 129/129 active; 73 declare a
+`confidence_field`, 56 declare none; 9 distinct field names; 4 are risk-shaped
+(amanat-weather-risk, skywire-storm-alert, elcaro-ipi-detection, vulnfeed-onchain-security);
+29 miners publish >1 endpoint, 7 of those name intents in descriptions; 59 accept a
+question-shaped key; 5 intents have exactly one miner.
+
+Once there is real traffic, one more candidate: how often the router's #1 pick and the next-ranked
+miner disagree, from `kind = 'second-opinion'` rows next to their originals.
 
 ## Post 6 — closing thread (Sep 6–7)
 

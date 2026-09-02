@@ -31,7 +31,7 @@ const second: Receipt = {
   minerId: "9001",
   intent: "SSL_VERIFICATION",
   minerRank: 2,
-  confidence: 0.88,
+  confidence: 0.88, confidenceIsRisk: false,
   label: "valid",
   answer: "The certificate is valid until 2027-02-14, issued by Sectigo.",
   costUsd: 0.01,

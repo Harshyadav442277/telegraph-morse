@@ -12,8 +12,11 @@ export function shortHash(h: string | null): string {
   return h ? `${h.slice(0, 10)}…${h.slice(-6)}` : "—";
 }
 
-export function confidenceText(c: number | null): string {
-  return c === null ? "confidence not reported" : `confidence ${(c * 100).toFixed(0)}%`;
+export function confidenceText(c: number | null, isRisk = false): string {
+  if (c === null) return "confidence not reported";
+  const pct = (c * 100).toFixed(0);
+  // The miner reported how bad, not how sure. Saying "confidence" here would invert it.
+  return isRisk ? `risk ${pct}% (the miner's own metric, not confidence)` : `confidence ${pct}%`;
 }
 
 export function receiptLine(r: Receipt, publicUrl: string | undefined): string {
@@ -26,7 +29,7 @@ export function receiptLine(r: Receipt, publicUrl: string | undefined): string {
       ? `\n<a href="${publicUrl}/verify/${r.signalHash}">verify ${shortHash(r.signalHash)}</a>`
       : `\nsignal ${shortHash(r.signalHash)}`
     : "";
-  return `<i>served by <b>${esc(who)}</b>${esc(rank)} · ${confidenceText(r.confidence)} · ${cost}${ms ? ` · ${ms}` : ""}</i>${verify}`;
+  return `<i>served by <b>${esc(who)}</b>${esc(rank)} · ${confidenceText(r.confidence, r.confidenceIsRisk)} · ${cost}${ms ? ` · ${ms}` : ""}</i>${verify}`;
 }
 
 /** Telegram message body (HTML) for one answer card. */

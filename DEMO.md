@@ -201,6 +201,18 @@ THE NODE'S 402 CHALLENGE (fetched, not paid)
 Every field the client must satisfy already matches. Only the EIP-3009 signature, the on-chain
 settlement and the returned `signal_hash` need a real call.
 
+## What the catalogue says — ✅ verified, free
+
+```bash
+npm run catalogue
+```
+
+Reads the public `/api/miners` once, engages no miner, spends nothing. It is where the numbers in
+GAPS G8 and G14 come from, and it found two real bugs in Morse: four miners publish a *risk* score
+in their `confidence_field` (a high number means more danger, not more certainty), and 29 miners
+publish more than one endpoint, so picking `endpoints[0]` for a direct second opinion sent
+fraud questions to a transaction-lookup endpoint. Both are fixed and covered by tests.
+
 ## Health probe
 
 ```bash

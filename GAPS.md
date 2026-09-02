@@ -57,10 +57,26 @@ Circle's faucet: 20 USDC per 2h per address per chain (web sources, 2026-09-02).
 is 2,000 calls per claim; the demand multiplier raises price to $0.015 above 1,000 requests/24h
 per intent. The stats page shows the payer balance so a dry wallet is visible before it hurts.
 
-### G8 · Confidence is heterogeneous across miners — `OPEN`
-Some miners report `confidence` in [0,1], some report nothing, some report strings. The
-second-opinion threshold only fires when a numeric confidence exists; otherwise "not reported".
-Record per-miner behaviour as it is observed.
+### G8 · Confidence is heterogeneous across miners — `MEASURED 2026-09-02, one real bug fixed`
+Measured over all 129 active miners with `npm run catalogue`:
+
+- **73 (57%) declare a `confidence_field`; 56 (43%) declare nothing at all.**
+- 9 distinct field names: `confidence` ×64, then `risk` ×2, `risk_score`, `exploit_probability`,
+  `answer`, `match`, `probability`, `yield_quality.yield_quality_score`,
+  `capabilityIntelligence.confidence`.
+- **4 miners map a *risk* score into `confidence_field`** — amanat-weather-risk (`risk`),
+  skywire-storm-alert (`risk`), elcaro-ipi-detection (`risk_score`), vulnfeed-onchain-security
+  (`exploit_probability`). A high number there means *more danger*, not *more certainty*.
+
+That last one was a live bug, not a curiosity: both storm miners do it, so the `/weather` recipe —
+which asks STORM_ALERT — would have shown a judge "confidence 85%" when the miner meant "storm risk
+85%", and a calm forecast (`risk: 0.05`) would have looked like a 5%-confident miner and fired a
+spurious second opinion on every quiet day. Fixed: `Receipt.confidenceIsRisk` labels these as risk
+everywhere they are rendered and excludes them from the second-opinion threshold. Covered by
+test/catalogue-quirks.test.ts.
+
+Still open: what miners put in these fields at *runtime* (strings, 0-100, nulls) can only be seen
+with real traffic.
 
 ### G9 · End-to-end coverage stops at the wallet — `PARTIALLY CLOSED 2026-09-02`
 `e2e/judge-journey.spec.ts` runs the judge journey against the live deployment: landing and
@@ -91,11 +107,23 @@ and "Invalid export found in module /var/task/src/app.js". Fixed by exporting
 app`, and a `public/` output dir. Confirmed live 2026-09-02 15:00 UTC: the operator's redeploy is serving, `/` returns 200 with the
 landing page and `/api/stats`, `/keys`, `/v1/*` and `/mcp` all answer.
 
-### G14 · The second-opinion direct request is a heuristic — `OPEN, measure on real miners`
+### G14 · The second-opinion direct request is a heuristic — `MEASURED 2026-09-02, endpoint bug fixed`
 `directRequest()` sends `{query}` plus any of `q/question/text/prompt/input/message` the miner's
-`input_schema` declares, to the miner's first endpoint. GET miners with required params (lat/lon)
-will 422 at the node's pre-validation, which costs nothing and is recorded as `error`. Record which
-miners answer and which do not, and prefer miners that accept `query` when picking the candidate.
+`input_schema` declares. Measured over 129 active miners:
+
+- **59 (46%) declare a question-shaped key.** The other 54% need typed inputs — lat/lon, an
+  address, a tx hash — and will 422 at the node's free pre-validation, which costs nothing and is
+  recorded as `error`.
+- **29 (22%) publish more than one endpoint**, so the old "use `endpoints[0]`" rule was a coin
+  flip for them. degenlens-onchain publishes **33**, of which `endpoints[0]` is ONCHAIN_TX_LOOKUP —
+  a FRAUD_DETECTION second opinion was being sent to the transaction-lookup endpoint.
+- Fixed: `endpointFor()` picks the endpoint whose description names the intent. **Only 7 of the 29
+  multi-endpoint miners name their intents that way**, so for the other 22 it still falls back to
+  the first endpoint. That fallback is the remaining heuristic.
+- **5 intents are served by exactly one miner**, so no second opinion is possible for them at all;
+  `secondOpinion` already reports that honestly rather than failing.
+
+Still open: which miners actually answer a direct request, which needs real traffic.
 
 ### G15 · A second opinion re-asks the question from its stored 200-character preview — `OPEN, accepted`
 The ledger keeps `preview` (the question clipped to 200 chars), not the full text, so `/second`,

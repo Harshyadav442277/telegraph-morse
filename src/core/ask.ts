@@ -4,7 +4,7 @@ import { guardPaid } from "./guards.js";
 import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
-import { ask, askMiner, leaderboard, minerBySlug, rankOf, TelegraphError, type Miner } from "./telegraph.js";
+import { ask, askMiner, leaderboard, minerBySlug, rankOf, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
 
 /**
  * The one path every channel uses to ask the network. Guards first, then the paid
@@ -84,7 +84,7 @@ export async function secondOpinion(
   const board = await leaderboard(intent);
   const candidate = board.find((e) => e.miner.slug !== excludeSlug && (e.miner.endpoints?.length ?? 0) > 0);
   if (!candidate) return { receipt: null, error: `No other active miner serves ${intent}.` };
-  const req = directRequest(candidate.miner, question);
+  const req = directRequest(candidate.miner, question, intent);
   const row = baseRow(ctx, "second-opinion", question);
   const ledger = getLedger();
   try {
@@ -131,9 +131,29 @@ export async function secondOpinionOn(ctx: AskContext, row: CallRow | null): Pro
 
 const QUESTION_KEYS = ["query", "q", "question", "text", "prompt", "input", "message"];
 
-/** Shape a direct request from the miner's first endpoint and its declared inputs. */
-export function directRequest(miner: Miner, question: string): { method: "GET" | "POST"; endpoint: string; payload: Record<string, unknown> } {
-  const ep = miner.endpoints?.[0];
+/**
+ * Pick the endpoint that serves `intent`. 29 of the 129 active miners publish more
+ * than one endpoint (measured 2026-09-02), and they name the intent at the start of
+ * each description — degenlens-onchain lists 33, of which `endpoints[0]` is
+ * ONCHAIN_TX_LOOKUP, so asking it for a FRAUD_DETECTION second opinion used to hit
+ * the wrong endpoint entirely. Falls back to the first endpoint (GAPS G14).
+ */
+export function endpointFor(miner: Miner, intent: string | null): MinerEndpoint | undefined {
+  const eps = miner.endpoints ?? [];
+  if (intent) {
+    const named = eps.find((e) => new RegExp(`(^|[^A-Z_])${intent}([^A-Z_]|$)`).test(e.description ?? ""));
+    if (named) return named;
+  }
+  return eps[0];
+}
+
+/** Shape a direct request from the endpoint serving this intent and the miner's declared inputs. */
+export function directRequest(
+  miner: Miner,
+  question: string,
+  intent: string | null = null,
+): { method: "GET" | "POST"; endpoint: string; payload: Record<string, unknown> } {
+  const ep = endpointFor(miner, intent);
   const method = (ep?.method ?? "GET").toUpperCase() === "POST" ? "POST" : "GET";
   const props = Object.keys(miner.input_schema?.properties ?? {});
   const payload: Record<string, unknown> = { query: question };
@@ -142,6 +162,9 @@ export function directRequest(miner: Miner, question: string): { method: "GET" |
 }
 
 export function shouldSeekSecondOpinion(receipt: Receipt): boolean {
+  // A risk score is not a confidence: a low one means "safe", not "unsure", and would
+  // otherwise trigger a second opinion on every calm weather report (GAPS G8).
+  if (receipt.confidenceIsRisk) return false;
   return receipt.confidence !== null && receipt.confidence < config().SECOND_OPINION_THRESHOLD && Boolean(receipt.intent);
 }
 

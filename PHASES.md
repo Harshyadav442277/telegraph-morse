@@ -54,7 +54,10 @@ exact operator sequence — wallet, faucet, BotFather, `npm run preflight`, the 
 - [x] Routing visibility: "served by #k for INTENT" on every receipt, from the live leaderboard
 - [x] Daemon "what's hot" (`/hot` in Telegram, `telegraph_hot_signals` over MCP)
 - [ ] ⏳ **done when** each recipe produces one combined verdict and N ledger rows, all verifiable
-- [ ] Measure which miners accept a direct request and which reject it (GAPS G14) — needs traffic
+- [x] Measured the whole catalogue for free (`npm run catalogue`): 57% of miners declare a
+      confidence field, 4 publish a *risk* score in it, 29 publish >1 endpoint. Two real bugs fixed
+      as a result — risk shown as confidence, and second opinions hitting the wrong endpoint
+      (GAPS G8, G14)
 
 ## P4 — Developer surface (2026-09-04) [A, D]
 - [x] `/keys`: issue a key (100/day cap, IP-limited), docs on the page

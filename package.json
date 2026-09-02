@@ -16,7 +16,8 @@
     "e2e": "playwright test",
     "health": "node scripts/health-probe.mjs",
     "x:numbers": "node scripts/x-numbers.mjs",
-    "preflight": "tsx scripts/preflight.ts"
+    "preflight": "tsx scripts/preflight.ts",
+    "catalogue": "node scripts/catalogue-stats.mjs"
   },
   "dependencies": {
     "@hono/mcp": "^0.3.2",

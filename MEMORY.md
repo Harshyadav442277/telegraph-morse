@@ -54,6 +54,21 @@ schedule — now fixed by commenting only when the problem set changes or six ho
   **129/129** miners active, **45** canonical intents. SSL_VERIFICATION leaderboard: livecert #1,
   preflight-ssl-verification #2, txlens #3.
 
+**Two real bugs found by reading the catalogue, before any traffic existed:**
+- **4 miners publish a risk score in `signal_mapping.confidence_field`** — amanat-weather-risk and
+  skywire-storm-alert (`risk`), elcaro-ipi-detection (`risk_score`), vulnfeed-onchain-security
+  (`exploit_probability`). Both storm miners do it, so `/weather` would have told a judge
+  "confidence 85%" when the miner meant "storm risk 85%", and a calm forecast (risk 0.05) would
+  have looked like an unsure miner and fired a second opinion every quiet day. `confidenceIsRisk`
+  now labels them and keeps them out of the threshold.
+- **`directRequest` used `endpoints[0]`**, but 29 of 129 miners publish several — degenlens-onchain
+  publishes 33, and its first is ONCHAIN_TX_LOOKUP, so a FRAUD_DETECTION second opinion went to the
+  transaction-lookup endpoint. `endpointFor()` now matches the intent named in the description;
+  only 7 of those 29 name intents that way, so the rest still fall back.
+
+`npm run catalogue` re-measures all of it for free. It is also the material for the strongest X
+post: a real finding about the network that needs no traffic and no wallet.
+
 **Two things this session broke and fixed, so they are not re-learned:**
 - Repeated e2e runs exhausted the three-keys-per-network-per-day cap, so judge-journey test 4 now
   skips on this machine until 00:00 UTC. The cap works — that is how it was verified live. The
