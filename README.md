@@ -5,10 +5,15 @@ A Telegraph Hackathon Season I, **Track 3** application.
 
 Morse lets anyone use the [Telegraph](https://telegraphprotocol.com) miner network without a
 wallet: ask a question in Telegram or on the web, or point an agent at one hosted MCP/REST
-endpoint. Morse pays the x402 fee from one app-owned wallet, routes the question through
-Telegraph's engine, and returns the answer with a **receipt** — the miner that served it, the
-intent the router chose, that miner's rank for the intent, its confidence, the cost, the latency,
-and a `signal_hash` you can verify on the node and on Base Sepolia.
+endpoint. Morse works out which canonical intent your question belongs to, calls the best-ranked
+live miner for it, pays the x402 fee from one app-owned wallet, and returns the answer with a
+**receipt** — the miner that served it, the intent and why it was chosen, that miner's rank, its
+confidence, the cost, the latency, the on-chain settlement transaction, and a `signal_hash` you can
+verify on the node.
+
+Live example, 2026-09-02: LiveCert #1 for `SSL_VERIFICATION`, $0.01, signal
+[`0x0691ca3f…0821a1`](https://telegraph-morse.vercel.app/verify/0x0691ca3f54514e5ea5ce342d8dadc30c58c48ada711cdfde01e171b4ee0821a1),
+settled on-chain as [`0x31b9b480…2af007`](https://sepolia.basescan.org/tx/0x31b9b480548034ad571448194ea09bf12a13f3ad2903f88d3307dd191e2af007).
 
 Every call Morse makes is in a public ledger, so "people used it" is checkable rather than
 claimed.
@@ -85,6 +90,8 @@ in place.
 | `minerSlug`, `minerId` | which miner the Engine routed to |
 | `intent` | the canonical intent the router classified the question as |
 | `minerRank` | that miner's current leaderboard rank for the intent |
+| `routerReasoning` | which rule chose the intent, and which rank was called |
+| `settlementTx` | the USDC transfer on Base Sepolia, from the node's `payment-response` header |
 | `confidence` | the miner's own confidence, read from its declared `signal_mapping` — or "not reported" |
 | `costUsd`, `durationMs` | what the call cost and how long it took |
 | `signalHash` | verify at `/verify/{hash}`, or on the node at `GET /engine/v1/signal/{hash}` |
@@ -132,6 +139,12 @@ can manufacture traffic.
 ## Assumptions and limitations
 
 - **Testnet.** Base Sepolia, testnet USDC. Answers are real; the money is not.
+- **Morse routes, not Telegraph.** The network's own `/engine/v1/ask` router times out at ~47s on
+  settlement, which does not fit a serverless function, so Morse classifies the intent with keyword
+  rules and calls the best-ranked miner directly. That is weaker classification than the network's,
+  and every receipt says which rule fired so you can judge it (GAPS G17).
+- **The ledger's early rows are our own verification calls**, not users — real and receipted, but
+  not adoption (GAPS G20).
 - **"Users" means distinct salted identity hashes** — a Telegram user id, a web session cookie, or
   an API key. One person on two surfaces counts twice; ten people reading one forwarded answer
   count once. Morse publishes the method next to the number and never rounds it up (GAPS G4).

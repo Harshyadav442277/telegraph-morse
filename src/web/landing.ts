@@ -24,7 +24,7 @@ export function landingPage(d: LandingData): string {
   const s = d.stats;
   const chips = d.recipes.map((r) => `<button type="button" data-recipe="${h(r.name)}" title="${h(r.description)}">${h(r.usage)}</button>`).join("");
   const body = `
-<p class="lede">Ask a question. Telegraph's router picks the intent and the best-ranked miner, Morse pays the x402 fee, and you get the answer <b>with a receipt</b>: who answered, how confident, what it cost, and a signal hash anyone can look up on the node, with the payer wallet checked against ours.</p>
+<p class="lede">Ask a question. Morse works out the intent, calls the best-ranked live miner for it, pays the x402 fee, and gives you the answer <b>with a receipt</b>: who answered and at what rank, how confident they were, what it cost, the on-chain settlement, and a signal hash anyone can look up on the node with the payer wallet checked against ours.</p>
 ${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The payer wallet or daily budget is not configured, so asking is disabled until the operator funds it. Everything else on this page is live.</div>`}
 <section class="panel"><h2>Ask the network</h2>
 <form class="ask" id="ask"><input id="q" name="q" placeholder="Is the TLS certificate for github.com valid right now?" maxlength="2000" required><button id="go" type="submit">Ask</button></form>
@@ -47,7 +47,7 @@ ${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The pay
 <p class="muted">JSON: <a href="/api/stats">/api/stats</a> · <a href="/api/recent">/api/recent</a> · <a href="/api/health">/api/health</a></p></section>
 
 <section class="panel"><h2>How routing works</h2>
-<p>Telegraph ranks miners per intent from validator scores every 9-hour epoch and routes 70% of traffic to #1, 20% to #2, 10% to #3. Morse never picks a miner for a first answer: it sends your plain-language question to <code>POST /engine/v1/ask</code> and shows you where the router sent it. When a miner reports low confidence, or when you ask, Morse fetches a <b>second opinion</b> from the next-ranked miner directly. Recipes fan one question out to several intents and combine the receipts.</p>
+<p>Telegraph ranks miners per intent from validator scores every 9-hour epoch. Morse reads that live leaderboard, works out which of the 45 canonical intents your question belongs to, and calls the best-ranked active miner for it directly — every receipt states which rule matched and which rank answered, so the routing is inspectable rather than implied. Morse does <i>not</i> use the network's own <code>POST /engine/v1/ask</code> router: its settlement step takes about 47 seconds to time out, which does not fit in a serverless function, while a direct miner call settles in about four. That is a real trade — the network's classifier is smarter than a keyword rule — and it is written down in <a href="https://github.com/Harshyadav442277/telegraph-morse/blob/main/GAPS.md">GAPS</a> rather than glossed over. When a miner reports low confidence, or when you ask, Morse fetches a <b>second opinion</b> from the next-ranked miner. Recipes fan one question out to several intents and combine the receipts.</p>
 <p>Also in Telegram: ${d.botUsername ? `<b><a href="https://t.me/${h(d.botUsername)}">@${h(d.botUsername)}</a></b>` : "<b>not connected yet</b> — the bot goes live when the operator sets its token"}. For agents: <a href="/keys">hosted MCP and REST, no wallet needed</a>.</p></section>
 
 <script>

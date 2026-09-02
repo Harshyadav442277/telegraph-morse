@@ -34,7 +34,38 @@ counters. Link: <https://telegraph-morse.vercel.app>
 **Verified inputs:** 878 user-originated calls network-wide in 24h (`/daemon/api/questions?source=user&since_hours=24`),
 129 active miners, 45 canonical intents — all read live on 2026-09-02.
 
-## Post 2 — what a receipt is (ready once one real call exists)
+## Post 2 — what a receipt is (READY — a real receipt exists)
+
+Verified 2026-09-02 18:13 UTC.
+
+> Every Morse answer names the miner that served it, its rank for that intent, its own
+> confidence, what it cost, and the on-chain settlement.
+>
+> LiveCert #1 for SSL_VERIFICATION, 100% confident, $0.01, ~1s.
+>
+> Check it yourself: telegraph-morse.vercel.app/verify/0x0691ca3f…
+
+*(268 chars.)* Attach the `/verify` page cropped to **Paid by … = Morse's payer wallet** and the
+BaseScan settlement link.
+
+**Real values to paste:** signal
+`0x0691ca3f54514e5ea5ce342d8dadc30c58c48ada711cdfde01e171b4ee0821a1`, tx
+`0x31b9b480548034ad571448194ea09bf12a13f3ad2903f88d3307dd191e2af007`.
+
+## Post 2b — the engineering war story (strong candidate, ready now)
+
+> Getting @Telegraphprotoc to take my money took a day.
+>
+> Their router's settlement call times out at ~47s. A serverless function gets 60.
+>
+> So Morse does its own routing — picks the intent, calls the #1 ranked miner directly. ~4s, and
+> the receipt tells you which rule chose it.
+
+*(274 chars.)* Engineers reshare this kind of post, and it demonstrates depth better than any
+feature list. Only post it if you are comfortable naming a rough edge in the sponsor's product —
+it is factual and not unkind, but it is their bug.
+
+## Post 2c — superseded (kept for reference)
 
 > Every Morse answer names the miner that served it, its rank for that intent, its own
 > confidence, the cost, and a signal hash.
@@ -64,7 +95,12 @@ the row appearing in the ledger.
 **Verified now:** the MCP handshake and all 7 tools answer in production; the paid tool call
 itself is what still needs the wallet.
 
-## Post 4 — first real numbers (post with a ledger screenshot)
+## Post 4 — first real numbers (WAIT: the numbers must be strangers')
+
+**Do not post this yet.** Every ledger row today is our own verification traffic (GAPS G20).
+Publishing "N people asked" while N is us is precisely the metric inflation rule 04 forbids. Post
+it once the bot and the MCP endpoint have been used by someone else, and quote `usersAnswered`.
+
 
 > Morse, day «N» on @Telegraphprotoc: «USERS_ANSWERED» people asked «CALLS» questions across
 > «INTENTS» intents and «MINERS» miners, for $«SPENT» paid to the network.

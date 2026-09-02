@@ -27,7 +27,7 @@ export function buildServer(ctx: AskContext): McpServer {
     {
       title: "Ask the Telegraph network",
       description:
-        "Ask any question in plain language. Telegraph's router picks the intent and the best-ranked miner; Morse pays the x402 fee. Returns the answer plus a receipt: miner, intent, rank, confidence, cost, latency and a signal_hash verifiable at " +
+        "Ask any question in plain language. Morse classifies the intent, calls the best-ranked live Telegraph miner for it, and pays the x402 fee. Returns the answer plus a receipt: miner, intent, rank, confidence, cost, latency, on-chain settlement tx and a signal_hash verifiable at " +
         (publicUrl ? `${publicUrl}/verify/{signal_hash}` : "GET /engine/v1/signal/{hash}") +
         ". Good for weather, crypto and stock prices, fact checks, translations, on-chain lookups, TLS checks, IP geolocation, academic and news search.",
       inputSchema: { question: z.string().min(3).max(2000) },
