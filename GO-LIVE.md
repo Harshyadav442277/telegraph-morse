@@ -58,24 +58,16 @@ read back. It only makes the landing page link the bot.)
 
 ## 5 · Preflight — before spending anything
 
-Put the same key in a local `.env` (gitignored) so preflight can derive the payer:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env`: set `EVM_PRIVATE_KEY`, and `DAILY_BUDGET_CALLS=1500`. Then:
+**You do not need the key on this machine.** The seven protocol checks (scheme, network, asset,
+EIP-712 version, price against the client's $1 cap, timeouts) need no wallet and already pass:
 
 ```bash
 npm run preflight
 ```
 
-It spends nothing. It derives the payer, reads its USDC and ETH balances, fetches the node's 402
-challenge **without paying it**, and diffs that challenge against our client — scheme, network,
-asset, EIP-712 domain version, price against the client's $1 cap, timeouts. Those seven checks
-already pass today; this run adds the wallet ones.
-
-**Only continue if it prints `READY`.**
+The wallet-side checks — payer address and USDC balance — come from the deployment itself after
+step 6, via `/api/health`. That keeps the private key in exactly one place: Vercel. Only put it in
+a local `.env` if you specifically want to run the paid path from your laptop.
 
 ## 6 · Redeploy
 
