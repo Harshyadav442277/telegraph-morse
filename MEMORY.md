@@ -100,6 +100,18 @@ asset is the `DEFAULT_ASSETS` entry so the client's own spend controls permit it
 only the EIP-3009 signature, the settlement, and the returned hash. Run preflight the moment the
 key lands; make the one call only if it prints READY.
 
+**2026-09-02 ~17:55 UTC — the wallet is live and the node still refuses every payment.** Health is
+green (payer `0xfBB3…4c9c`, 20 USDC, `paidWorkEnabled:true`, `telegram:true`). Every paid call
+returns a bare 402 carrying the original challenge — which Telegraph's docs say is exactly what a
+malformed payload looks like, so the wire tells you nothing. Everything checkable has been checked
+and is correct: valid recovering EIP-3009 signature, right EIP-712 domain, sane timing, right
+`PAYMENT-SIGNATURE` header, client pinned to @x402 2.11.0 and built exactly like Telegraph-MCP
+(one-arg signer, wildcard `eip155:*`). The network is healthy — 122 user-paid calls landed while we
+failed. No funds moved; balance still 20, nonce still 0. Full list in GAPS G17.
+**The next test is `npm run first-call`**, which runs the same client locally and tries the router
+then a direct miner: failing there indicts the client, succeeding indicts the serverless runtime.
+It needs the key in a local `.env`, so it is the operator's to run.
+
 **Next, in order:** operator sets the two env vars → redeploy → make ONE real paid call and check
 `/verify/<hash>` shows the payer = our wallet (closes G17, G2's second half, and the wallet-gated
 half of G9) → run `npm run e2e` with `MORSE_E2E_PAID=1` once → X post 1 (ready now, needs no

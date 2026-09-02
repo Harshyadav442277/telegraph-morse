@@ -202,6 +202,19 @@ Ruled out so far, each verified rather than assumed:
   `x402Client.fromConfig`, `wrapFetchWithPayment`. Same refusal.
 - **Nothing settled.** Balance still exactly 20, nonce still 0 — no money moved, nothing lost.
 
+Also ruled out since, all free:
+- **The payload is correct.** Built locally (with Hardhat's published test key, unfunded, purely to
+  inspect serialisation) it is a textbook EIP-3009 authorization, and its signature **recovers to
+  the right signer** over the exact domain the USDC contract reports.
+- **Timing is fine.** `validAfter` is 10 minutes in the past, `validBefore` 60s ahead; Vercel's
+  clock is 1s and the node's 2s from real time.
+- **The header is right.** v2 emits `PAYMENT-SIGNATURE: base64(JSON(payload))`, exactly as the docs
+  specify, and the retry response is what we see — so the node received it and refused.
+- **Not a network outage.** 122 user-paid calls landed on the node in the hour we were failing,
+  the newest 10 minutes old.
+- **Not the token.** Payer is not blacklisted, the contract is not paused, EIP-3009 is live.
+- **Not the network registration.** Matching the MCP's wildcard `eip155:*` changed nothing.
+
 Not yet distinguished: **our client versus the Vercel serverless runtime.** `npm run first-call`
 runs the identical client locally and tries both the router and a direct miner call; a failure
 there points at the client, a success points at the runtime. That needs the operator's key on a
