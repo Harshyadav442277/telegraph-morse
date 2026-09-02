@@ -12,7 +12,8 @@ deployed, and unprovable until they land. See GAPS G17.
 - [x] Plan, PRD, architecture → [PLAN.md](PLAN.md)
 - [x] Public repo `telegraph-morse` created; CertWatch retired in the miner repo
 - [x] Vercel project + Neon database + non-secret env vars (Claude, 2026-09-02)
-- [ ] **Operator:** burner wallet funded → `EVM_PRIVATE_KEY`; BotFather token → `TELEGRAM_BOT_TOKEN`
+- [ ] **Operator:** burner wallet funded → `EVM_PRIVATE_KEY`; BotFather token → `TELEGRAM_BOT_TOKEN`;
+      and `TELEGRAM_BOT_USERNAME` so the site links the bot without a code change
 
 ## P1 — Core and Telegram bot (2026-09-02) [A, T]
 - [x] `core/telegraph.ts`: paying fetch (x402 2.24.0), `ask()`, `askMiner()`, `verifySignal()`,

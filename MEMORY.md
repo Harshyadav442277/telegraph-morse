@@ -15,8 +15,9 @@ the redeploy was pending — it was not; check the deployment before believing a
 calls, and 45% of the Track 3 rubric (real users + call volume) is sitting at zero. Everything
 downstream of a paid call is built, typechecked and deployed but has **never executed** — GAPS G17.
 Operator, in Vercel scope `wukong4`, project `telegraph-morse`:
-`npx vercel env add EVM_PRIVATE_KEY production --scope wukong4` and the same for
-`TELEGRAM_BOT_TOKEN`, then redeploy, then
+`npx vercel env add EVM_PRIVATE_KEY production --scope wukong4`, the same for
+`TELEGRAM_BOT_TOKEN`, and `TELEGRAM_BOT_USERNAME` (the site renders the t.me link from it), then
+`npm run preflight`, then redeploy, then
 `curl -X POST https://telegraph-morse.vercel.app/admin/telegram/webhook -H "Authorization: Bearer <ADMIN_TOKEN>"`.
 
 **Deployed and pushed this session.** `main` is at 44d522a on GitHub; production is

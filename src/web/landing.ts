@@ -8,6 +8,7 @@ export interface LandingData {
   ledgerKind: "postgres" | "memory";
   payer: string | null;
   publicUrl: string | undefined;
+  botUsername: string | undefined;
   paid: boolean;
   recipes: Recipe[];
 }
@@ -47,7 +48,7 @@ ${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The pay
 
 <section class="panel"><h2>How routing works</h2>
 <p>Telegraph ranks miners per intent from validator scores every 9-hour epoch and routes 70% of traffic to #1, 20% to #2, 10% to #3. Morse never picks a miner for a first answer: it sends your plain-language question to <code>POST /engine/v1/ask</code> and shows you where the router sent it. When a miner reports low confidence, or when you ask, Morse fetches a <b>second opinion</b> from the next-ranked miner directly. Recipes fan one question out to several intents and combine the receipts.</p>
-<p>Also in Telegram: <b>${d.publicUrl ? "the bot link will appear here when it is live" : "coming with the first deployment"}</b>. For agents: <a href="/keys">hosted MCP and REST, no wallet needed</a>.</p></section>
+<p>Also in Telegram: ${d.botUsername ? `<b><a href="https://t.me/${h(d.botUsername)}">@${h(d.botUsername)}</a></b>` : "<b>not connected yet</b> — the bot goes live when the operator sets its token"}. For agents: <a href="/keys">hosted MCP and REST, no wallet needed</a>.</p></section>
 
 <script>
 const form=document.getElementById('ask'),q=document.getElementById('q'),out=document.getElementById('out'),go=document.getElementById('go');

@@ -26,7 +26,7 @@ export function webRoutes(app: Hono<AppEnv>): void {
   app.get("/", async (c) => {
     const ledger = getLedger();
     const [stats, recent] = await Promise.all([ledger.stats(), ledger.recent(25)]);
-    return c.html(landingPage({ stats, recent, ledgerKind: ledger.kind, payer: payerAddress(), publicUrl: config().MORSE_PUBLIC_URL, paid: paidWorkEnabled(), recipes: Object.values(RECIPES) }));
+    return c.html(landingPage({ stats, recent, ledgerKind: ledger.kind, payer: payerAddress(), publicUrl: config().MORSE_PUBLIC_URL, botUsername: config().TELEGRAM_BOT_USERNAME, paid: paidWorkEnabled(), recipes: Object.values(RECIPES) }));
   });
 
   app.get("/api/stats", async (c) => c.json({ ...(await getLedger().stats()), ledger: getLedger().kind, payer: payerAddress() }));

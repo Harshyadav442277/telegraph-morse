@@ -21,6 +21,12 @@ const schema = z.object({
     .transform((v) => v === "true" || v === "1"),
   TELEGRAPH_NODE: z.string().url().default("https://devnode.telegraphprotocol.com"),
   MORSE_PUBLIC_URL: z.string().url().optional(),
+  /** Bot username without the @, e.g. "morse_telegraph_bot". Renders the t.me link. */
+  TELEGRAM_BOT_USERNAME: z
+    .string()
+    .regex(/^@?[A-Za-z0-9_]{5,32}$/)
+    .transform((v) => v.replace(/^@/, ""))
+    .optional(),
   /** Confidence below which a second opinion is fetched automatically. */
   SECOND_OPINION_THRESHOLD: z.coerce.number().min(0).max(1).default(0.6),
   ASK_TIMEOUT_MS: z.coerce.number().int().min(1000).default(45_000),
