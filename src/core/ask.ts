@@ -146,7 +146,7 @@ const PROSE_KEYS = ["query", "question", "text", "prompt", "input", "message"];
  * WEATHER_CHECK and declares only `lat`, `lon`, `q`; handed "What is the current
  * weather in Chennai?" as `q` it answers `city not found`. Handed "Chennai" it works.
  */
-const SUBJECT_KEYS = ["q", "city", "location", "place", "domain", "host", "hostname", "address", "symbol"];
+const SUBJECT_KEYS = ["q", "city", "location", "place", "domain", "host", "hostname"];
 
 /**
  * Pick the endpoint that serves `intent`. 29 of the 129 active miners publish more
@@ -175,11 +175,14 @@ export function directRequest(
   const method = (ep?.method ?? "GET").toUpperCase() === "POST" ? "POST" : "GET";
   const props = Object.keys(miner.input_schema?.properties ?? {});
   const payload: Record<string, unknown> = { query: question };
-  for (const k of props) {
-    if (PROSE_KEYS.includes(k)) payload[k] = question;
-    // Only fill a subject key when we actually have a subject: guessing one from the
-    // sentence would be worse than leaving it out and letting the miner say so.
-    else if (subject && SUBJECT_KEYS.includes(k)) payload[k] = subject;
+  const prose = props.filter((k) => PROSE_KEYS.includes(k));
+  for (const k of prose) payload[k] = question;
+  // Subject keys are a fallback for miners that take no prose at all, like
+  // openweathermap (lat, lon, q). Filling them alongside a prose key does harm:
+  // chainsight-oracle declares `address` and `symbol`, and handing it a place name
+  // there made the node correctly predict the request would fail.
+  if (subject && prose.length === 0) {
+    for (const k of props) if (SUBJECT_KEYS.includes(k)) payload[k] = subject;
   }
   return { method, endpoint: ep?.path ?? "/", payload };
 }

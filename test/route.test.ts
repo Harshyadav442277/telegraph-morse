@@ -41,3 +41,29 @@ describe("intent classification", () => {
     expect(intentOf("write me a haiku about autumn")).toBeNull();
   });
 });
+
+describe("direct request payloads", () => {
+  const prose = { id: "1", slug: "chainsight-oracle", input_schema: { properties: { query: {}, address: {}, symbol: {} } }, endpoints: [{ path: "/p", method: "GET", description: "STORM_ALERT." }] };
+  const typed = { id: "2", slug: "openweathermap", input_schema: { properties: { lat: {}, lon: {}, q: {} } }, endpoints: [{ path: "/weather", method: "GET", description: "WEATHER_CHECK." }] };
+
+  it("uses prose when the miner takes prose, and leaves typed keys alone", async () => {
+    const { directRequest } = await import("../src/core/ask.js");
+    const req = directRequest(prose, "storm risk in Chennai?", "STORM_ALERT", "Chennai");
+    expect(req.payload["query"]).toBe("storm risk in Chennai?");
+    // Passing a place name as an address or a ticker is how the node was made to
+    // predict failure. It must not happen again.
+    expect(req.payload["address"]).toBeUndefined();
+    expect(req.payload["symbol"]).toBeUndefined();
+  });
+
+  it("falls back to the subject only when the miner takes no prose", async () => {
+    const { directRequest } = await import("../src/core/ask.js");
+    const req = directRequest(typed, "What is the current weather in Chennai?", "WEATHER_CHECK", "Chennai");
+    expect(req.payload["q"], "openweathermap wants a city, not a sentence").toBe("Chennai");
+  });
+
+  it("leaves the subject key unset when there is no subject", async () => {
+    const { directRequest } = await import("../src/core/ask.js");
+    expect(directRequest(typed, "weather?", "WEATHER_CHECK").payload["q"]).toBeUndefined();
+  });
+});
