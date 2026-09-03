@@ -93,15 +93,15 @@ test/catalogue-quirks.test.ts.
 Still open: what miners put in these fields at *runtime* (strings, 0-100, nulls) can only be seen
 with real traffic.
 
-### G9 · End-to-end coverage — `CLOSED 2026-09-02 18:14 UTC`
-`MORSE_E2E_PAID=1 npm run e2e` against production: **5 passed, 2 skipped**. Both of the previously
-wallet-gated tests now pass — test 3 (every signal hash in the ledger verifies on the node and was
-paid by Morse's wallet) and test 7 (ask → receipt → verify → ledger row, with a real $0.01 call).
+### G9 · End-to-end coverage — `CLOSED 2026-09-03 05:20 UTC, 7/7`
+`MORSE_E2E_PAID=1 npm run e2e` against production: **7 passed, 0 skipped**.
 
-The two skips are conditional by design, not gaps: test 6 only runs when the wallet is *unfunded*
-(it asserts the honest-failure path), and test 4 skipped because this machine's network had already
-spent its three API keys for the UTC day (GAPS G18) — it passed earlier the same day against the
-same deployment.
+Two things had to change for the suite to be able to go green at all. Test 6 and test 7 were
+mutually exclusive — one only ran unfunded, the other only funded — so test 6 now asserts the
+honest-failure contract in *both* states, using a second opinion on a hash that does not exist,
+which costs nothing. And test 4 needed an API key, which the three-per-network-per-day cap (G18)
+had exhausted; running from a second network gave a fresh quota, and the suite now caches its key
+so repeat runs stop burning it.
 
 ### G10 · The operator's public repo `Harshyadav442277/Telegraph` is a copy of a rival's miner — `OPEN, operator decision`
 Found 2026-09-02: that repo's README and package.json are PREFLIGHT (`preflight-ssl-verification`,
@@ -221,7 +221,11 @@ Morse now captures it there, stores it on the ledger row, and links it to BaseSc
 and `/verify`. The signal-record observation stands — `signal.tx_hash` really is absent — but the
 conclusion drawn from it did not.
 
-### G18 · Three API keys per network per UTC day will bite shared IPs — `OPEN, accepted for now`
+### G18 · Three API keys per network per UTC day will bite shared IPs — `CONFIRMED IN PRACTICE, accepted`
+Confirmed twice: it blocked this project's own test suite for six hours, and switching networks
+cleared it instantly. A judge behind a shared NAT will hit the same wall. Still not worth raising —
+three keys already put 300 of the 1,500 daily calls behind one IP — but if a judge reports it, the
+answer is to hand them a key issued elsewhere.
 `issueKey` caps issuance at three per salted client IP per UTC day. Judges behind one shared NAT —
 a company, a university, a conference wifi — would exhaust that between them and see "Key limit
 reached for today from this network." Verified live on 2026-09-02: the cap works, and this

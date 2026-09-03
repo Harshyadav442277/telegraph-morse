@@ -5,9 +5,13 @@ Criterion tags: A = adoption 45%, D = depth 25%, X = X 25%, T = technical 5%.
 
 **Status 2026-09-02 18:15 UTC: Morse is paying and answering in production.** First live receipt
 `0x0691ca3f…0821a1` (LiveCert #1 for SSL_VERIFICATION, $0.01, settled on-chain, `paidByMorse:
-true`). `MORSE_E2E_PAID=1 npm run e2e` is **5 passed / 2 skipped**, both skips conditional by
-design (GAPS G9). Getting there needed Morse to stop using Telegraph's router, which times out at
-~47s against its own facilitator — see GAPS G17.
+true`). **`MORSE_E2E_PAID=1 npm run e2e` is 7 passed, 0 skipped** (2026-09-03 05:20 UTC, run from a
+second network so the key quota was fresh). Getting there needed Morse to stop using Telegraph's
+router, which times out at ~47s against its own facilitator — see GAPS G17.
+
+**Every channel has now paid for a real answer:** web, MCP (`telegraph_ask` →
+`0x3807cfe1…a7b15`) and REST (`POST /v1/ask` → `0x82360f91…d20f95`), each with its own on-chain
+settlement. Telegram is the one left, and it needs the webhook registered.
 
 **Still open for the operator:** register the Telegram webhook (needs `ADMIN_TOKEN`, stored as a
 Vercel Secret and therefore unreadable — reset it to a value you keep), and post the X drafts.
@@ -44,8 +48,8 @@ Vercel Secret and therefore unreadable — reset it to a value you keep), and po
       rendering verified against a real third-party signal without spending (GAPS G3, G3b)
 - [x] `/api/stats` JSON for X screenshots and for judges; `usersAnswered` published next to `users`
       so the honest number leads (GAPS G4)
-- [x] Playwright judge journey — `e2e/judge-journey.spec.ts`, 5 passed against production
-      2026-09-02, 2 skipped because they need the wallet
+- [x] Playwright judge journey — `e2e/judge-journey.spec.ts`, **7 passed / 0 skipped** against
+      production 2026-09-03
 - [x] **done:** the ledger matches the API and every listed hash verifies as paid by Morse's wallet
       (e2e test 3, green against production)
 - [ ] X post 2 with first real numbers — wait until the numbers are strangers', not ours (GAPS G20)
@@ -73,10 +77,10 @@ Vercel Secret and therefore unreadable — reset it to a value you keep), and po
 - [x] MCP handshake and all 7 tools verified against production with a real issued key; `/mcp`
       without a key returns 401 + `WWW-Authenticate`
 - [x] README quick-starts: Claude Code one-liner, Cursor JSON, curl
-- [ ] **done when** `claude mcp add …` works from a clean machine and the call lands in the ledger —
-      transport proven, and the paid path now works, so this needs one run from a fresh network
-      (GAPS G18 exhausted this one's key quota for the day)
-- [ ] X post 3
+- [x] **done:** a key issued from a clean network, `tools/call telegraph_ask` paid and answered
+      (`0x3807cfe1…a7b15`, settled `0x4d117b30…0837d2`), and `POST /v1/ask` likewise
+      (`0x82360f91…d20f95`). Both rows are in the public ledger.
+- [ ] X post 3 — ready, see [docs/X_TO_POST.md](docs/X_TO_POST.md) post 6
 
 ## P5 — Freeze, rehearse, submit (2026-09-05 18:00 UTC → 09-07 23:59 UTC) [A, X, T]
 - [ ] Feature freeze; only P1 bugs after this
