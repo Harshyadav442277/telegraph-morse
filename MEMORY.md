@@ -25,7 +25,12 @@ restored rank and signal mapping on engine-routed receipts. The ledger now also 
 one example per intent, a seven-question FAQ, slash commands typed on the web run recipes, Telegram
 `/start` shows five tappable examples and every answer carries an **Ask the podium** button.
 
-**Operator action still needed (2026-09-04 19:20 UTC):** the operator is rotating the Telegram bot
+**DONE 2026-09-04 19:40 UTC:** the operator rotated the bot token, set it in Vercel, and the admin
+call returned `{"ok":true, "webhook":true, "commands":true}`; production was redeployed after the
+env change so the running function holds the new token. The Telegram `/` menu now shows the new
+commands. Remaining operator items: X draft 9, sharing the bot, wallet top-up, submission.
+
+**Superseded note (kept for the record):** the operator is rotating the Telegram bot
 token (it was exposed). After rotating: set the new `TELEGRAM_BOT_TOKEN` in Vercel, redeploy, then
 `POST /admin/telegram/webhook` with the **ADMIN_TOKEN** as bearer — not the bot token, which
 returns `unauthorized` — to re-register the webhook and publish the command menu
