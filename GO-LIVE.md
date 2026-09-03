@@ -84,14 +84,46 @@ Expect `"ok":true`, a `payer` address, `payerUsdc` above zero, `paidWorkEnabled"
 
 ## 7 · Point Telegram at the deployment
 
-`ADMIN_TOKEN` is already in Vercel — read it from the Vercel dashboard, do not paste it into a
-shared terminal log.
+`ADMIN_TOKEN` was stored as a Vercel **Secret**, which means it cannot be read back — not by you,
+not from the CLI. If you saved it when you created it, skip to 7c. Otherwise reset it to a value
+you keep.
+
+**7a — pick a token, without printing it.** In your own terminal (not through Claude):
+
+```powershell
+-join ((48..57)+(65..90)+(97..122) | Get-Random -Count 40 | ForEach-Object {[char]$_}) | Set-Clipboard
+```
+
+It lands on your clipboard and is never displayed.
+
+**7b — replace ADMIN_TOKEN.** Vercel → Settings → Environment Variables → the `…` next to
+`ADMIN_TOKEN` → Remove. Then **Add Environment Variable**: key `ADMIN_TOKEN`, paste the value,
+Type **Secret**, Environment **Production**, Save. Paste it into a password manager too — you will
+want it again. Then redeploy, because env changes do not reach the running function until you do:
+
+```bash
+npx vercel deploy --prod --yes --scope wukong4
+```
+
+**7c — register the webhook.** One call. The endpoint reads `TELEGRAM_WEBHOOK_SECRET` itself, so
+that one stays unread.
 
 ```bash
 curl -X POST https://telegraph-morse.vercel.app/admin/telegram/webhook -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
 ```
 
 Expect `{"ok":true,"webhook":"https://telegraph-morse.vercel.app/telegram/webhook","result":true}`.
+A `401 {"error":"unauthorized"}` means the token does not match what is in Vercel, or the redeploy
+in 7b was skipped.
+
+**7d — test it.** Open <https://t.me/MyMorse_Bot>, send `/help`, then ask it something like
+*"Is the TLS certificate for github.com valid?"*. You should get "Asking the Telegraph network…"
+edited in place into an answer with a receipt. The call then appears at the top of
+<https://telegraph-morse.vercel.app/#ledger> with `channel: telegram`.
+
+**Alternative, if you would rather not touch ADMIN_TOKEN:** reset `TELEGRAM_WEBHOOK_SECRET` instead
+and call Telegram directly — `https://api.telegram.org/bot<BOT_TOKEN>/setWebhook?url=https://telegraph-morse.vercel.app/telegram/webhook&secret_token=<THE_SECRET>&drop_pending_updates=true`.
+Same amount of work, and it puts your bot token in a URL, so 7a–7c is the better path.
 
 ## 8 · The first real call — the one that matters
 

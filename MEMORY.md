@@ -41,6 +41,19 @@ place name being sent as a wallet address — plus concurrent recipe payments dr
 `batch_send_failed` from the facilitator. All fixed, all covered by tests built from the real
 catalogue. **Lesson: run the thing against the live network; the catalogue is the spec.**
 
+**2026-09-03 05:20 UTC — judge journey is 7/7 and three channels have paid.** Running from a second
+network gave a fresh API-key quota and closed test 4; test 6 was also rewritten so it is no longer
+mutually exclusive with test 7. Web, MCP (`telegraph_ask` → `0x3807cfe1…a7b15`) and REST
+(`0x82360f91…d20f95`) have each paid for a real answer with its own on-chain settlement. Ledger by
+channel: web 23, mcp 1, rest 1. Telegram is the only channel that has never paid, because the
+webhook is not registered.
+
+**The webhook is blocked on a secret nobody can read.** `ADMIN_TOKEN` and `TELEGRAM_WEBHOOK_SECRET`
+are both stored as Vercel *Secrets*, so the operator cannot retrieve either. Registering needs one
+of them. The fix is to reset `ADMIN_TOKEN` to a value the operator keeps, redeploy, then POST
+`/admin/telegram/webhook` — the endpoint reads the webhook secret internally, so only one value
+needs to be known. Steps are in [GO-LIVE.md](GO-LIVE.md).
+
 **Operator's remaining items:** register the Telegram webhook — it needs `ADMIN_TOKEN`, which is a
 Vercel *Secret* and cannot be read back, so reset it to a value you keep; then post X draft 1,
 which needs no wallet and is ready.
