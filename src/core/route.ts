@@ -74,6 +74,19 @@ export const SUBJECT_KEYS = ["q", "city", "location", "place", "domain", "host",
 export const MESSAGES_KEY = "messages";
 
 /**
+ * Intents whose miners are OpenAI-shaped by convention. They get a `messages` array
+ * whether or not they declare one: telegraph-chatbot declares an empty schema and
+ * then 422s with `missing body.messages`, so trusting the schema alone fails.
+ */
+export const CHAT_INTENTS = new Set([
+  "CHAT_COMPLETION",
+  "TEXT_GENERATION",
+  "LANGUAGE_GENERATION",
+  "TASK_COMPLETION",
+  "AGENT_TASK",
+]);
+
+/**
  * Every parameter Morse can fill from a plain question. A miner that requires
  * anything outside this — `model`, `lat`/`lon`, a transaction hash — cannot be
  * addressed from a sentence, and calling it anyway just buys a 400. The #1

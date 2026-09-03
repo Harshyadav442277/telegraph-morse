@@ -5,7 +5,7 @@ import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
 import { askMiner, leaderboard, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
-import { MESSAGES_KEY, PROSE_KEYS, routeCandidates, SUBJECT_KEYS, type Route } from "./route.js";
+import { CHAT_INTENTS, MESSAGES_KEY, PROSE_KEYS, routeCandidates, SUBJECT_KEYS, type Route } from "./route.js";
 
 /**
  * The one path every channel uses to ask the network. Guards first, then the paid
@@ -193,8 +193,13 @@ export function directRequest(
   const payload: Record<string, unknown> = { query: question };
   const prose = props.filter((k) => PROSE_KEYS.includes(k));
   for (const k of prose) payload[k] = question;
-  // OpenAI-shaped miners take the question as a one-turn conversation.
-  if (props.includes(MESSAGES_KEY)) payload[MESSAGES_KEY] = [{ role: "user", content: question }];
+  // OpenAI-shaped miners take the question as a one-turn conversation. Sent when the
+  // miner declares it, and also for the chat-shaped intents whether or not they do —
+  // telegraph-chatbot declares an empty schema and then rejects the call for a
+  // missing `messages` body.
+  if (props.includes(MESSAGES_KEY) || (intent && CHAT_INTENTS.has(intent))) {
+    payload[MESSAGES_KEY] = [{ role: "user", content: question }];
+  }
   // Subject keys are a fallback for miners that take no prose at all, like
   // openweathermap (lat, lon, q). Filling them alongside a prose key does harm:
   // chainsight-oracle declares `address` and `symbol`, and handing it a place name
