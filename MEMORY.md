@@ -25,8 +25,18 @@ restored rank and signal mapping on engine-routed receipts. The ledger now also 
 one example per intent, a seven-question FAQ, slash commands typed on the web run recipes, Telegram
 `/start` shows five tappable examples and every answer carries an **Ask the podium** button.
 
-**Operator action still needed:** re-run `POST /admin/telegram/webhook` with the ADMIN_TOKEN so
-`setMyCommands` publishes the new command menu (the code runs it inside `installWebhook`).
+**Operator action still needed (2026-09-04 19:20 UTC):** the operator is rotating the Telegram bot
+token (it was exposed). After rotating: set the new `TELEGRAM_BOT_TOKEN` in Vercel, redeploy, then
+`POST /admin/telegram/webhook` with the **ADMIN_TOKEN** as bearer — not the bot token, which
+returns `unauthorized` — to re-register the webhook and publish the command menu
+(`setMyCommands` runs inside `installWebhook`). Until then the bot's `/` menu is the old one and,
+once the old token is revoked, the bot is down until the new one is deployed. Then: post X draft 9
+(Podium), share the bot, and top up the payer wallet before Sep 7.
+
+**Next session, in order:** 1) confirm the bot answers after the token rotation and try `/start` →
+TLS check → Ask the podium on a phone; 2) `MORSE_E2E_PAID=1 npm run e2e` once; 3) distribution and
+X posts (the 45% axis); 4) submit at submissions.telegraphprotocol.com before 2026-09-07 23:59 UTC
+using SUBMISSION.md; 5) do not add features — freeze was 2026-09-05 18:00 UTC.
 
 ## 2026-09-03 16:15 UTC — HANDOFF STATE (read this first)
 
