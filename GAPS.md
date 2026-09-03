@@ -288,3 +288,42 @@ honest history rather than a curated one, which is the trade this project keeps 
 every routed intent at 100% and every unrouted one at 0%, which pointed straight at the fallback.
 Failed rows now keep their intent and miner for exactly that reason — before this they all logged
 as `(unrouted)` and the pattern was invisible.
+
+### G22 · Morse routes 41% of its calls to the operator's own Track 1 miner — `DISCLOSE, do not rig`
+`livecert` is the operator's Track 1 miner (`track1-miner/miner.yaml`, slug `livecert`). It is also
+ranked **#1 in six intents** and #2 in four more, so Morse's "call the best-ranked live miner" rule
+sends a lot of traffic its way: **26 of 64 answered calls, 41%**, measured 2026-09-03.
+
+Nothing here is rigged — Morse reads the live leaderboard and takes the top addressable miner, and
+livecert genuinely holds those ranks. But Track 1 is judged partly on requests served, so Track 3
+traffic landing on the same operator's Track 1 miner is exactly the shape of thing rule 04 exists
+to catch, and a judge who notices it unaided will assume the worst.
+
+**The response is disclosure, not distortion.** Deliberately skipping the best-ranked miner would
+make Morse worse at its job and would be its own kind of dishonesty. So: the routing panel on the
+landing page names the overlap, GAPS records it, and the submission should mention it rather than
+hope nobody checks. The ledger already shows `minerSlug` on every row, so the overlap is visible to
+anyone who looks — better that it comes from us first.
+
+**If the organisers say it is a problem**, the fix is one line in `route.ts` excluding the slug, and
+the receipts would then say a lower-ranked miner was chosen and why. Ask before assuming.
+
+### G23 · Request volume on this network is unrelated to rank — `MEASURED 2026-09-03`
+Worth knowing before optimising for the wrong number. Measured across the catalogue and the Daemon
+feed:
+
+| miner | lifetime requests | best rank | intents |
+|---|---:|---|---:|
+| degenlens-onchain | 1,181 | **#2** (ranked #1 in nothing) | 3, via 33 endpoints |
+| amanat-weather-risk | 523 | **#5** | 3 |
+| onlookout-weather | 333 | **#10** — its only intent | 1 |
+| livecert | 274 | **#1 in six intents** | 13 |
+
+Of 100 sampled user-paid calls network-wide in 24h: amanat-weather-risk 26%, skywire-storm-alert
+25%, degenlens-onchain 14%. Amanat is ranked #5, #7 and #8 in the three intents it serves.
+
+So the engine's 70/20/10 split to #1/#2/#3 is not what drives these totals. Two things do:
+`total_requests_served` is **lifetime cumulative**, so an earlier registration keeps its count
+forever; and **direct calls to `/engine/v1/ask/{minerId}` bypass ranking entirely** — the caller
+names the miner, which is what Morse itself now does. A miner with a heavy direct caller outranks
+the leaderboard on volume while scoring near zero: degenlens' average score is 0.000000000000089.
