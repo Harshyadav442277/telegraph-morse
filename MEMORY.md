@@ -19,6 +19,10 @@ through to the next one on a provably-free failure, always send `messages` for c
 details in GAPS G21. **Failed rows now keep their intent and miner** — before, they all logged as
 `(unrouted)` and the pattern was invisible.
 
+**After the fix: 6 for 6.** Every call from 16:08:46 UTC on succeeded, across CHAT_COMPLETION,
+WEATHER_CHECK, SSL_VERIFICATION and URL_SCAN. The lifetime number on the site stays depressed
+because a day of pre-fix failures is still in the ledger and is not being deleted.
+
 **Read the ledger, not just the tests.** That is the lesson of this session, twice over: running
 the recipes for real found three routing bugs, and grouping the ledger by intent found a fourth.
 

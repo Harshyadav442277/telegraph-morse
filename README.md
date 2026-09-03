@@ -79,9 +79,9 @@ curl -s https://telegraph-morse.vercel.app/api/stats
 
 ### Telegram
 
-The bot answers free text, and has `/safe`, `/wallet`, `/weather`, `/fact`, `/second`, `/hot`,
-`/verify`, `/stats`. The link is published here and on the site once the operator's bot token is
-in place.
+**<https://t.me/MyMorse_Bot>** — answers free text, plus `/safe`, `/wallet`, `/weather`, `/fact`,
+`/second`, `/hot`, `/verify`, `/stats`. Every answer carries the same receipt the web and API
+surfaces return, and lands in the same public ledger.
 
 ## What a receipt contains
 

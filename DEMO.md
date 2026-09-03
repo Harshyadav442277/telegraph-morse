@@ -137,14 +137,18 @@ data: {"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listCh
 `telegraph_leaderboard`, `telegraph_hot_signals`. Without a key, `/mcp` returns **401** with a
 `WWW-Authenticate: Bearer realm="morse"` header — ✅ verified.
 
-### 7 · Telegram — ⏳ needs the bot token
+### 7 · Telegram — ✅ verified
 
-Open the bot, send `/safe https://example.com`.
+Open **<https://t.me/MyMorse_Bot>**, send `/help`, then ask it anything.
 
-Expected: `Asking the network (safe)…` edited in place into a combined verdict over three
-receipted calls (URL_SCAN, SSL_VERIFICATION, and IP_GEOLOCATION of the resolved address). Then
-`/second` re-asks the last question of the next-ranked miner and prints both miners with their
-ranks. `/hot` shows the Daemon's top signals; `/stats` prints the same numbers as `/api/stats`.
+Verified 2026-09-03: **13 answered calls across 6 intents** — SSL_VERIFICATION, URL_SCAN,
+IP_GEOLOCATION, WEATHER_CHECK, WEATHER_FORECAST, STORM_ALERT — every one with its own on-chain
+settlement, and including the `weather` and `safe` recipes run in-chat.
+
+`/safe https://example.com` returns "Asking the network (safe)…" edited in place into a combined
+verdict over three receipted calls. `/second` re-asks the next-ranked miner and prints both with
+their ranks. `/hot` shows the Daemon's top signals. `/stats` prints the same numbers as
+`/api/stats`.
 
 ---
 

@@ -275,8 +275,14 @@ Three fixes, each earned from a different failure:
    telegraph-chatbot declares an *empty* schema and then rejects the call for a missing `messages`
    body — the declared schema simply cannot be trusted.
 
-Verified after: "Write me a two-line poem about the sea" and "Who painted the Mona Lisa?" both
-answered by Telegraph Knowledge Chatbot #4.
+**Measured after:** every call from 16:08:46 UTC onward succeeded — 6 for 6, including two
+CHAT_COMPLETION, and spanning WEATHER_CHECK, SSL_VERIFICATION and URL_SCAN. Every failure in the
+ledger sits at 16:06 or earlier, before the last of the three fixes deployed. Two of those
+failures were Telegram, so real in-chat traffic was hitting this too.
+
+The lifetime figure on the public ledger will stay depressed for a while — it counts a day of
+failures from before the fix, and those rows are not being deleted. A judge reading it sees an
+honest history rather than a curated one, which is the trade this project keeps making.
 
 **The lesson worth keeping:** the ledger found this, not a test. Grouping failures by intent showed
 every routed intent at 100% and every unrouted one at 0%, which pointed straight at the fallback.
