@@ -5,7 +5,7 @@ import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
 import { askMiner, leaderboard, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
-import { route } from "./route.js";
+import { canAddress, MESSAGES_KEY, PROSE_KEYS, route, SUBJECT_KEYS } from "./route.js";
 
 /**
  * The one path every channel uses to ask the network. Guards first, then the paid
@@ -53,11 +53,12 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
     }
   }
   const row = baseRow(ctx, kind, question);
+  let chosen: Awaited<ReturnType<typeof route>> = null;
   try {
     // Telegraph's own router is unusable from a 60s serverless function: its settlement
     // call times out at ~47s while a direct miner call settles in ~4s (GAPS G17). So
     // Morse routes, and says on the receipt how it chose.
-    const chosen = await route(question);
+    chosen = await route(question, subject);
     if (!chosen) {
       throw new TelegraphError("No active miner serves a question like this right now.", "engine");
     }
@@ -73,6 +74,14 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
     const err = e instanceof TelegraphError ? e : new TelegraphError((e as Error).message, "network");
     row.status = err.kind === "timeout" ? "timeout" : err.kind === "unpaid" ? "unpaid" : "error";
     row.error = err.message.slice(0, 300);
+    // Keep the routing on a failed row too. Without this every failure logged as
+    // "(unrouted)" and the ledger could not tell you which intent or miner broke.
+    if (chosen) {
+      row.intent = chosen.intent;
+      row.minerSlug = chosen.miner.slug;
+      row.minerId = chosen.miner.id;
+      row.minerRank = chosen.rank;
+    }
     await ledger.recordCall(row);
     return { ok: false, kind, question, receipt: null, second: null, error: err.message, remaining, rowId: row.id };
   }
@@ -139,15 +148,6 @@ export async function secondOpinionOn(ctx: AskContext, row: CallRow | null): Pro
   return { first: row, second: r.receipt, error: r.error };
 }
 
-/** Keys that want the whole question as prose. */
-const PROSE_KEYS = ["query", "question", "text", "prompt", "input", "message"];
-/**
- * Keys that want a bare subject, not a sentence. openweathermap is #1 for
- * WEATHER_CHECK and declares only `lat`, `lon`, `q`; handed "What is the current
- * weather in Chennai?" as `q` it answers `city not found`. Handed "Chennai" it works.
- */
-const SUBJECT_KEYS = ["q", "city", "location", "place", "domain", "host", "hostname"];
-
 /**
  * Pick the endpoint that serves `intent`. 29 of the 129 active miners publish more
  * than one endpoint (measured 2026-09-02), and they name the intent at the start of
@@ -177,6 +177,8 @@ export function directRequest(
   const payload: Record<string, unknown> = { query: question };
   const prose = props.filter((k) => PROSE_KEYS.includes(k));
   for (const k of prose) payload[k] = question;
+  // OpenAI-shaped miners take the question as a one-turn conversation.
+  if (props.includes(MESSAGES_KEY)) payload[MESSAGES_KEY] = [{ role: "user", content: question }];
   // Subject keys are a fallback for miners that take no prose at all, like
   // openweathermap (lat, lon, q). Filling them alongside a prose key does harm:
   // chainsight-oracle declares `address` and `symbol`, and handing it a place name

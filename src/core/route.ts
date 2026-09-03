@@ -62,6 +62,36 @@ const RULES: Array<{ intent: string; re: RegExp }> = [
 /** Tried in order when no rule matches; the first with a live miner wins. */
 const FALLBACKS = ["CHAT_COMPLETION", "WEB_SEARCH", "RESEARCH_QUERY", "TASK_COMPLETION", "LANGUAGE_GENERATION"];
 
+/** Keys that want the whole question as prose. */
+export const PROSE_KEYS = ["query", "question", "text", "prompt", "input", "message"];
+/**
+ * Keys that want a bare subject, not a sentence. openweathermap is #1 for
+ * WEATHER_CHECK and declares only `lat`, `lon`, `q`; handed "What is the current
+ * weather in Chennai?" as `q` it answers `city not found`. Handed "Chennai" it works.
+ */
+export const SUBJECT_KEYS = ["q", "city", "location", "place", "domain", "host", "hostname"];
+/** CHAT_COMPLETION miners are OpenAI-shaped and want a messages array. */
+export const MESSAGES_KEY = "messages";
+
+/**
+ * Every parameter Morse can fill from a plain question. A miner that requires
+ * anything outside this — `model`, `lat`/`lon`, a transaction hash — cannot be
+ * addressed from a sentence, and calling it anyway just buys a 400. The #1
+ * CHAT_COMPLETION miner requires `model`, and until this existed every question that
+ * matched no keyword rule was routed to it and failed.
+ */
+export function fillableKeys(subject?: string): string[] {
+  return [...PROSE_KEYS, MESSAGES_KEY, ...(subject ? SUBJECT_KEYS : [])];
+}
+
+/** True when we can supply every field the miner declares as required. */
+export function canAddress(miner: Miner, subject?: string): boolean {
+  const required = miner.input_schema?.required ?? [];
+  if (required.length === 0) return true;
+  const fillable = new Set(fillableKeys(subject));
+  return required.every((k) => fillable.has(k));
+}
+
 export interface Route {
   intent: string;
   miner: Miner;
@@ -82,7 +112,7 @@ export function classifyIntent(question: string): { intent: string; why: string 
  * be addressed. Returns null when nothing can serve the question, which the caller
  * reports honestly rather than guessing.
  */
-export async function route(question: string): Promise<Route | null> {
+export async function route(question: string, subject?: string): Promise<Route | null> {
   const guess = classifyIntent(question);
   const candidates = guess ? [guess.intent, ...FALLBACKS] : FALLBACKS;
 
@@ -90,7 +120,10 @@ export async function route(question: string): Promise<Route | null> {
   for (const intent of candidates) {
     if (!live.has(intent)) continue;
     const board = await leaderboard(intent);
-    const best = board.find((e) => (e.miner.endpoints?.length ?? 0) > 0);
+    // Best-ranked miner we can actually address. Skipping a higher-ranked miner whose
+    // required fields we cannot fill costs a rank but buys an answer: the #1
+    // CHAT_COMPLETION miner requires `model`, and calling it only ever returned 400.
+    const best = board.find((e) => (e.miner.endpoints?.length ?? 0) > 0 && canAddress(e.miner, subject));
     if (!best) continue;
     const why =
       guess && intent === guess.intent

@@ -67,3 +67,36 @@ describe("direct request payloads", () => {
     expect(directRequest(typed, "weather?", "WEATHER_CHECK").payload["q"]).toBeUndefined();
   });
 });
+
+describe("skipping miners we cannot address", () => {
+  const needsModel = { id: "1", slug: "bedrock-nova-2-lite", input_schema: { properties: { messages: {}, model: {}, max_tokens: {} }, required: ["messages", "model"] }, endpoints: [{ path: "/chat", method: "POST" }] };
+  const needsNothing = { id: "2", slug: "telegraph-chatbot", input_schema: { properties: {} }, endpoints: [{ path: "/chat", method: "POST" }] };
+  const needsLatLon = { id: "3", slug: "amanat-weather-risk", input_schema: { properties: { lat: {}, lon: {}, question: {} }, required: ["lat", "lon"] }, endpoints: [{ path: "/forecast", method: "POST" }] };
+  const needsCity = { id: "4", slug: "openweathermap", input_schema: { properties: { lat: {}, lon: {}, q: {} }, required: ["q"] }, endpoints: [{ path: "/weather", method: "GET" }] };
+
+  it("refuses a miner that requires a model we cannot know", async () => {
+    const { canAddress } = await import("../src/core/route.js");
+    // 14 real failures came from routing every unmatched question to this miner.
+    expect(canAddress(needsModel)).toBe(false);
+    expect(canAddress(needsNothing)).toBe(true);
+  });
+
+  it("refuses a miner that requires coordinates", async () => {
+    const { canAddress } = await import("../src/core/route.js");
+    expect(canAddress(needsLatLon, "Chennai")).toBe(false);
+  });
+
+  it("accepts a subject-only miner when a subject exists, not otherwise", async () => {
+    const { canAddress } = await import("../src/core/route.js");
+    expect(canAddress(needsCity, "Chennai")).toBe(true);
+    expect(canAddress(needsCity)).toBe(false);
+  });
+
+  it("builds an OpenAI-shaped messages array for chat miners", async () => {
+    const { directRequest } = await import("../src/core/ask.js");
+    const req = directRequest(needsNothing as never, "write me a haiku", "CHAT_COMPLETION");
+    expect(req.payload["messages"]).toBeUndefined(); // not declared, so not sent
+    const withMessages = directRequest({ ...needsModel, input_schema: { properties: { messages: {} } } } as never, "write me a haiku", "CHAT_COMPLETION");
+    expect(withMessages.payload["messages"]).toEqual([{ role: "user", content: "write me a haiku" }]);
+  });
+});

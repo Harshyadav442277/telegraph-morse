@@ -206,7 +206,7 @@ export interface Miner {
   signal_mapping?: SignalMapping | null;
   scores?: MinerScore[];
   endpoints?: MinerEndpoint[];
-  input_schema?: { properties?: Record<string, unknown> } | null;
+  input_schema?: { properties?: Record<string, unknown>; required?: string[] } | null;
   activation_status?: string;
   min_price_usdc?: number;
   total_requests_served?: number;
