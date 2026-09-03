@@ -43,7 +43,7 @@ details{margin:6px 0}details summary{cursor:pointer;padding:6px 0}details p{marg
 
 export function page(title: string, body: string, opts: { description?: string } = {}): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(opts.description ?? "Ask Telegram, get a receipt from the Telegraph network.")}">
+<title>${escapeHtml(title)}</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="description" content="${escapeHtml(opts.description ?? "Ask Telegram, get a receipt from the Telegraph network.")}">
 <style>${CSS}</style></head><body><main>
 <header class="top"><h1><a href="/" style="color:inherit">M<span>·</span>O<span>·</span>R<span>·</span>S<span>·</span>E</a></h1>
 <nav><a href="/#ledger">Ledger</a><a href="/keys">API &amp; MCP</a><a href="https://github.com/Harshyadav442277/telegraph-morse">GitHub</a><a href="https://telegraphprotocol.com">Telegraph</a></nav></header>

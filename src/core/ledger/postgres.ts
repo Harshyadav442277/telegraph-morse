@@ -142,7 +142,10 @@ export class PostgresLedger implements Ledger {
 
   async latestAnswered(): Promise<CallRow | null> {
     const rows = await this.q(
-      `select * from calls where status = 'ok' and answer is not null and signal_hash is not null
+      `select * from calls
+       where status = 'ok' and kind = 'ask' and signal_hash is not null
+         and answer is not null and length(answer) > 40
+         and answer !~* '(unavailable|not available|temporarily|could not|unable to|error)'
        order by at desc limit 1`,
     );
     return rows[0] ? toCallRow(rows[0]) : null;

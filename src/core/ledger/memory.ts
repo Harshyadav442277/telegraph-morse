@@ -52,7 +52,12 @@ export class MemoryLedger implements Ledger {
   }
 
   async latestAnswered(): Promise<CallRow | null> {
-    return [...this.calls].reverse().find((c) => c.status === "ok" && c.answer && c.signalHash) ?? null;
+    // The showcase row: a routed answer with substance, never a podium leg or an "unavailable" reply.
+    return (
+      [...this.calls]
+        .reverse()
+        .find((c) => c.status === "ok" && c.kind === "ask" && c.signalHash && (c.answer?.length ?? 0) > 40 && !/(unavailable|not available|temporarily|could not|unable to|error)/i.test(c.answer ?? "")) ?? null
+    );
   }
 
   async stats(): Promise<Stats> {
