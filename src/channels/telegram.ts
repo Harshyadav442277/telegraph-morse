@@ -37,6 +37,8 @@ const HELP = [
   "/stats — public usage numbers",
   "",
   "Every answer names the miner, the intent, its confidence, the cost, and a signal hash you can verify. Morse pays the network on your behalf.",
+  "",
+  "<b>What you ask is public.</b> Every question is listed in the open ledger, clipped to 200 characters, alongside the miner and the receipt. Please do not send anything private.",
 ].join("\n");
 
 export function getBot(): Bot {

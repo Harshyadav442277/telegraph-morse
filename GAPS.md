@@ -327,3 +327,14 @@ So the engine's 70/20/10 split to #1/#2/#3 is not what drives these totals. Two 
 forever; and **direct calls to `/engine/v1/ask/{minerId}` bypass ranking entirely** — the caller
 names the miner, which is what Morse itself now does. A miner with a heavy direct caller outranks
 the leaderboard on volume while scoring near zero: degenlens' average score is 0.000000000000089.
+
+### G24 · The question text is public, and users had no way to know — `DISCLOSED 2026-09-03`
+`/api/recent` returns `preview` — the question clipped to 200 characters — for every call. It is
+deliberate: the ledger is the evidence, and a ledger with the questions redacted is much weaker
+proof that real people asked real things. But the ledger *table* does not render it, so nothing on
+the site or in the bot told anyone their question was publicly queryable.
+
+Now disclosed in all three places a person could encounter it: the ledger panel on the landing
+page, the bot's `/help`, and docs/TRY_THESE.md before anyone shares it. Kept rather than removed,
+because hiding it would weaken the adoption evidence that is 45% of the score — but a user typing
+into a Telegram bot should not have to read the API to learn this.
