@@ -36,6 +36,9 @@ create table if not exists calls (
 );
 alter table calls add column if not exists settlement_tx text;
 alter table calls add column if not exists routed_by text;
+alter table calls add column if not exists label text;
+alter table calls add column if not exists answer text;
+alter table calls add column if not exists group_id text;
 create index if not exists calls_at_idx on calls (at desc);
 create index if not exists calls_user_at_idx on calls (user_hash, at);
 create table if not exists api_keys (
@@ -76,11 +79,13 @@ export class PostgresLedger implements Ledger {
   async recordCall(r: CallRow): Promise<void> {
     await this.q(
       `insert into calls (id, at, channel, user_hash, kind, preview, intent, miner_slug, miner_id,
-         miner_rank, confidence, cost_usd, duration_ms, signal_hash, settlement_tx, routed_by, status, error)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+         miner_rank, confidence, cost_usd, duration_ms, signal_hash, settlement_tx, routed_by, status, error,
+         label, answer, group_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
        on conflict (id) do nothing`,
       [r.id, r.at, r.channel, r.userHash, r.kind, r.preview, r.intent, r.minerSlug, r.minerId,
-        r.minerRank, r.confidence, r.costUsd, r.durationMs, r.signalHash, r.settlementTx, r.routedBy, r.status, r.error],
+        r.minerRank, r.confidence, r.costUsd, r.durationMs, r.signalHash, r.settlementTx, r.routedBy, r.status, r.error,
+        r.label, r.answer, r.groupId],
     );
     if (r.status === "ok") {
       await this.q(`update users set calls = calls + 1, last_seen = now() where user_hash = $1`, [r.userHash]);
@@ -131,6 +136,14 @@ export class PostgresLedger implements Ledger {
     const rows = await this.q(
       `select * from calls where signal_hash like $1 || '%' order by at desc limit 1`,
       [prefix],
+    );
+    return rows[0] ? toCallRow(rows[0]) : null;
+  }
+
+  async latestAnswered(): Promise<CallRow | null> {
+    const rows = await this.q(
+      `select * from calls where status = 'ok' and answer is not null and signal_hash is not null
+       order by at desc limit 1`,
     );
     return rows[0] ? toCallRow(rows[0]) : null;
   }
@@ -228,6 +241,9 @@ function toCallRow(r: Row): CallRow {
     signalHash: str(r["signal_hash"]),
     settlementTx: str(r["settlement_tx"]),
     routedBy: str(r["routed_by"]) as CallRow["routedBy"],
+    label: str(r["label"]),
+    answer: str(r["answer"]),
+    groupId: str(r["group_id"]),
     status: String(r["status"]) as CallRow["status"],
     error: str(r["error"]),
   };

@@ -3,8 +3,10 @@ import { getCookie, setCookie } from "hono/cookie";
 import { randomUUID } from "node:crypto";
 import { config, configProblems, paidWorkEnabled } from "../config.js";
 import { askNetwork, secondOpinion, secondOpinionOn, shouldSeekSecondOpinion, type AskContext } from "../core/ask.js";
+import { EXAMPLES, GROUPS, parseSlash, QUICK } from "../core/examples.js";
 import { hashId } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
+import { askPodium } from "../core/podium.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
 import { payerAddress, payerUsdcBalance, verifySignal } from "../core/telegraph.js";
 import { keysPage } from "../web/keys.js";
@@ -25,8 +27,23 @@ function sessionCtx(c: Context): AskContext {
 export function webRoutes(app: Hono<AppEnv>): void {
   app.get("/", async (c) => {
     const ledger = getLedger();
-    const [stats, recent] = await Promise.all([ledger.stats(), ledger.recent(25)]);
-    return c.html(landingPage({ stats, recent, ledgerKind: ledger.kind, payer: payerAddress(), publicUrl: config().MORSE_PUBLIC_URL, botUsername: config().TELEGRAM_BOT_USERNAME, paid: paidWorkEnabled(), recipes: Object.values(RECIPES) }));
+    const [stats, recent, latest] = await Promise.all([ledger.stats(), ledger.recent(25), ledger.latestAnswered()]);
+    return c.html(
+      landingPage({
+        stats,
+        recent,
+        latest,
+        ledgerKind: ledger.kind,
+        payer: payerAddress(),
+        publicUrl: config().MORSE_PUBLIC_URL,
+        botUsername: config().TELEGRAM_BOT_USERNAME,
+        paid: paidWorkEnabled(),
+        recipes: Object.values(RECIPES),
+        quick: QUICK,
+        groups: GROUPS,
+        examples: EXAMPLES,
+      }),
+    );
   });
 
   app.get("/api/stats", async (c) => c.json({ ...(await getLedger().stats()), ledger: getLedger().kind, payer: payerAddress() }));
@@ -61,13 +78,28 @@ export function webRoutes(app: Hono<AppEnv>): void {
   app.post("/api/ask", async (c) => {
     const ctx = sessionCtx(c);
     const body = (await c.req.json().catch(() => ({}))) as { question?: string; recipe?: string; input?: string };
-    if (body.recipe) {
-      const recipe = RECIPES[body.recipe];
+    let recipeName = body.recipe;
+    let input = String(body.input ?? "");
+    let q = String(body.question ?? "").trim();
+    // People bring bot habits to the web box: "/safe https://…" used to be sent to the
+    // network as a chat question. A recipe name typed with a slash runs the recipe.
+    const slash = !recipeName && q.startsWith("/") ? parseSlash(q) : null;
+    if (slash) {
+      if (RECIPES[slash.command]) {
+        recipeName = slash.command;
+        input = slash.input;
+      } else if (slash.command === "podium" || slash.command === "second") {
+        return c.json({ error: `On the web, ask a question first, then use the "${slash.command === "podium" ? "Ask the podium" : "second opinion"}" button under the answer.` }, 400);
+      } else {
+        return c.json({ error: `Unknown command /${slash.command}. Just type your question, or use /safe, /wallet, /weather or /fact.` }, 400);
+      }
+    }
+    if (recipeName) {
+      const recipe = RECIPES[recipeName];
       if (!recipe) return c.json({ error: "unknown recipe" }, 400);
-      const res = await runRecipe(ctx, recipe, String(body.input ?? ""));
+      const res = await runRecipe(ctx, recipe, input);
       return c.json(res, res.error ? 400 : 200);
     }
-    const q = String(body.question ?? "").trim();
     if (q.length < 3 || q.length > 2000) return c.json({ error: "Ask a question between 3 and 2000 characters." }, 400);
     const card = await askNetwork(ctx, q, "ask");
     // Same rule as Telegram: a miner that reports low confidence gets checked against
@@ -77,6 +109,18 @@ export function webRoutes(app: Hono<AppEnv>): void {
       card.second = s.receipt;
     }
     return c.json(card, card.ok ? 200 : 502);
+  });
+
+  /** Ask the Podium: the other top-ranked miners answer the same question, side by side. */
+  app.post("/api/podium", async (c) => {
+    const ctx = sessionCtx(c);
+    const { hash } = (await c.req.json().catch(() => ({}))) as { hash?: string };
+    if (!hash || !/^0x[0-9a-fA-F]{8,64}$/.test(hash)) return c.json({ error: "Send {\"hash\": \"0x…\"} — the signal hash of an answer." }, 400);
+    const row = await getLedger().answerByHashPrefix(hash);
+    const res = await askPodium(ctx, row);
+    // The original row's answer excerpt is public already (/api/recent); strip raw miner payloads.
+    const members = res.members.map(({ receipt, ...m }) => ({ ...m, routerReasoning: receipt?.routerReasoning ?? null, costUsd: receipt?.costUsd ?? null, durationMs: receipt?.durationMs ?? null }));
+    return c.json({ ...res, original: res.original ? { minerSlug: res.original.minerSlug, minerRank: res.original.minerRank, intent: res.original.intent, signalHash: res.original.signalHash, routedBy: res.original.routedBy } : null, members }, res.error ? (row ? 400 : 404) : 200);
   });
 
   /** Explicit second opinion on a receipt already in the ledger. */

@@ -27,6 +27,12 @@ export interface CallRow {
   settlementTx: string | null;
   /** Which router chose the miner: Telegraph's engine, or Morse's own fallback. */
   routedBy: "engine" | "morse" | null;
+  /** The miner's own verdict label, when it declares one. Podium compares these. */
+  label: string | null;
+  /** The answer text Morse showed, clipped to 500 characters. */
+  answer: string | null;
+  /** Links the rows of one podium round to the answer that started it. */
+  groupId: string | null;
   status: CallStatus;
   error: string | null;
 }
@@ -70,6 +76,8 @@ export interface Ledger {
   lastAnswerFor(userHash: string): Promise<CallRow | null>;
   /** One call by signal hash or by a unique prefix of one (Telegram callback data is capped at 64 bytes). */
   answerByHashPrefix(prefix: string): Promise<CallRow | null>;
+  /** The newest answered row that stored its answer text, for the landing page's example receipt. */
+  latestAnswered(): Promise<CallRow | null>;
   stats(): Promise<Stats>;
   insertApiKey(row: ApiKeyRow): Promise<void>;
   findApiKey(keyHash: string): Promise<ApiKeyRow | null>;

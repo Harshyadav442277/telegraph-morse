@@ -5,6 +5,7 @@ import { z } from "zod";
 import { config } from "../config.js";
 import { askNetwork, secondOpinionOn, type AskContext } from "../core/ask.js";
 import { getLedger } from "../core/ledger/index.js";
+import { askPodium } from "../core/podium.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
 import { getIntents, hotSignals, leaderboard, verifySignal } from "../core/telegraph.js";
 import { authenticateKey, type AppEnv } from "./rest.js";
@@ -27,7 +28,7 @@ export function buildServer(ctx: AskContext): McpServer {
     {
       title: "Ask the Telegraph network",
       description:
-        "Ask any question in plain language. Morse classifies the intent, calls the best-ranked live Telegraph miner for it, and pays the x402 fee. Returns the answer plus a receipt: miner, intent, rank, confidence, cost, latency, on-chain settlement tx and a signal_hash verifiable at " +
+        "Ask any question in plain language. Telegraph's own router classifies the intent and picks a ranked miner (Morse falls back to its own routing only if the router does not answer); Morse pays the x402 fee. Returns the answer plus a receipt: miner, intent, rank, routedBy, confidence, cost, latency, on-chain settlement tx and a signal_hash verifiable at " +
         (publicUrl ? `${publicUrl}/verify/{signal_hash}` : "GET /engine/v1/signal/{hash}") +
         ". Good for weather, crypto and stock prices, fact checks, translations, on-chain lookups, TLS checks, IP geolocation, academic and news search.",
       inputSchema: { question: z.string().min(3).max(2000) },
@@ -64,6 +65,28 @@ export function buildServer(ctx: AskContext): McpServer {
           ? { minerSlug: res.first.minerSlug, minerRank: res.first.minerRank, intent: res.first.intent, confidence: res.first.confidence, signalHash: res.first.signalHash }
           : null,
         second: res.second,
+        error: res.error,
+      });
+    },
+  );
+
+  server.registerTool(
+    "telegraph_podium",
+    {
+      title: "Ask the podium",
+      description:
+        "Verification layer on a previous answer: the other top-ranked miners for the same intent answer the same question directly, side by side, with ranks and receipts. Morse states agreement only when the answers are machine-comparable (a verdict such as valid/unsafe/true, or a figure such as a price or temperature, with a stated tolerance); free-text answers are returned side by side and marked as not judged. Give it the signal_hash from an earlier telegraph_ask receipt. Costs one paid call per extra miner, at most two.",
+      inputSchema: { signal_hash: z.string().regex(/^0x[0-9a-fA-F]{8,64}$/) },
+    },
+    async ({ signal_hash }) => {
+      const res = await askPodium(ctx, await getLedger().answerByHashPrefix(signal_hash));
+      return text({
+        question: res.question,
+        intent: res.intent,
+        agreement: res.agreement,
+        members: res.members.map(({ receipt, ...m }) => ({ ...m, costUsd: receipt?.costUsd ?? null, durationMs: receipt?.durationMs ?? null })),
+        paidCalls: res.paidCalls,
+        skipped: res.skipped,
         error: res.error,
       });
     },

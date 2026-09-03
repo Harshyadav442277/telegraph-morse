@@ -243,6 +243,26 @@ export async function minerBySlug(slug: string | null | undefined): Promise<Mine
   return (await getMiners()).find((m) => m.slug === slug) ?? null;
 }
 
+export async function minerById(id: string | number | null | undefined): Promise<Miner | null> {
+  if (id === null || id === undefined) return null;
+  const s = String(id);
+  return (await getMiners()).find((m) => m.id === s) ?? null;
+}
+
+/**
+ * The Engine's `miner_name` is the miner's display name ("TxLens", "PREFLIGHT
+ * Infrastructure Signals"), not its slug, and `miner_id` is the catalogue id. Looking
+ * a router answer up by slug therefore found nothing, which silently dropped the rank
+ * and the signal mapping from every engine-routed receipt. Resolve by id first.
+ */
+export async function resolveMiner(ref: { id?: string | number | null; name?: string | null }): Promise<Miner | null> {
+  const byId = await minerById(ref.id);
+  if (byId) return byId;
+  const miners = await getMiners();
+  if (!ref.name) return null;
+  return miners.find((m) => m.slug === ref.name) ?? miners.find((m) => m.name === ref.name) ?? null;
+}
+
 export function rankOf(miner: Miner | null, intent: string | null): number | null {
   if (!miner || !intent) return null;
   return miner.scores?.find((s) => s.intent_id === intent)?.rank ?? null;

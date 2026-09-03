@@ -4,10 +4,12 @@ import type { AppEnv } from "./rest.js";
 import { config } from "../config.js";
 import { askNetwork, secondOpinion, secondOpinionOn, shouldSeekSecondOpinion, type AskContext } from "../core/ask.js";
 import { defer } from "../core/defer.js";
-import { cardHtml, esc, recipeHtml, secondOpinionHtml } from "../core/format.js";
+import { EXAMPLES, QUICK } from "../core/examples.js";
+import { cardHtml, esc, podiumHtml, recipeHtml, secondOpinionHtml } from "../core/format.js";
 import { hashId } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
 import type { CallRow } from "../core/ledger/types.js";
+import { askPodium } from "../core/podium.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
 import { hotSignals, verifySignal } from "../core/telegraph.js";
 
@@ -18,28 +20,64 @@ import { hotSignals, verifySignal } from "../core/telegraph.js";
 let bot: Bot | null = null;
 let botReady: Promise<void> | null = null;
 
+const OPTS = { parse_mode: "HTML" as const, link_preview_options: { is_disabled: true } };
+
 function ctxFor(ctx: Context): AskContext {
   const id = String(ctx.from?.id ?? ctx.chat?.id ?? "anon");
   return { channel: "telegram", userHash: hashId("tg", id, config().HASH_SALT) };
 }
 
+/** The five examples on the /start keyboard: each is a specialised miner, so the receipt is striking. */
+const START_EXAMPLES = QUICK.filter((e) => ["SSL_VERIFICATION", "WEATHER_CHECK", "CRYPTO_PRICE", "URL_SCAN", "FACT_CHECK"].includes(e.intent));
+
+const START = [
+  "<b>Morse</b> — ask anything, and Telegraph's miner network answers <b>with a receipt</b>.",
+  "",
+  "Just type a question. Or tap one below to see what an answer looks like: who answered, their rank, how confident, what it cost, and a signal hash you can verify.",
+  "",
+  "After any answer, tap <b>Ask the podium</b>: the other top-ranked miners answer the same question, side by side, and Morse says whether they agree.",
+].join("\n");
+
 const HELP = [
   "<b>Morse</b> — ask, and the Telegraph miner network answers with a receipt.",
   "",
-  "Just type a question: weather, prices, fact checks, translations, on-chain lookups…",
+  "Type a question in plain language. Examples:",
+  ...QUICK.map((e) => `• ${esc(e.q)}`),
   "",
-  "<b>Recipes</b> (several intents combined):",
+  "<b>Recipes</b> (several miners at once):",
   ...Object.values(RECIPES).map((r) => `${esc(r.usage)} — ${esc(r.description)}`),
   "",
-  "/second — ask the next-ranked miner the same question, and compare",
-  "/hot — what the network is talking about right now",
+  "/podium — the other top-ranked miners answer your last question; Morse compares them",
+  "/second — one more miner, the next-ranked, on your last question",
+  "/hot — what the network is asking itself right now",
   "/verify &lt;signal hash&gt; — check any receipt on the node",
   "/stats — public usage numbers",
   "",
-  "Every answer names the miner, the intent, its confidence, the cost, and a signal hash you can verify. Morse pays the network on your behalf.",
-  "",
-  "<b>What you ask is public.</b> Every question is listed in the open ledger, clipped to 200 characters, alongside the miner and the receipt. Please do not send anything private.",
+  "<b>What you ask is public.</b> Every question is listed in the open ledger, clipped to 200 characters, with the miner and the receipt. Please do not send anything private.",
 ].join("\n");
+
+export const COMMANDS = [
+  { command: "start", description: "What Morse is, with example questions" },
+  { command: "podium", description: "Other top-ranked miners answer your last question" },
+  { command: "second", description: "A second opinion on your last question" },
+  { command: "safe", description: "URL safety: link scan + TLS + IP location" },
+  { command: "weather", description: "Current weather + 48h storm risk for a place" },
+  { command: "wallet", description: "Balance + fraud risk for an address" },
+  { command: "fact", description: "Fact check + latest news for a claim" },
+  { command: "hot", description: "What the network is asking itself" },
+  { command: "verify", description: "Check a signal hash on the node" },
+  { command: "stats", description: "Public usage numbers" },
+  { command: "help", description: "All commands" },
+];
+
+function startKeyboard(): InlineKeyboard {
+  const kb = new InlineKeyboard();
+  START_EXAMPLES.forEach((e, i) => {
+    kb.text(e.label, `ex:${EXAMPLES.indexOf(e)}`);
+    if (i % 2 === 1) kb.row();
+  });
+  return kb;
+}
 
 export function getBot(): Bot {
   if (bot) return bot;
@@ -47,14 +85,37 @@ export function getBot(): Bot {
   if (!c.TELEGRAM_BOT_TOKEN) throw new Error("TELEGRAM_BOT_TOKEN is not set");
   const b = new Bot(c.TELEGRAM_BOT_TOKEN);
 
-  b.command(["start", "help"], (ctx) => ctx.reply(HELP, { parse_mode: "HTML", link_preview_options: { is_disabled: true } }));
+  /** Ask, then edit the progress message into the answer with a podium button. */
+  async function answer(ctx: Context, q: string, progressId: number): Promise<void> {
+    const a = ctxFor(ctx);
+    const card = await askNetwork(a, q);
+    if (card.ok && card.receipt && shouldSeekSecondOpinion(card.receipt) && card.receipt.intent) {
+      const s = await secondOpinion(a, q, card.receipt.intent, card.receipt.minerSlug);
+      card.second = s.receipt;
+    }
+    const kb = card.ok && card.receipt?.signalHash && card.receipt.intent
+      ? new InlineKeyboard().text("Ask the podium", `pd:${card.receipt.signalHash.slice(0, 40)}`)
+      : undefined;
+    await edit(ctx, progressId, cardHtml(card, c.MORSE_PUBLIC_URL), kb);
+  }
+
+  b.command("start", (ctx) => ctx.reply(START, { ...OPTS, reply_markup: startKeyboard() }));
+  b.command("help", (ctx) => ctx.reply(HELP, OPTS));
+
+  b.callbackQuery(/^ex:(\d+)$/, async (ctx) => {
+    const e = EXAMPLES[Number(ctx.match[1])];
+    await ctx.answerCallbackQuery();
+    if (!e) return;
+    const progress = await ctx.reply(`<i>${esc(e.q)}</i>\n\nAsking the Telegraph network…`, OPTS);
+    defer(answer(ctx, e.q, progress.message_id));
+  });
 
   b.command("stats", async (ctx) => {
     const s = await getLedger().stats();
     const url = c.MORSE_PUBLIC_URL ? `\n${c.MORSE_PUBLIC_URL}` : "";
     await ctx.reply(
       `<b>Morse so far</b>\n${s.usersAnswered} people answered (${s.users} asked) · ${s.okCalls} answered calls · ${s.intents} intents · ${s.miners} miners · $${s.spentUsd.toFixed(2)} paid to the network\nToday: ${s.today.calls} calls from ${s.today.users} users${esc(url)}`,
-      { parse_mode: "HTML", link_preview_options: { is_disabled: true } },
+      OPTS,
     );
   });
 
@@ -66,7 +127,7 @@ export function getBot(): Bot {
       const s = rec.signal ?? {};
       await ctx.reply(
         `<b>Signal found on the node</b>\nminer: ${esc(s.miner_slug ?? "?")}\npaid by: <code>${esc(s.wallet_address ?? "?")}</code>\nsettlement tx: ${s.tx_hash ? `<a href="https://sepolia.basescan.org/tx/${s.tx_hash}">${esc(s.tx_hash.slice(0, 14))}…</a>` : "n/a"}\nrecorded: ${esc(s.created_at ?? "?")}`,
-        { parse_mode: "HTML", link_preview_options: { is_disabled: true } },
+        OPTS,
       );
     } catch (e) {
       await ctx.reply(`Could not verify: ${(e as Error).message}`);
@@ -78,7 +139,7 @@ export function getBot(): Bot {
       const rows = await hotSignals(5);
       if (rows.length === 0) return ctx.reply("The Daemon feed is quiet right now.");
       const lines = rows.map((r) => `• ${esc(r.question?.text ?? "?")} <i>(${esc(r.routing?.intent ?? r.question?.category ?? "?")})</i>`);
-      await ctx.reply(`<b>What the network is asking itself</b>\n${lines.join("\n")}`, { parse_mode: "HTML" });
+      await ctx.reply(`<b>What the network is asking itself</b>\n${lines.join("\n")}`, OPTS);
     } catch (e) {
       await ctx.reply(`Feed unavailable: ${(e as Error).message}`);
     }
@@ -98,14 +159,32 @@ export function getBot(): Bot {
     });
   }
 
-  /** Ask the next-ranked miner for the same intent, and show both miners side by side. */
-  async function replyWithSecondOpinion(ctx: Context, row: CallRow | null): Promise<void> {
-    const res = await secondOpinionOn(ctxFor(ctx), row);
-    const html = res.first
-      ? secondOpinionHtml(res.first, res.second, res.error, c.MORSE_PUBLIC_URL)
-      : `⚠️ ${esc(res.error ?? "Nothing to compare.")}`;
-    await ctx.reply(html, { parse_mode: "HTML", link_preview_options: { is_disabled: true } });
+  /** Podium on a row: the other top-ranked miners for the same intent, side by side. */
+  async function podiumOn(ctx: Context, row: CallRow | null, progressId: number): Promise<void> {
+    const res = await askPodium(ctxFor(ctx), row);
+    await edit(ctx, progressId, podiumHtml(res, c.MORSE_PUBLIC_URL));
   }
+
+  b.command("podium", async (ctx) => {
+    const progress = await ctx.reply("Asking the other top-ranked miners… (up to ~30 s)");
+    defer(
+      (async () => {
+        const row = await getLedger().lastAnswerFor(ctxFor(ctx).userHash);
+        await podiumOn(ctx, row, progress.message_id);
+      })(),
+    );
+  });
+
+  b.callbackQuery(/^pd:(.+)$/, async (ctx) => {
+    const prefix = ctx.match[1] ?? "";
+    await ctx.answerCallbackQuery({ text: "Asking the other top-ranked miners…" });
+    const progress = await ctx.reply("Asking the other top-ranked miners… (up to ~30 s)");
+    defer(
+      (async () => {
+        await podiumOn(ctx, await getLedger().answerByHashPrefix(prefix), progress.message_id);
+      })(),
+    );
+  });
 
   b.command("second", async (ctx) => {
     const progress = await ctx.reply("Asking the next-ranked miner…");
@@ -122,30 +201,11 @@ export function getBot(): Bot {
     );
   });
 
-  b.callbackQuery(/^so:(.+)$/, async (ctx) => {
-    const prefix = ctx.match[1] ?? "";
-    await ctx.answerCallbackQuery({ text: "Asking the next-ranked miner…" });
-    await replyWithSecondOpinion(ctx, await getLedger().answerByHashPrefix(prefix));
-  });
-
   b.on("message:text", async (ctx) => {
     const q = ctx.message.text.trim();
     if (q.startsWith("/") || q.length < 3) return;
     const progress = await ctx.reply("Asking the Telegraph network…");
-    defer(
-      (async () => {
-        const a = ctxFor(ctx);
-        const card = await askNetwork(a, q);
-        if (card.ok && card.receipt && shouldSeekSecondOpinion(card.receipt) && card.receipt.intent) {
-          const s = await secondOpinion(a, q, card.receipt.intent, card.receipt.minerSlug);
-          card.second = s.receipt;
-        }
-        const kb = card.ok && card.receipt?.signalHash && card.receipt.intent && !card.second
-          ? new InlineKeyboard().text("Second opinion", `so:${card.receipt.signalHash.slice(0, 40)}`)
-          : undefined;
-        await edit(ctx, progress.message_id, cardHtml(card, c.MORSE_PUBLIC_URL), kb);
-      })(),
-    );
+    defer(answer(ctx, q, progress.message_id));
   });
 
   b.catch((err) => console.error("telegram handler error:", err.error));
@@ -157,11 +217,7 @@ async function edit(ctx: Context, messageId: number, html: string, kb?: InlineKe
   const chat = ctx.chat?.id;
   if (!chat) return;
   try {
-    await ctx.api.editMessageText(chat, messageId, html, {
-      parse_mode: "HTML",
-      link_preview_options: { is_disabled: true },
-      ...(kb ? { reply_markup: kb } : {}),
-    });
+    await ctx.api.editMessageText(chat, messageId, html, { ...OPTS, ...(kb ? { reply_markup: kb } : {}) });
   } catch {
     // HTML the miner produced may not parse; fall back to plain text.
     await ctx.api.editMessageText(chat, messageId, html.replace(/<[^>]+>/g, ""), kb ? { reply_markup: kb } : {});
@@ -180,13 +236,15 @@ export function telegramRoutes(app: Hono<AppEnv>): void {
   });
 }
 
-/** Operator action: point Telegram at this deployment. Needs ADMIN_TOKEN. */
+/** Operator action: point Telegram at this deployment and publish the command menu. Needs ADMIN_TOKEN. */
 export async function installWebhook(publicUrl: string): Promise<unknown> {
   const cfg = config();
   const b = getBot();
-  return b.api.setWebhook(`${publicUrl.replace(/\/+$/, "")}/telegram/webhook`, {
+  const webhook = await b.api.setWebhook(`${publicUrl.replace(/\/+$/, "")}/telegram/webhook`, {
     ...(cfg.TELEGRAM_WEBHOOK_SECRET ? { secret_token: cfg.TELEGRAM_WEBHOOK_SECRET } : {}),
     allowed_updates: ["message", "callback_query"],
     drop_pending_updates: true,
   });
+  const commands = await b.api.setMyCommands(COMMANDS);
+  return { webhook, commands };
 }

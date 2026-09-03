@@ -4,7 +4,7 @@ import { guardPaid } from "./guards.js";
 import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
-import { askMiner, askRouted, leaderboard, minerBySlug, rankOf, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
+import { askMiner, askRouted, leaderboard, rankOf, resolveMiner, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
 import { CHAT_INTENTS, MESSAGES_KEY, PROSE_KEYS, routeCandidates, SUBJECT_KEYS, type Route } from "./route.js";
 
 /**
@@ -29,11 +29,20 @@ export interface AnswerCard {
   /** Calls this identity may still make today. */
   remaining: number | null;
   rowId: string | null;
+  /** Who chose the miner: Telegraph's own router, or Morse's fallback. */
+  routedBy?: "engine" | "morse" | null;
 }
 
 export function preview(q: string): string {
   const s = q.replace(/\s+/g, " ").trim();
   return s.length > 200 ? `${s.slice(0, 197)}…` : s;
+}
+
+/** The answer text kept on the ledger row, clipped so a row stays small. */
+export function answerExcerpt(a: string | null | undefined): string | null {
+  if (!a) return null;
+  const s = a.replace(/\s+/g, " ").trim();
+  return s.length > 500 ? `${s.slice(0, 497)}…` : s;
 }
 
 /** Guard for N calls without spending; recipes call this before fanning out. */
@@ -66,7 +75,7 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
         fillRow(row, viaEngine, "ok");
         row.routedBy = "engine";
         await ledger.recordCall(row);
-        return { ok: true, kind, question, receipt: viaEngine, second: null, error: null, remaining, rowId: row.id };
+        return { ok: true, kind, question, receipt: viaEngine, second: null, error: null, remaining, rowId: row.id, routedBy: "engine" };
       }
     }
 
@@ -80,14 +89,14 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
       try {
         const raw = await askMiner(cand.miner.id, directRequest(cand.miner, question, cand.intent, subject));
         raw.intent ??= cand.intent;
-        raw.miner_name ??= cand.miner.slug;
         const receipt = buildReceipt(raw, cand.miner.signal_mapping ?? null, cand.rank);
+        receipt.minerSlug = cand.miner.slug;
         const after = i === 0 ? "" : ` The ${i} better-ranked miner${i > 1 ? "s" : ""} could not be paid or could not take the request.`;
         receipt.routerReasoning = `Telegraph's own router did not answer, so Morse routed this itself: ${cand.why}, then called the #${cand.rank ?? "?"} miner for ${cand.intent}.${after}`;
         fillRow(row, receipt, "ok");
         row.routedBy = "morse";
         await ledger.recordCall(row);
-        return { ok: true, kind, question, receipt, second: null, error: null, remaining, rowId: row.id };
+        return { ok: true, kind, question, receipt, second: null, error: null, remaining, rowId: row.id, routedBy: "morse" };
       } catch (inner) {
         const err = inner instanceof TelegraphError ? inner : new TelegraphError((inner as Error).message, "network");
         lastError = err;
@@ -110,9 +119,80 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
       row.minerSlug = chosen.miner.slug;
       row.minerId = chosen.miner.id;
       row.minerRank = chosen.rank;
+      row.routedBy = "morse";
     }
     await ledger.recordCall(row);
-    return { ok: false, kind, question, receipt: null, second: null, error: err.message, remaining, rowId: row.id };
+    return { ok: false, kind, question, receipt: null, second: null, error: err.message, remaining, rowId: row.id, routedBy: row.routedBy };
+  }
+}
+
+/**
+ * One capped attempt at Telegraph's router. Returns null — never throws — when it
+ * cannot serve the question, because the caller's job is to fall back quietly rather
+ * than surface the network's bad day to the person who asked.
+ *
+ * Nothing is charged for a failure here: the settle timeout that broke it reported an
+ * empty `transaction`, and a 402 means the payment was refused rather than taken.
+ */
+async function tryEngineRouter(question: string): Promise<Receipt | null> {
+  try {
+    const raw = await askRouted(question);
+    // The Engine names the miner by display name and by catalogue id; the slug is
+    // what the ledger, the leaderboard and Podium key on, so resolve it here.
+    const miner = await resolveMiner({ id: raw.miner_id ?? null, name: raw.miner_name ?? null });
+    const receipt = buildReceipt(raw, miner?.signal_mapping ?? null, rankOf(miner, raw.intent ?? null));
+    if (miner) receipt.minerSlug = miner.slug;
+    receipt.routerReasoning = `Telegraph's own router classified this as ${raw.intent ?? "an intent"} and picked ${miner?.slug ?? raw.miner_name ?? "a miner"}${receipt.minerRank ? ` (#${receipt.minerRank})` : ""}.`;
+    return receipt;
+  } catch (e) {
+    const err = e instanceof TelegraphError ? e : new TelegraphError((e as Error).message, "network");
+    console.error(`engine router unavailable (${err.kind}), falling back to Morse routing:`, err.message.slice(0, 200));
+    return null;
+  }
+}
+
+export interface DirectOutcome {
+  receipt: Receipt | null;
+  error: string | null;
+  row: CallRow;
+}
+
+/**
+ * Call one named miner directly for one intent, and record the row whatever
+ * happens. Shared by second opinions and Podium. The caller has already applied the
+ * spending guard for this call.
+ */
+export async function callMinerDirect(
+  ctx: AskContext,
+  miner: Miner,
+  rank: number | null,
+  intent: string,
+  question: string,
+  opts: { kind: string; groupId?: string | null; timeoutMs?: number; subject?: string },
+): Promise<DirectOutcome> {
+  const row = baseRow(ctx, opts.kind, question);
+  row.groupId = opts.groupId ?? null;
+  row.routedBy = "morse";
+  row.intent = intent;
+  row.minerSlug = miner.slug;
+  row.minerId = miner.id;
+  row.minerRank = rank;
+  const ledger = getLedger();
+  try {
+    const raw = await askMiner(miner.id, directRequest(miner, question, intent, opts.subject), opts.timeoutMs);
+    raw.intent = intent;
+    const receipt = buildReceipt(raw, miner.signal_mapping ?? null, rank);
+    receipt.minerSlug = miner.slug;
+    receipt.routerReasoning = `Morse called ${miner.slug} (#${rank ?? "?"} for ${intent}) directly, at your request.`;
+    fillRow(row, receipt, "ok");
+    await ledger.recordCall(row);
+    return { receipt, error: null, row };
+  } catch (e) {
+    const err = e instanceof TelegraphError ? e : new TelegraphError((e as Error).message, "network");
+    row.status = err.kind === "timeout" ? "timeout" : err.kind === "unpaid" ? "unpaid" : "error";
+    row.error = err.message.slice(0, 300);
+    await ledger.recordCall(row);
+    return { receipt: null, error: `${miner.slug} could not answer directly: ${err.message}`, row };
   }
 }
 
@@ -130,51 +210,10 @@ export async function secondOpinion(
   const g = await guard(ctx, 1);
   if (!g.allowed) return { receipt: null, error: g.reason ?? "Not allowed." };
   const board = await leaderboard(intent);
-  const candidate = board.find((e) => e.miner.slug !== excludeSlug && (e.miner.endpoints?.length ?? 0) > 0);
+  const candidate = board.find((e) => e.miner.slug !== excludeSlug && e.miner.name !== excludeSlug && (e.miner.endpoints?.length ?? 0) > 0);
   if (!candidate) return { receipt: null, error: `No other active miner serves ${intent}.` };
-  const req = directRequest(candidate.miner, question, intent);
-  const row = baseRow(ctx, "second-opinion", question);
-  const ledger = getLedger();
-  try {
-    const raw = await askMiner(candidate.miner.id, req);
-    raw.intent = intent;
-    raw.miner_name = raw.miner_name ?? candidate.miner.slug;
-    const receipt = buildReceipt(raw, candidate.miner.signal_mapping ?? null, candidate.rank);
-    fillRow(row, receipt, "ok");
-    await ledger.recordCall(row);
-    return { receipt, error: null };
-  } catch (e) {
-    const err = e instanceof TelegraphError ? e : new TelegraphError((e as Error).message, "network");
-    row.status = err.kind === "timeout" ? "timeout" : err.kind === "unpaid" ? "unpaid" : "error";
-    row.error = err.message.slice(0, 300);
-    row.minerSlug = candidate.miner.slug;
-    row.minerId = candidate.miner.id;
-    row.intent = intent;
-    await ledger.recordCall(row);
-    return { receipt: null, error: `${candidate.miner.slug} could not answer directly: ${err.message}` };
-  }
-}
-
-/**
- * One capped attempt at Telegraph's router. Returns null — never throws — when it
- * cannot serve the question, because the caller's job is to fall back quietly rather
- * than surface the network's bad day to the person who asked.
- *
- * Nothing is charged for a failure here: the settle timeout that broke it reported an
- * empty `transaction`, and a 402 means the payment was refused rather than taken.
- */
-async function tryEngineRouter(question: string): Promise<Receipt | null> {
-  try {
-    const raw = await askRouted(question);
-    const miner = await minerBySlug(raw.miner_name);
-    const receipt = buildReceipt(raw, miner?.signal_mapping ?? null, rankOf(miner, raw.intent ?? null));
-    receipt.routerReasoning = `Telegraph's own router classified this as ${raw.intent ?? "an intent"} and picked ${raw.miner_name ?? "a miner"}${receipt.minerRank ? ` (#${receipt.minerRank})` : ""}.`;
-    return receipt;
-  } catch (e) {
-    const err = e instanceof TelegraphError ? e : new TelegraphError((e as Error).message, "network");
-    console.error(`engine router unavailable (${err.kind}), falling back to Morse routing:`, err.message.slice(0, 200));
-    return null;
-  }
+  const out = await callMinerDirect(ctx, candidate.miner, candidate.rank, intent, question, { kind: "second-opinion" });
+  return { receipt: out.receipt, error: out.error };
 }
 
 export interface SecondOpinionResult {
@@ -252,7 +291,7 @@ export function shouldSeekSecondOpinion(receipt: Receipt): boolean {
   return receipt.confidence !== null && receipt.confidence < config().SECOND_OPINION_THRESHOLD && Boolean(receipt.intent);
 }
 
-function baseRow(ctx: AskContext, kind: string, question: string): CallRow {
+export function baseRow(ctx: AskContext, kind: string, question: string): CallRow {
   return {
     id: randomUUID(),
     at: new Date().toISOString(),
@@ -270,6 +309,9 @@ function baseRow(ctx: AskContext, kind: string, question: string): CallRow {
     signalHash: null,
     settlementTx: null,
     routedBy: null,
+    label: null,
+    answer: null,
+    groupId: null,
     status: "error",
     error: null,
   };
@@ -285,5 +327,7 @@ function fillRow(row: CallRow, r: Receipt, status: CallRow["status"]): void {
   row.durationMs = r.durationMs;
   row.signalHash = r.signalHash;
   row.settlementTx = r.settlementTx;
+  row.label = r.label;
+  row.answer = answerExcerpt(r.answer);
   row.status = status;
 }

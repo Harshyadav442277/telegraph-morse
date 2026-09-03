@@ -28,6 +28,17 @@ td.mono,code,pre{font-family:var(--mono);font-size:12.5px}pre{background:var(--b
 .ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}.muted{color:var(--muted)}
 .tablewrap{overflow-x:auto}footer{color:var(--muted);font-size:13px;margin-top:40px}
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--muted)}
+
+.hero{border-color:var(--accent)}.hero .q{font-size:16px;color:var(--muted);margin:0 0 8px;font-style:italic}
+.rcpt{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:10px 0 0;font-size:13px}.rcpt dt{color:var(--muted)}.rcpt dd{margin:0;word-break:break-word}
+.sub{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+button.pd,button.so{background:var(--panel);color:var(--fg);border:1px solid var(--accent);font-weight:600}
+.podium{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--panel)}
+.podium .verdict{font-weight:600;margin-bottom:10px;font-size:15px}.podium .verdict.ok{color:var(--ok)}.podium .verdict.warn{color:var(--warn)}
+.member{padding:10px 0;border-top:1px solid var(--line)}.member .ans{white-space:pre-wrap;margin-top:4px}
+.chips .ex{border-color:var(--accent)}.chips span.muted{align-self:center;font-size:13px}
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 24px;margin-top:10px}.groups h3{font-size:14px;margin:8px 0 4px}.groups ul{margin:0;padding-left:18px}.groups li{margin:3px 0;font-size:14px}
+details{margin:6px 0}details summary{cursor:pointer;padding:6px 0}details p{margin:4px 0 8px 0;color:var(--fg)}
 `;
 
 export function page(title: string, body: string, opts: { description?: string } = {}): string {

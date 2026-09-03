@@ -5,6 +5,7 @@ import { bearer, hashId, hashKey, newApiKey } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
 import type { ApiKeyRow } from "../core/ledger/types.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
+import { askPodium } from "../core/podium.js";
 import { getIntents, leaderboard } from "../core/telegraph.js";
 
 /**
@@ -59,6 +60,16 @@ export function restRoutes(app: Hono<AppEnv>): void {
   app.get("/v1/leaderboard/:intent", async (c) => {
     const board = await leaderboard(c.req.param("intent").toUpperCase());
     return c.json({ intent: c.req.param("intent").toUpperCase(), miners: board.map((e) => ({ slug: e.miner.slug, id: e.miner.id, rank: e.rank, score: e.score })) });
+  });
+
+  /** Ask the podium on an earlier answer, by its signal hash. */
+  app.post("/v1/podium", requireKey, async (c) => {
+    const { ctx } = c.get("identity");
+    const body = (await c.req.json().catch(() => ({}))) as { signal_hash?: string; hash?: string };
+    const hash = String(body.signal_hash ?? body.hash ?? "");
+    if (!/^0x[0-9a-fA-F]{8,64}$/.test(hash)) return c.json({ error: "Send {\"signal_hash\": \"0x…\"} from an earlier /v1/ask receipt." }, 400);
+    const res = await askPodium(ctx, await getLedger().answerByHashPrefix(hash));
+    return c.json({ ...res, original: res.original ? { minerSlug: res.original.minerSlug, minerRank: res.original.minerRank, signalHash: res.original.signalHash } : null, members: res.members.map(({ receipt, ...m }) => ({ ...m, costUsd: receipt?.costUsd ?? null, durationMs: receipt?.durationMs ?? null })) }, res.error ? 400 : 200);
   });
 
   app.post("/v1/ask", requireKey, async (c) => {
