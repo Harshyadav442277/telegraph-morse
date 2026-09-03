@@ -15,10 +15,12 @@ const base: Config = {
   TELEGRAPH_NODE: "https://devnode.telegraphprotocol.com",
   SECOND_OPINION_THRESHOLD: 0.6,
   ASK_TIMEOUT_MS: 45_000,
+  USE_ENGINE_ROUTER: true,
+  ROUTER_TIMEOUT_MS: 20_000,
 };
 
 function okRow(userHash: string): CallRow {
-  return { id: Math.random().toString(36), at: new Date().toISOString(), channel: "telegram", userHash, kind: "ask", preview: "q", intent: "X", minerSlug: "m", minerId: "1", minerRank: 1, confidence: null, costUsd: 0.01, durationMs: 1, signalHash: "0x1", settlementTx: null, status: "ok", error: null };
+  return { id: Math.random().toString(36), at: new Date().toISOString(), channel: "telegram", userHash, kind: "ask", preview: "q", intent: "X", minerSlug: "m", minerId: "1", minerRank: 1, confidence: null, costUsd: 0.01, durationMs: 1, signalHash: "0x1", settlementTx: null, routedBy: null, status: "ok", error: null };
 }
 
 describe("paid guards", () => {

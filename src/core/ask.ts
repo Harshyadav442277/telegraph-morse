@@ -4,7 +4,7 @@ import { guardPaid } from "./guards.js";
 import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
-import { askMiner, leaderboard, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
+import { askMiner, askRouted, leaderboard, minerBySlug, rankOf, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
 import { CHAT_INTENTS, MESSAGES_KEY, PROSE_KEYS, routeCandidates, SUBJECT_KEYS, type Route } from "./route.js";
 
 /**
@@ -55,9 +55,21 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
   const row = baseRow(ctx, kind, question);
   let chosen: Route | null = null;
   try {
-    // Telegraph's own router is unusable from a 60s serverless function: its settlement
-    // call times out at ~47s while a direct miner call settles in ~4s (GAPS G17). So
-    // Morse routes, and says on the receipt how it chose.
+    // Telegraph's own router classifies with an LLM and is better at it than keyword
+    // rules, so it goes first — on a short leash. It was unusable on 2026-09-02
+    // (settlement timing out at ~47s) and healthy at 6.5s the next day, and a 60s
+    // function has no room for a slow failure plus a fallback (GAPS G17).
+    const cfg = config();
+    if (cfg.USE_ENGINE_ROUTER && !skipGuard) {
+      const viaEngine = await tryEngineRouter(question);
+      if (viaEngine) {
+        fillRow(row, viaEngine, "ok");
+        row.routedBy = "engine";
+        await ledger.recordCall(row);
+        return { ok: true, kind, question, receipt: viaEngine, second: null, error: null, remaining, rowId: row.id };
+      }
+    }
+
     const candidates = await routeCandidates(question, subject);
     if (candidates.length === 0) {
       throw new TelegraphError("No active miner serves a question like this right now.", "engine");
@@ -71,8 +83,9 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
         raw.miner_name ??= cand.miner.slug;
         const receipt = buildReceipt(raw, cand.miner.signal_mapping ?? null, cand.rank);
         const after = i === 0 ? "" : ` The ${i} better-ranked miner${i > 1 ? "s" : ""} could not be paid or could not take the request.`;
-        receipt.routerReasoning = `Morse routed this: ${cand.why}, then called the #${cand.rank ?? "?"} miner for ${cand.intent}.${after}`;
+        receipt.routerReasoning = `Telegraph's own router did not answer, so Morse routed this itself: ${cand.why}, then called the #${cand.rank ?? "?"} miner for ${cand.intent}.${after}`;
         fillRow(row, receipt, "ok");
+        row.routedBy = "morse";
         await ledger.recordCall(row);
         return { ok: true, kind, question, receipt, second: null, error: null, remaining, rowId: row.id };
       } catch (inner) {
@@ -139,6 +152,28 @@ export async function secondOpinion(
     row.intent = intent;
     await ledger.recordCall(row);
     return { receipt: null, error: `${candidate.miner.slug} could not answer directly: ${err.message}` };
+  }
+}
+
+/**
+ * One capped attempt at Telegraph's router. Returns null — never throws — when it
+ * cannot serve the question, because the caller's job is to fall back quietly rather
+ * than surface the network's bad day to the person who asked.
+ *
+ * Nothing is charged for a failure here: the settle timeout that broke it reported an
+ * empty `transaction`, and a 402 means the payment was refused rather than taken.
+ */
+async function tryEngineRouter(question: string): Promise<Receipt | null> {
+  try {
+    const raw = await askRouted(question);
+    const miner = await minerBySlug(raw.miner_name);
+    const receipt = buildReceipt(raw, miner?.signal_mapping ?? null, rankOf(miner, raw.intent ?? null));
+    receipt.routerReasoning = `Telegraph's own router classified this as ${raw.intent ?? "an intent"} and picked ${raw.miner_name ?? "a miner"}${receipt.minerRank ? ` (#${receipt.minerRank})` : ""}.`;
+    return receipt;
+  } catch (e) {
+    const err = e instanceof TelegraphError ? e : new TelegraphError((e as Error).message, "network");
+    console.error(`engine router unavailable (${err.kind}), falling back to Morse routing:`, err.message.slice(0, 200));
+    return null;
   }
 }
 
@@ -234,6 +269,7 @@ function baseRow(ctx: AskContext, kind: string, question: string): CallRow {
     durationMs: null,
     signalHash: null,
     settlementTx: null,
+    routedBy: null,
     status: "error",
     error: null,
   };

@@ -44,6 +44,21 @@ const schema = z.object({
   /** Confidence below which a second opinion is fetched automatically. */
   SECOND_OPINION_THRESHOLD: z.coerce.number().min(0).max(1).default(0.6),
   ASK_TIMEOUT_MS: z.coerce.number().int().min(1000).default(45_000),
+  /**
+   * Try Telegraph's own router first. It was unusable on 2026-09-02 (settlement timing
+   * out at ~47s) and healthy again on 2026-09-03 at 6.5s, so Morse uses it when it
+   * works and falls back to its own routing when it does not (GAPS G17).
+   */
+  USE_ENGINE_ROUTER: z
+    .string()
+    .default("true")
+    .transform((v) => v !== "false" && v !== "0"),
+  /**
+   * Hard cap on the router attempt. The failure mode is *slow*: 47s to fail plus a
+   * fallback call would exceed the 60s function ceiling, so the router gets a short
+   * budget and the fallback keeps the rest.
+   */
+  ROUTER_TIMEOUT_MS: z.coerce.number().int().min(1000).default(20_000),
 });
 
 export type Config = z.infer<typeof schema>;

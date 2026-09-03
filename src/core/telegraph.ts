@@ -155,11 +155,15 @@ function snippet(text: string): string {
 }
 
 /**
- * Morse does NOT use the Engine's auto-router (`POST /engine/v1/ask`). Its settlement
- * step calls facilitator.payai.network and takes ~47s to time out, against a 60s
- * serverless ceiling; the direct call below settles in ~4s. See GAPS G17 — and if the
- * router is ever fixed, `route.ts` is the thing to reconsider, not this file.
+ * The Engine's own router: it classifies the intent with an LLM and picks the miner.
+ * Better classification than Morse's keyword rules, so it is tried first — but it
+ * broke once (settlement timing out at ~47s, 2026-09-02) and was healthy again at
+ * 6.5s the next day, so callers must be ready to fall back. Give it a short timeout:
+ * its failure mode is slow, and the fallback still needs room inside 60s (GAPS G17).
  */
+export function askRouted(query: string, timeoutMs = config().ROUTER_TIMEOUT_MS): Promise<EngineAsk> {
+  return paidPost("/engine/v1/ask", { query }, timeoutMs);
+}
 
 /** Direct ask: skip routing and call one miner's endpoint. Used for second opinions only. */
 export function askMiner(

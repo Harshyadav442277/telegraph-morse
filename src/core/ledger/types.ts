@@ -25,6 +25,8 @@ export interface CallRow {
   signalHash: string | null;
   /** On-chain USDC settlement transaction, when the node reported one. */
   settlementTx: string | null;
+  /** Which router chose the miner: Telegraph's engine, or Morse's own fallback. */
+  routedBy: "engine" | "morse" | null;
   status: CallStatus;
   error: string | null;
 }

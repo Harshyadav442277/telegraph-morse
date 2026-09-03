@@ -30,10 +30,12 @@ create table if not exists calls (
   duration_ms integer,
   signal_hash text,
   settlement_tx text,
+  routed_by text,
   status text not null,
   error text
 );
 alter table calls add column if not exists settlement_tx text;
+alter table calls add column if not exists routed_by text;
 create index if not exists calls_at_idx on calls (at desc);
 create index if not exists calls_user_at_idx on calls (user_hash, at);
 create table if not exists api_keys (
@@ -74,11 +76,11 @@ export class PostgresLedger implements Ledger {
   async recordCall(r: CallRow): Promise<void> {
     await this.q(
       `insert into calls (id, at, channel, user_hash, kind, preview, intent, miner_slug, miner_id,
-         miner_rank, confidence, cost_usd, duration_ms, signal_hash, settlement_tx, status, error)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+         miner_rank, confidence, cost_usd, duration_ms, signal_hash, settlement_tx, routed_by, status, error)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
        on conflict (id) do nothing`,
       [r.id, r.at, r.channel, r.userHash, r.kind, r.preview, r.intent, r.minerSlug, r.minerId,
-        r.minerRank, r.confidence, r.costUsd, r.durationMs, r.signalHash, r.settlementTx, r.status, r.error],
+        r.minerRank, r.confidence, r.costUsd, r.durationMs, r.signalHash, r.settlementTx, r.routedBy, r.status, r.error],
     );
     if (r.status === "ok") {
       await this.q(`update users set calls = calls + 1, last_seen = now() where user_hash = $1`, [r.userHash]);
@@ -225,6 +227,7 @@ function toCallRow(r: Row): CallRow {
     durationMs: num(r["duration_ms"]),
     signalHash: str(r["signal_hash"]),
     settlementTx: str(r["settlement_tx"]),
+    routedBy: str(r["routed_by"]) as CallRow["routedBy"],
     status: String(r["status"]) as CallRow["status"],
     error: str(r["error"]),
   };

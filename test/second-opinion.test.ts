@@ -19,7 +19,7 @@ function row(over: Partial<CallRow> = {}): CallRow {
     confidence: 0.42,
     costUsd: 0.01,
     durationMs: 300,
-    signalHash: `0x${"ab".repeat(32)}`, settlementTx: null,
+    signalHash: `0x${"ab".repeat(32)}`, settlementTx: null, routedBy: null,
     status: "ok",
     error: null,
     ...over,
