@@ -3,6 +3,31 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
+## 2026-09-04 19:00 UTC — HANDOFF STATE (read this first)
+
+**Shipped and verified live: Ask the Podium, onboarding, the visible receipt trail.** Deployed to
+production. Podium: after any answer, the other top-ranked addressable miners for the intent answer
+the same question directly (sequential, 15 s each, at most two extra calls, ledger rows of kind
+`podium` grouped by `group_id`), and `src/core/agree.ts` judges agreement only for verdict and figure
+intents (GAPS G25). Live proof: SSL github.com → txlens #1 (Telegraph router) + livecert #2 +
+preflight #3, "3 of 3 agree: valid", 5.6 s. Honest failure also verified: BTC price podium →
+"only 1 of 2 answers contained a comparable figure".
+
+**Routing architecture is unchanged and must stay so:** Telegraph's router first (20 s budget), Morse
+fallback only when it does not answer, `routedBy` on every row and receipt. Podium is a layer on top,
+user-initiated only.
+
+**Bug fixed on the way (G26):** the Engine's `miner_name` is a display name; resolving by `miner_id`
+restored rank and signal mapping on engine-routed receipts. The ledger now also stores `label`,
+`answer` (500-char excerpt) and `group_id`; the landing page shows the latest real receipt as a hero.
+
+**Onboarding:** eight one-click example questions above the ask box, a "What can I ask?" list with
+one example per intent, a seven-question FAQ, slash commands typed on the web run recipes, Telegram
+`/start` shows five tappable examples and every answer carries an **Ask the podium** button.
+
+**Operator action still needed:** re-run `POST /admin/telegram/webhook` with the ADMIN_TOKEN so
+`setMyCommands` publishes the new command menu (the code runs it inside `installWebhook`).
+
 ## 2026-09-03 16:15 UTC — HANDOFF STATE (read this first)
 
 **All four channels pay.** web, telegram, mcp, rest — each with real receipts and on-chain

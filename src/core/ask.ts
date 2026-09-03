@@ -327,7 +327,8 @@ function fillRow(row: CallRow, r: Receipt, status: CallRow["status"]): void {
   row.durationMs = r.durationMs;
   row.signalHash = r.signalHash;
   row.settlementTx = r.settlementTx;
-  row.label = r.label;
+  // txlens maps label_field to its whole answer; a label is a verdict, not an essay.
+  row.label = r.label ? r.label.replace(/\s+/g, " ").slice(0, 200) : null;
   row.answer = answerExcerpt(r.answer);
   row.status = status;
 }

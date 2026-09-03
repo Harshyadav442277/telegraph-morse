@@ -5,9 +5,9 @@ A Telegraph Hackathon Season I, **Track 3** application.
 
 Morse lets anyone use the [Telegraph](https://telegraphprotocol.com) miner network without a
 wallet: ask a question in Telegram or on the web, or point an agent at one hosted MCP/REST
-endpoint. Morse works out which canonical intent your question belongs to, calls the best-ranked
-live miner for it, pays the x402 fee from one app-owned wallet, and returns the answer with a
-**receipt** — the miner that served it, the intent and why it was chosen, that miner's rank, its
+endpoint. Telegraph's own router classifies the question and picks a ranked miner (Morse falls
+back to its own routing only when the router does not answer), Morse pays the x402 fee from one
+app-owned wallet, and returns the answer with a **receipt** — the miner that served it, the intent and why it was chosen, that miner's rank, its
 confidence, the cost, the latency, the on-chain settlement transaction, and a `signal_hash` you can
 verify on the node.
 
@@ -17,6 +17,15 @@ settled on-chain as [`0x31b9b480…2af007`](https://sepolia.basescan.org/tx/0x31
 
 Every call Morse makes is in a public ledger, so "people used it" is checkable rather than
 claimed.
+
+**Ask the podium.** After any answer, one click asks the other top-ranked miners for that intent
+the same question, directly, and shows the answers side by side with ranks and receipts. When the
+answers are verdicts (valid/unsafe/true) or figures (a price, a temperature), Morse compares them
+and says whether they agree, with the tolerance it used; free-text answers are shown side by side
+and marked as not judged. Live example, 2026-09-04: "Is the SSL certificate for github.com valid?"
+was routed by Telegraph to txlens #1; the podium added livecert #2 and preflight #3; **3 of 3
+agree: valid**, in 5.6 s, two extra receipts. Routing is never replaced: Podium only runs after an
+answer exists, at the user's request.
 
 ## Why
 
@@ -36,9 +45,9 @@ claude mcp add --transport http morse https://telegraph-morse.vercel.app/mcp --h
 ```
 
 Then ask Claude anything the network can answer — *"use telegraph_ask: is the TLS certificate for
-github.com valid, and who issued it?"*. Tools: `telegraph_ask`, `telegraph_recipe`,
-`telegraph_second_opinion`, `telegraph_verify_signal`, `telegraph_intents`,
-`telegraph_leaderboard`, `telegraph_hot_signals`.
+github.com valid, and who issued it?"*, then *"use telegraph_podium on that signal_hash"*. Tools:
+`telegraph_ask`, `telegraph_podium`, `telegraph_recipe`, `telegraph_second_opinion`,
+`telegraph_verify_signal`, `telegraph_intents`, `telegraph_leaderboard`, `telegraph_hot_signals`.
 
 ### Cursor, or any Streamable-HTTP MCP client
 
@@ -79,8 +88,9 @@ curl -s https://telegraph-morse.vercel.app/api/stats
 
 ### Telegram
 
-**<https://t.me/MyMorse_Bot>** — answers free text, plus `/safe`, `/wallet`, `/weather`, `/fact`,
-`/second`, `/hot`, `/verify`, `/stats`. Every answer carries the same receipt the web and API
+**<https://t.me/MyMorse_Bot>** — `/start` shows tappable example questions; answers free text,
+and every answer carries an **Ask the podium** button. Commands: `/podium`, `/second`, `/safe`,
+`/wallet`, `/weather`, `/fact`, `/hot`, `/verify`, `/stats`. Every answer carries the same receipt the web and API
 surfaces return, and lands in the same public ledger.
 
 ## What a receipt contains
@@ -90,7 +100,8 @@ surfaces return, and lands in the same public ledger.
 | `minerSlug`, `minerId` | which miner the Engine routed to |
 | `intent` | the canonical intent the router classified the question as |
 | `minerRank` | that miner's current leaderboard rank for the intent |
-| `routerReasoning` | which rule chose the intent, and which rank was called |
+| `routedBy` | `engine` when Telegraph's router chose the miner, `morse` when the fallback did |
+| `routerReasoning` | the router's stated reason, or which fallback rule fired |
 | `settlementTx` | the USDC transfer on Base Sepolia, from the node's `payment-response` header |
 | `confidence` | the miner's own confidence, read from its declared `signal_mapping` — or "not reported" |
 | `costUsd`, `durationMs` | what the call cost and how long it took |
@@ -139,10 +150,14 @@ can manufacture traffic.
 ## Assumptions and limitations
 
 - **Testnet.** Base Sepolia, testnet USDC. Answers are real; the money is not.
-- **Morse routes, not Telegraph.** The network's own `/engine/v1/ask` router times out at ~47s on
-  settlement, which does not fit a serverless function, so Morse classifies the intent with keyword
-  rules and calls the best-ranked miner directly. That is weaker classification than the network's,
-  and every receipt says which rule fired so you can judge it (GAPS G17).
+- **Telegraph routes first; Morse only falls back.** The network's router gets 20 seconds; if it
+  does not answer (it timed out at ~47s for a day on 2026-09-02), Morse classifies the intent with
+  keyword rules and calls the best-ranked miner directly. Every receipt and ledger row says which
+  of the two happened (GAPS G17).
+- **Podium agreement is judged only where it can be.** Verdict intents are compared by verdict
+  words, figure intents by number within a stated tolerance, and everything else is shown side by
+  side without a verdict. Some ranked miners cannot be addressed from a sentence and are listed as
+  skipped; some answer with an "unavailable" message, which counts as not comparable (GAPS G25).
 - **The ledger's early rows are our own verification calls**, not users — real and receipted, but
   not adoption (GAPS G20).
 - **"Users" means distinct salted identity hashes** — a Telegram user id, a web session cookie, or

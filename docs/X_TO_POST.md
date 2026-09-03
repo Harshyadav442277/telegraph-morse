@@ -141,3 +141,27 @@ Fill this in as you go — the closing thread and the submission both need the l
 - Landing page screenshot showing the ledger and the six counters
 - `/verify/{hash}` cropped to the green **= Morse's payer wallet** line and the BaseScan tx
 - A short screen recording: Claude Code tool call → row appearing in the ledger
+
+---
+
+### 9 · Ask the podium (READY — verified live 2026-09-04)
+
+Attach a screenshot of the podium panel showing "3 of 3 miners agree: valid" with the three receipts.
+
+```
+New in Morse: Ask the podium.
+
+@Telegraphprotoc routes your question to one ranked miner. One click, and the other top-ranked miners answer the same question — side by side, with ranks and receipts.
+
+github.com's TLS cert: #1, #2 and #3 all say valid. 5.6 s, $0.02.
+```
+
+And when it cannot judge, it says so:
+
+```
+Podium is only honest if it refuses to guess.
+
+BTC price: the #1 miner said $81,019. #2 could not be addressed, #3 said "data unavailable", #4 timed out. Morse's verdict: "cannot be judged" — every attempt is in the public ledger.
+
+@Telegraphprotoc
+```

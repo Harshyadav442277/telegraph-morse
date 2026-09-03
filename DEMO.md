@@ -132,7 +132,7 @@ event: message
 data: {"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"morse","version":"0.1.0"}},"jsonrpc":"2.0","id":1}
 ```
 
-`tools/list` returns seven tools: `telegraph_ask`, `telegraph_recipe`,
+`tools/list` returns eight tools: `telegraph_ask`, `telegraph_podium`, `telegraph_recipe`,
 `telegraph_second_opinion`, `telegraph_verify_signal`, `telegraph_intents`,
 `telegraph_leaderboard`, `telegraph_hot_signals`. Without a key, `/mcp` returns **401** with a
 `WWW-Authenticate: Bearer realm="morse"` header — ✅ verified.
@@ -149,6 +149,34 @@ settlement, and including the `weather` and `safe` recipes run in-chat.
 verdict over three receipted calls. `/second` re-asks the next-ranked miner and prints both with
 their ranks. `/hot` shows the Daemon's top signals. `/stats` prints the same numbers as
 `/api/stats`.
+
+### 8 · Ask the podium — ✅ verified 2026-09-04 18:46 UTC
+
+After step 2, click **Ask the podium — the other top-ranked miners answer this too**.
+
+Verified against production, same question as step 2:
+
+```
+routed  : Telegraph's own router → txlens, #1 for SSL_VERIFICATION (9.0 s, engine)
+podium  : livecert #2 and preflight-ssl-verification #3 asked directly (5.6 s total)
+verdict : 3 of 3 miners agree: valid.
+receipts: 0xa488f91a… (original) · 0x3a4e74a6… (#2) · 0x9eb30b2f… (#3), each settled on-chain
+ledger  : two rows of kind `podium`, grouped to the original answer's row id
+```
+
+And the honest failure, same session, `What is the price of BTC right now?` (CRYPTO_PRICE):
+
+```
+routed  : onchain-intel-miner #1 → "BTC is 81019.01 USD"
+podium  : pricepulse-crypto-consensus #2 skipped (cannot be addressed from a sentence);
+          sentinel-risk-oracle #3 answered "price data temporarily unavailable";
+          kriterion-pramagraph #4 timed out at 15 s (recorded as timeout, nothing charged)
+verdict : Only 1 of 2 answers contained a comparable figure, so agreement cannot be judged.
+```
+
+Podium never fakes agreement: the second case is shown exactly like that, with every attempt in
+the ledger. In Telegram the same flow is the **Ask the podium** button under every answer, or
+`/podium` for your last question.
 
 ---
 

@@ -338,3 +338,30 @@ Now disclosed in all three places a person could encounter it: the ledger panel 
 page, the bot's `/help`, and docs/TRY_THESE.md before anyone shares it. Kept rather than removed,
 because hiding it would weaken the adoption evidence that is 45% of the score — but a user typing
 into a Telegram bot should not have to read the API to learn this.
+
+### G25 · Ask the Podium — what it can and cannot say — `MEASURED 2026-09-04`
+Podium asks the other top-ranked *addressable* miners for the same intent the same question,
+directly, and compares the answers. Verified live: SSL_VERIFICATION on github.com — txlens #1 (router)
++ livecert #2 + preflight #3, "3 of 3 agree: valid", 5.6 s, two extra receipts. Limits, stated on the
+page and in the code (`src/core/agree.ts`):
+- **Agreement is judged only for verdict intents** (SSL_VERIFICATION, URL_SCAN, FRAUD_DETECTION,
+  FACT_CHECK, AI_TEXT_DETECTION, by verdict words with negations tested first) **and figure intents**
+  (prices, FX, gas, balances, holder counts, TVL, temperature, by number within a stated tolerance).
+  Everything else is shown side by side and labelled "not judged automatically".
+- **Unaddressable podium miners are skipped and named.** pricepulse-crypto-consensus (#2 for
+  CRYPTO_PRICE) requires fields Morse cannot fill from a sentence, so the podium for that intent was
+  #1, #3, #4. A subject extractor for symbols and places would widen this; not built.
+- **A 200 with no answer counts as not comparable**, e.g. sentinel-risk-oracle's "price data
+  temporarily unavailable"; a timeout (15 s per miner) is recorded as `timeout` and not charged.
+- **Verdict extraction is heuristic.** A miner whose prose says "not valid" but whose label says
+  "valid" is read as valid (the label wins). Both are shown, so a reader can see the disagreement.
+- **Older ledger rows have no stored answer text**, so a podium on a row from before 2026-09-04
+  compares only the new answers and marks the original as not comparable.
+- **Cost and pacing:** at most two extra paid calls, sequential (the facilitator rejected concurrent
+  payments), user-initiated only — never automatic, never scheduled (rule 04).
+
+### G26 · Engine-routed rows before 2026-09-04 carry display names and no rank — `CLOSED, history kept`
+The Engine returns `miner_name` as a display name ("TxLens"), so `minerBySlug(miner_name)` found
+nothing and engine-routed receipts lost their rank and signal mapping. Fixed by resolving on
+`miner_id` (`resolveMiner`). Rows from 18:18 to 18:26 UTC on 2026-09-03 keep the display name and
+a null rank; they are not rewritten.
