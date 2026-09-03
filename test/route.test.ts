@@ -92,11 +92,23 @@ describe("skipping miners we cannot address", () => {
     expect(canAddress(needsCity)).toBe(false);
   });
 
-  it("builds an OpenAI-shaped messages array for chat miners", async () => {
+  it("builds an OpenAI-shaped messages array whenever the miner declares one", async () => {
     const { directRequest } = await import("../src/core/ask.js");
+    const declared = directRequest({ ...needsModel, input_schema: { properties: { messages: {} } } } as never, "write me a haiku", "CHAT_COMPLETION");
+    expect(declared.payload["messages"]).toEqual([{ role: "user", content: "write me a haiku" }]);
+  });
+
+  it("sends messages for chat-shaped intents even when the schema omits it", async () => {
+    const { directRequest } = await import("../src/core/ask.js");
+    // telegraph-chatbot declares an empty schema and then 422s on a missing
+    // `messages` body, so the declared schema cannot be trusted here.
     const req = directRequest(needsNothing as never, "write me a haiku", "CHAT_COMPLETION");
-    expect(req.payload["messages"]).toBeUndefined(); // not declared, so not sent
-    const withMessages = directRequest({ ...needsModel, input_schema: { properties: { messages: {} } } } as never, "write me a haiku", "CHAT_COMPLETION");
-    expect(withMessages.payload["messages"]).toEqual([{ role: "user", content: "write me a haiku" }]);
+    expect(req.payload["messages"]).toEqual([{ role: "user", content: "write me a haiku" }]);
+  });
+
+  it("does not send messages to a non-chat intent that never asked for it", async () => {
+    const { directRequest } = await import("../src/core/ask.js");
+    const req = directRequest(needsCity as never, "weather in Chennai?", "WEATHER_CHECK", "Chennai");
+    expect(req.payload["messages"]).toBeUndefined();
   });
 });
