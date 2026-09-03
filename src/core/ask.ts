@@ -5,7 +5,7 @@ import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
 import { askMiner, leaderboard, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
-import { canAddress, MESSAGES_KEY, PROSE_KEYS, route, SUBJECT_KEYS } from "./route.js";
+import { MESSAGES_KEY, PROSE_KEYS, routeCandidates, SUBJECT_KEYS, type Route } from "./route.js";
 
 /**
  * The one path every channel uses to ask the network. Guards first, then the paid
@@ -53,23 +53,39 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
     }
   }
   const row = baseRow(ctx, kind, question);
-  let chosen: Awaited<ReturnType<typeof route>> = null;
+  let chosen: Route | null = null;
   try {
     // Telegraph's own router is unusable from a 60s serverless function: its settlement
     // call times out at ~47s while a direct miner call settles in ~4s (GAPS G17). So
     // Morse routes, and says on the receipt how it chose.
-    chosen = await route(question, subject);
-    if (!chosen) {
+    const candidates = await routeCandidates(question, subject);
+    if (candidates.length === 0) {
       throw new TelegraphError("No active miner serves a question like this right now.", "engine");
     }
-    const raw = await askMiner(chosen.miner.id, directRequest(chosen.miner, question, chosen.intent, subject));
-    raw.intent ??= chosen.intent;
-    raw.miner_name ??= chosen.miner.slug;
-    const receipt = buildReceipt(raw, chosen.miner.signal_mapping ?? null, chosen.rank);
-    receipt.routerReasoning = `Morse routed this: ${chosen.why}, then called the #${chosen.rank ?? "?"} miner for ${chosen.intent}.`;
-    fillRow(row, receipt, "ok");
-    await ledger.recordCall(row);
-    return { ok: true, kind, question, receipt, second: null, error: null, remaining, rowId: row.id };
+    let lastError: TelegraphError | null = null;
+    for (const [i, cand] of candidates.entries()) {
+      chosen = cand;
+      try {
+        const raw = await askMiner(cand.miner.id, directRequest(cand.miner, question, cand.intent, subject));
+        raw.intent ??= cand.intent;
+        raw.miner_name ??= cand.miner.slug;
+        const receipt = buildReceipt(raw, cand.miner.signal_mapping ?? null, cand.rank);
+        const after = i === 0 ? "" : ` The ${i} better-ranked miner${i > 1 ? "s" : ""} could not be paid or could not take the request.`;
+        receipt.routerReasoning = `Morse routed this: ${cand.why}, then called the #${cand.rank ?? "?"} miner for ${cand.intent}.${after}`;
+        fillRow(row, receipt, "ok");
+        await ledger.recordCall(row);
+        return { ok: true, kind, question, receipt, second: null, error: null, remaining, rowId: row.id };
+      } catch (inner) {
+        const err = inner instanceof TelegraphError ? inner : new TelegraphError((inner as Error).message, "network");
+        lastError = err;
+        // Only move on when this attempt provably cost nothing: a refused payment, or
+        // the node's free pre-validation. A 500 may already have been paid for, and a
+        // timeout may still land, so neither is retried — that would risk paying twice.
+        const freeFailure = err.kind === "unpaid" || err.status === 422;
+        if (!freeFailure) throw err;
+      }
+    }
+    throw lastError ?? new TelegraphError("No miner could take this question.", "engine");
   } catch (e) {
     const err = e instanceof TelegraphError ? e : new TelegraphError((e as Error).message, "network");
     row.status = err.kind === "timeout" ? "timeout" : err.kind === "unpaid" ? "unpaid" : "error";

@@ -112,6 +112,42 @@ export function classifyIntent(question: string): { intent: string; why: string 
  * be addressed. Returns null when nothing can serve the question, which the caller
  * reports honestly rather than guessing.
  */
+/**
+ * Every miner Morse could address for this question, best first, across the matched
+ * intent and then the fallbacks. `askNetwork` walks this list when a miner refuses in
+ * a way that provably cost nothing, because the general-purpose intents are the
+ * flakiest part of the network: of the top six CHAT_COMPLETION miners one refuses
+ * payment outright and another 422s on a field it never declared.
+ */
+export async function routeCandidates(question: string, subject?: string, limit = 4): Promise<Route[]> {
+  const guess = classifyIntent(question);
+  const candidates = guess ? [guess.intent, ...FALLBACKS] : FALLBACKS;
+  const live = new Set((await getIntents()).filter((i) => i.miner_count > 0).map((i) => i.intent_id));
+  const out: Route[] = [];
+  const seen = new Set<string>();
+
+  for (const intent of candidates) {
+    if (!live.has(intent)) continue;
+    const board = await leaderboard(intent);
+    for (const e of board) {
+      if (out.length >= limit) return out;
+      if ((e.miner.endpoints?.length ?? 0) === 0 || !canAddress(e.miner, subject)) continue;
+      if (seen.has(e.miner.id)) continue;
+      seen.add(e.miner.id);
+      out.push({
+        intent,
+        miner: e.miner,
+        rank: e.rank,
+        why:
+          guess && intent === guess.intent
+            ? guess.why
+            : `no rule matched, so it went to ${intent}, a general-purpose intent`,
+      });
+    }
+  }
+  return out;
+}
+
 export async function route(question: string, subject?: string): Promise<Route | null> {
   const guess = classifyIntent(question);
   const candidates = guess ? [guess.intent, ...FALLBACKS] : FALLBACKS;
