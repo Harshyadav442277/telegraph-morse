@@ -3,6 +3,32 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
+## 2026-09-03 16:15 UTC — HANDOFF STATE (read this first)
+
+**All four channels pay.** web, telegram, mcp, rest — each with real receipts and on-chain
+settlements. `MORSE_E2E_PAID=1 npm run e2e` is **7 passed, 0 skipped**. 55 unit tests. Health green,
+19.4 USDC left. Telegram is @MyMorse_Bot, webhook registered, and it has answered 13 calls across
+6 intents including the `weather` and `safe` recipes in-chat.
+
+**The ledger caught a bug no test would have.** Grouping failures by intent showed every *routed*
+intent at 100% success and all 24 failures sitting in one bucket: questions matching no keyword
+rule, which fall back to CHAT_COMPLETION. Its top miners require `messages` and `model`; Morse sent
+neither. So the single most likely question from a stranger — anything general — failed every time,
+while the specific intents looked perfect. Fixed three ways (skip unaddressable miners, fall
+through to the next one on a provably-free failure, always send `messages` for chat intents);
+details in GAPS G21. **Failed rows now keep their intent and miner** — before, they all logged as
+`(unrouted)` and the pattern was invisible.
+
+**Read the ledger, not just the tests.** That is the lesson of this session, twice over: running
+the recipes for real found three routing bugs, and grouping the ledger by intent found a fourth.
+
+**The one thing still missing is other people.** Every row is still our own testing (G20), which is
+45% of the Track 3 score sitting on the operator. The bot works and is shareable; the X drafts are
+ready in docs/X_TO_POST.md. Nothing else blocks.
+
+**Still open:** the Track 3 submission tab was still disabled at last check (G5) — check daily.
+Deadline 2026-09-07 23:59 UTC.
+
 ## 2026-09-02 18:20 UTC — HANDOFF STATE (read this first)
 
 **Morse pays. It works in production.** First live receipt through the deployed app:
