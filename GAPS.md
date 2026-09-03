@@ -54,18 +54,16 @@ all, failures included) and `usersAnswered` (identities that actually got an ans
 the Telegram `/stats` command and the X drafts lead with the smaller one. The approximation in the
 paragraph above is unchanged and stays disclosed.
 
-### G5 · Track 3 submission form unknown — `OPEN, re-checked 2026-09-02 15:31 UTC`
-submissions.telegraphprotocol.com still shows "TRACK 3 — COMING SOON" and the tab's button is
-`disabled: true` in the DOM, so nothing is hidden behind it. Field list unknown. Keep ready: repo
-URL, live URL, X handle, payer wallet address, short description, gif. Check daily.
+### G5 · Track 3 submission form — `OPEN FOR SUBMISSIONS as of 2026-09-03 16:15 UTC`
+The tab flipped from "TRACK 3 — COMING SOON" to **"TRACK 3 — GITHUB APP"** some time between
+2026-09-02 15:31 and 2026-09-03 16:15 UTC. It asks for four fields — GitHub repository, title,
+description, live app URL — and requires a connected wallet to submit. Content is drafted and ready
+to paste in [SUBMISSION.md](SUBMISSION.md). **Submitting is the operator's job**: it needs a wallet
+signature, which Claude never does.
 
-Noted on the same page: **Track 1 submissions are CLOSED**, deadline shown as
-"Wed, 02 Sep 2026 11:59:59 UTC" — a *submission* deadline distinct from the Aug 31 track window in
-the miner repo's CLAUDE.md. That concerns the other repo, not Morse; flagging it, not acting on it.
-
-### G6 · Exact Track 3 deadline — `OPEN`
-The rules site's countdown says Sep 7 23:59 UTC. The exact wording is posted in Discord
-`#announcements`; the operator should transcribe it into docs/TELEGRAPH_FACTS.md.
+### G6 · Exact Track 3 deadline — `CONFIRMED 2026-09-03`
+The submission form states it verbatim: **"deadline: Mon, 07 Sep 2026 23:59:59 UTC"**, with a live
+countdown. This supersedes any inference from the rules page.
 
 ### G7 · Faucet cadence — `OPEN`
 Circle's faucet: 20 USDC per 2h per address per chain (web sources, 2026-09-02). At $0.01/call that

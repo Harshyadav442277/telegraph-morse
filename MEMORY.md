@@ -26,8 +26,10 @@ the recipes for real found three routing bugs, and grouping the ledger by intent
 45% of the Track 3 score sitting on the operator. The bot works and is shareable; the X drafts are
 ready in docs/X_TO_POST.md. Nothing else blocks.
 
-**Still open:** the Track 3 submission tab was still disabled at last check (G5) — check daily.
-Deadline 2026-09-07 23:59 UTC.
+**The Track 3 submission form is OPEN** (it flipped some time in the last day) and wants GitHub
+repo, title, description and live URL, with a connected wallet. Everything to paste is in
+SUBMISSION.md. Deadline confirmed verbatim on the form: **Mon, 07 Sep 2026 23:59:59 UTC**.
+Submitting needs a wallet signature, so it is the operator's to do.
 
 ## 2026-09-02 18:20 UTC — HANDOFF STATE (read this first)
 

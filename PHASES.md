@@ -97,7 +97,8 @@ share the bot so the ledger stops being our own testing (GAPS G20).
 - [x] Alarm proven end to end, all three paths: run 33648541786 opened issue #1, a repeat run
       stayed quiet, and run 33666604042 closed it once the deployment went healthy (GAPS G16)
 - [ ] Closing X thread with ledger numbers and receipts
-- [ ] Submission when the Track 3 tab opens; confirm it shows (GAPS G5)
+- [ ] **Submission form is OPEN** (GAPS G5) — paste from [SUBMISSION.md](SUBMISSION.md), connect a
+      wallet, submit, and confirm it shows. Deadline Mon 07 Sep 2026 23:59:59 UTC (GAPS G6)
 
 ## Stretch (only after P5's freeze gate is green and there are zero open P1s)
 - ERC-8183: "anchor this verdict" → `createJob` from the app wallet's escrow with a minimal
