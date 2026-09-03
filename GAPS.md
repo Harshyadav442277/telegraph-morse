@@ -236,20 +236,11 @@ of the 1,500-call daily budget behind one IP. The e2e suite now caches its key i
 instead of minting a new one per run. If a judge reports being blocked, the operator can issue a
 key from another network and hand it over; a proper fix would be an operator-only issuance route
 behind `ADMIN_TOKEN`, which is not built.
-### G19 · The health workflow's *schedule* has never been observed to fire — `OPEN, watch it`
-`.github/workflows/health.yml` declares `cron: "*/30 * * * *"`. It was pushed to `main` at
-15:26 UTC on 2026-09-02; by 17:22 UTC — nearly two hours — **zero scheduled runs had started**.
-Only the two `workflow_dispatch` runs triggered by hand exist.
-
-Configuration is not the problem: `gh workflow view` reports the workflow active, the default
-branch is `main`, and the repo is public. GitHub's scheduled runs are explicitly best-effort and
-are delayed or dropped under load, and new repositories often wait a long time for their first
-one.
-
-So what is proven is narrower than "monitored every 30 minutes": the probe script works, and the
-alarm path works on demand. Do not claim a cadence until a run appears with the event type
-`schedule`. Check with `gh run list --workflow=health`. If none has fired by the freeze, either
-say "on-demand monitoring" honestly, or move the probe to an external cron.
+### G19 · The health workflow's schedule — `CLOSED 2026-09-03, fires but late`
+Six scheduled runs observed, all successful. GitHub's cron is best-effort and it shows: the
+declared interval is 30 minutes, the actual gaps were 2h45m, 1h57m, 3h41m, 5h07m, 5h20m. Good
+enough to notice a dead deployment within a few hours, not good enough to call it monitoring. Not
+worth fixing for a hackathon; worth knowing before anyone relies on it.
 
 ### G20 · The first ledger rows are our own verification, not users — `DISCLOSED 2026-09-02`
 Every call in the ledger before the bot and the site were shared with anyone was made while
@@ -267,3 +258,29 @@ Two consequences, both binding:
   look cleaner; deleting evidence is worse than explaining it.
 
 If a judge asks "how many of these are yours", the answer must be available and honest.
+
+### G21 · General questions were routed to a miner that could not answer — `CLOSED 2026-09-03`
+The ledger showed 24 failures against 56 successes, and every single failure was a question that
+matched no keyword rule. Those fall back to CHAT_COMPLETION, whose top three miners require both
+`messages` and `model`; Morse sent neither, so the node returned `Invalid model name passed in
+model=None` every time. That is the path a stranger asking anything general lands on, so the
+success rate on the demo's most likely question was zero while every routed intent sat at 100%.
+
+Three fixes, each earned from a different failure:
+1. **Skip miners whose required fields cannot be filled from a sentence.** Costs a rank, buys an
+   answer. `canAddress` is the check.
+2. **Fall through to the next addressable miner** when an attempt provably cost nothing — a refused
+   payment, or the node's free pre-validation. Never on a 500 or a timeout, which may already have
+   been paid for. Of the top six CHAT_COMPLETION miners one refuses payment outright and another
+   422s on a field it never declared, so one fallback is not enough.
+3. **Send `messages` for chat-shaped intents whether or not the schema declares it.**
+   telegraph-chatbot declares an *empty* schema and then rejects the call for a missing `messages`
+   body — the declared schema simply cannot be trusted.
+
+Verified after: "Write me a two-line poem about the sea" and "Who painted the Mona Lisa?" both
+answered by Telegraph Knowledge Chatbot #4.
+
+**The lesson worth keeping:** the ledger found this, not a test. Grouping failures by intent showed
+every routed intent at 100% and every unrouted one at 0%, which pointed straight at the fallback.
+Failed rows now keep their intent and miner for exactly that reason — before this they all logged
+as `(unrouted)` and the pattern was invisible.

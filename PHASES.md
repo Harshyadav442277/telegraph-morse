@@ -13,8 +13,12 @@ router, which times out at ~47s against its own facilitator — see GAPS G17.
 `0x3807cfe1…a7b15`) and REST (`POST /v1/ask` → `0x82360f91…d20f95`), each with its own on-chain
 settlement. Telegram is the one left, and it needs the webhook registered.
 
-**Still open for the operator:** register the Telegram webhook (needs `ADMIN_TOKEN`, stored as a
-Vercel Secret and therefore unreadable — reset it to a value you keep), and post the X drafts.
+**Telegram is live** — @MyMorse_Bot, webhook registered 2026-09-03, 13 answered calls across 6
+intents including the `weather` and `safe` recipes, every one with an on-chain settlement.
+All four channels have now paid: web, telegram, mcp, rest.
+
+**Still open for the operator:** post the X drafts ([docs/X_TO_POST.md](docs/X_TO_POST.md)), and
+share the bot so the ledger stops being our own testing (GAPS G20).
 
 ## P0 — Decide and set up (2026-09-02) — DONE
 - [x] Research Track 3 rubric, client APIs, baselines → [docs/TELEGRAPH_FACTS.md](docs/TELEGRAPH_FACTS.md)
@@ -38,8 +42,9 @@ Vercel Secret and therefore unreadable — reset it to a value you keep), and po
 - [x] Deployed and serving: `/`, `/api/*`, `/v1/*`, `/keys`, `/mcp` all answer in production
       (2026-09-02 15:00 UTC; GAPS G13 closed)
 - [x] Paying in production: real receipts, real settlement transactions, verified payer (GAPS G17)
-- [ ] **Operator:** register the Telegram webhook, then a stranger's message returns a live answer
-- [ ] X post 1 — ready to post, needs no wallet ([docs/X_POSTS.md](docs/X_POSTS.md))
+- [x] Telegram live: webhook registered, 13 answered calls across 6 intents, recipes working in-chat
+- [ ] **Operator:** share the bot so a stranger's message returns a live answer
+- [ ] X post 1 — ready to post ([docs/X_TO_POST.md](docs/X_TO_POST.md))
 
 ## P2 — Web: landing, ledger, verify (2026-09-03) [A, D, T]
 - [x] `/` landing: what Morse is, ask box, live counters, recent calls table with verify links,
@@ -87,8 +92,8 @@ Vercel Secret and therefore unreadable — reset it to a value you keep), and po
 - [x] [DEMO.md](DEMO.md) — exact steps and exact expected output, every ✅ line captured from
       production, every ⏳ line named as unproven
 - [x] Health probe (`scripts/health-probe.mjs` + `.github/workflows/health.yml`), free-endpoint
-      only so it cannot inflate call volume. Works on demand; **the 30-minute schedule has not yet
-      been observed to fire** (GAPS G19)
+      only so it cannot inflate call volume. Schedule confirmed firing — six runs, all green,
+      though GitHub's cron runs hours late rather than every 30 minutes (GAPS G19)
 - [x] Alarm proven end to end, all three paths: run 33648541786 opened issue #1, a repeat run
       stayed quiet, and run 33666604042 closed it once the deployment went healthy (GAPS G16)
 - [ ] Closing X thread with ledger numbers and receipts
