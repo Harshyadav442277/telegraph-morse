@@ -2,7 +2,7 @@ import { Bot, InlineKeyboard, webhookCallback, type Context } from "grammy";
 import type { Hono } from "hono";
 import type { AppEnv } from "./rest.js";
 import { config } from "../config.js";
-import { askNetwork, secondOpinion, secondOpinionOn, shouldSeekSecondOpinion, type AskContext } from "../core/ask.js";
+import { askNamedMiner, askNetwork, secondOpinion, secondOpinionOn, shouldSeekSecondOpinion, type AskContext } from "../core/ask.js";
 import { defer } from "../core/defer.js";
 import { EXAMPLES, QUICK } from "../core/examples.js";
 import { cardHtml, esc, podiumHtml, recipeHtml, secondOpinionHtml } from "../core/format.js";
@@ -27,6 +27,26 @@ function ctxFor(ctx: Context): AskContext {
   return { channel: "telegram", userHash: hashId("tg", id, config().HASH_SALT) };
 }
 
+/**
+ * The question a plain text message is asking Morse, or null when it is not for Morse.
+ * In a private chat every message is. In a group, only a message that @mentions the
+ * bot or replies to one of its messages is — otherwise a bot added to a busy group
+ * would pay for an answer to every line of conversation, which is both a budget leak
+ * and exactly the manufactured traffic rule 04 forbids. Commands are handled elsewhere.
+ */
+export function addressedQuestion(text: string, o: { isGroup: boolean; botUsername?: string; repliedToBot?: boolean }): string | null {
+  const t = text.trim();
+  if (t.startsWith("/")) return null;
+  if (!o.isGroup) return t.length >= 3 ? t : null;
+  const mention = o.botUsername ? new RegExp(`@${o.botUsername.replace(/^@/, "")}\\b`, "gi") : null;
+  if (mention && mention.test(t)) {
+    const q = t.replace(mention, " ").replace(/\s+/g, " ").trim();
+    return q.length >= 3 ? q : null;
+  }
+  if (o.repliedToBot) return t.length >= 3 ? t : null;
+  return null;
+}
+
 /** The five examples on the /start keyboard: each is a specialised miner, so the receipt is striking. */
 const START_EXAMPLES = QUICK.filter((e) => ["SSL_VERIFICATION", "WEATHER_CHECK", "CRYPTO_PRICE", "URL_SCAN", "FACT_CHECK"].includes(e.intent));
 
@@ -49,6 +69,7 @@ const HELP = [
   "",
   "/podium — the other top-ranked miners answer your last question; Morse compares them",
   "/second — one more miner, the next-ranked, on your last question",
+  "/miner &lt;slug&gt; &lt;question&gt; — ask one named miner directly, routing bypassed (miner authors: try your own, with a receipt)",
   "/hot — what the network is asking itself right now",
   "/verify &lt;signal hash&gt; — check any receipt on the node",
   "/stats — public usage numbers",
@@ -60,6 +81,7 @@ export const COMMANDS = [
   { command: "start", description: "What Morse is, with example questions" },
   { command: "podium", description: "Other top-ranked miners answer your last question" },
   { command: "second", description: "A second opinion on your last question" },
+  { command: "miner", description: "Ask one named miner directly: /miner <slug> <question>" },
   { command: "safe", description: "URL safety: link scan + TLS + IP location" },
   { command: "weather", description: "Current weather + 48h storm risk for a place" },
   { command: "wallet", description: "Balance + fraud risk for an address" },
@@ -186,6 +208,18 @@ export function getBot(): Bot {
     );
   });
 
+  b.command("miner", async (ctx) => {
+    const m = /^(\S+)\s+([\s\S]{3,})$/.exec((ctx.match ?? "").trim());
+    if (!m) return ctx.reply("Usage: /miner <slug or id> <question> — e.g. /miner livecert Is the certificate for github.com valid?");
+    const progress = await ctx.reply(`Asking <b>${esc(m[1]!)}</b> directly…`, OPTS);
+    defer(
+      (async () => {
+        const card = await askNamedMiner(ctxFor(ctx), m[1]!, m[2]!);
+        await edit(ctx, progress.message_id, cardHtml(card, c.MORSE_PUBLIC_URL));
+      })(),
+    );
+  });
+
   b.command("second", async (ctx) => {
     const progress = await ctx.reply("Asking the next-ranked miner…");
     defer(
@@ -202,8 +236,13 @@ export function getBot(): Bot {
   });
 
   b.on("message:text", async (ctx) => {
-    const q = ctx.message.text.trim();
-    if (q.startsWith("/") || q.length < 3) return;
+    const type = ctx.chat?.type;
+    const q = addressedQuestion(ctx.message.text, {
+      isGroup: type === "group" || type === "supergroup",
+      botUsername: ctx.me?.username,
+      repliedToBot: ctx.message.reply_to_message?.from?.id === ctx.me?.id,
+    });
+    if (q === null) return;
     const progress = await ctx.reply("Asking the Telegraph network…");
     defer(answer(ctx, q, progress.message_id));
   });

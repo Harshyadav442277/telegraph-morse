@@ -4,8 +4,8 @@ import { guardPaid } from "./guards.js";
 import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
-import { askMiner, askRouted, leaderboard, rankOf, resolveMiner, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
-import { CHAT_INTENTS, MESSAGES_KEY, PROSE_KEYS, routeCandidates, SUBJECT_KEYS, type Route } from "./route.js";
+import { askMiner, askRouted, getMiners, leaderboard, rankOf, resolveMiner, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
+import { CHAT_INTENTS, classifyIntent, MESSAGES_KEY, PROSE_KEYS, routeCandidates, SUBJECT_KEYS, type Route } from "./route.js";
 
 /**
  * The one path every channel uses to ask the network. Guards first, then the paid
@@ -194,6 +194,46 @@ export async function callMinerDirect(
     await ledger.recordCall(row);
     return { receipt: null, error: `${miner.slug} could not answer directly: ${err.message}`, row };
   }
+}
+
+/**
+ * Which intent a question put to a named miner is filed under: the classified intent
+ * when the miner serves it, otherwise the miner's first declared intent. The intent
+ * only picks the endpoint and labels the row; the miner was chosen by the caller.
+ */
+export function intentForMiner(miner: Miner, question: string): string | null {
+  const supported = miner.supported_intents ?? [];
+  const guess = classifyIntent(question);
+  if (guess && supported.includes(guess.intent)) return guess.intent;
+  return supported[0] ?? null;
+}
+
+/**
+ * Ask one named miner directly, by slug or catalogue id. This is the dispatch the
+ * organizers' own reference apps use, and it is how a miner author can try their own
+ * miner with a receipt and no wallet. Routing is bypassed on purpose and the receipt
+ * says so; every other rule — guards, ledger row, honest failure — is unchanged.
+ */
+export async function askNamedMiner(ctx: AskContext, ref: string, question: string): Promise<AnswerCard> {
+  const kind = "direct";
+  const fail = (error: string, remaining: number | null = null): AnswerCard => ({
+    ok: false, kind, question, receipt: null, second: null, error, remaining, rowId: null, routedBy: "morse",
+  });
+  const key = ref.trim().replace(/^@/, "").toLowerCase();
+  if (!key) return fail("Name a miner: its slug from the leaderboard, or its catalogue id.");
+  const miners = await getMiners();
+  const miner = miners.find((m) => m.slug.toLowerCase() === key || m.id === key || (m.name ?? "").toLowerCase() === key) ?? null;
+  if (!miner) return fail(`No miner called "${ref.trim()}" is in the catalogue. Slugs are on /v1/leaderboard/{intent}.`);
+  if (miner.activation_status !== "active") {
+    return fail(`${miner.slug} is registered but not active (${miner.activation_status ?? "unknown"}), so the node will not serve it.`);
+  }
+  const intent = intentForMiner(miner, question);
+  if (!intent) return fail(`${miner.slug} declares no intents, so there is nothing to ask it.`);
+  await getLedger().touchUser(ctx.userHash, ctx.channel);
+  const g = await guard(ctx, 1);
+  if (!g.allowed) return fail(g.reason ?? "Not allowed.", g.remaining);
+  const out = await callMinerDirect(ctx, miner, rankOf(miner, intent), intent, question, { kind });
+  return { ok: Boolean(out.receipt), kind, question, receipt: out.receipt, second: null, error: out.error, remaining: g.remaining, rowId: out.row.id, routedBy: "morse" };
 }
 
 /**

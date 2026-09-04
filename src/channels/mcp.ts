@@ -3,7 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Hono } from "hono";
 import { z } from "zod";
 import { config } from "../config.js";
-import { askNetwork, secondOpinionOn, type AskContext } from "../core/ask.js";
+import { askNamedMiner, askNetwork, secondOpinionOn, type AskContext } from "../core/ask.js";
 import { getLedger } from "../core/ledger/index.js";
 import { askPodium } from "../core/podium.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
@@ -34,6 +34,17 @@ export function buildServer(ctx: AskContext): McpServer {
       inputSchema: { question: z.string().min(3).max(2000) },
     },
     async ({ question }) => text(await askNetwork(ctx, question, "ask")),
+  );
+
+  server.registerTool(
+    "telegraph_ask_miner",
+    {
+      title: "Ask one named miner directly",
+      description:
+        "Bypass routing and ask a specific miner by slug or catalogue id — the same direct dispatch Telegraph's reference apps use, and how a miner author tests their own miner with a receipt and no wallet. Costs one paid call; the receipt says routing was bypassed at your request. Find slugs with telegraph_leaderboard.",
+      inputSchema: { miner: z.string().min(1).max(64), question: z.string().min(3).max(2000) },
+    },
+    async ({ miner, question }) => text(await askNamedMiner(ctx, miner, question)),
   );
 
   server.registerTool(

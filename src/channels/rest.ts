@@ -1,6 +1,6 @@
 import type { Context, Hono, Next } from "hono";
 import { config } from "../config.js";
-import { askNetwork, type AskContext } from "../core/ask.js";
+import { askNamedMiner, askNetwork, type AskContext } from "../core/ask.js";
 import { bearer, hashId, hashKey, newApiKey } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
 import type { ApiKeyRow } from "../core/ledger/types.js";
@@ -74,7 +74,7 @@ export function restRoutes(app: Hono<AppEnv>): void {
 
   app.post("/v1/ask", requireKey, async (c) => {
     const { ctx } = c.get("identity");
-    const body = (await c.req.json().catch(() => ({}))) as { question?: string; recipe?: string; input?: string };
+    const body = (await c.req.json().catch(() => ({}))) as { question?: string; recipe?: string; input?: string; miner?: string };
     if (body.recipe) {
       const recipe = RECIPES[body.recipe];
       if (!recipe) return c.json({ error: `Unknown recipe. Available: ${Object.keys(RECIPES).join(", ")}` }, 400);
@@ -82,8 +82,12 @@ export function restRoutes(app: Hono<AppEnv>): void {
       return c.json(res, res.error ? 400 : 200);
     }
     const q = String(body.question ?? "").trim();
-    if (q.length < 3) return c.json({ error: "Send {\"question\": \"…\"} or {\"recipe\": \"safe\", \"input\": \"https://…\"}." }, 400);
-    const card = await askNetwork(ctx, q, "ask");
+    if (q.length < 3) {
+      return c.json({ error: "Send {\"question\": \"…\"}, {\"miner\": \"livecert\", \"question\": \"…\"} to ask one miner directly, or {\"recipe\": \"safe\", \"input\": \"https://…\"}." }, 400);
+    }
+    // A named miner bypasses routing on purpose: the organizers' reference apps dispatch
+    // this way, and it is how a miner author tries their own miner with a receipt.
+    const card = body.miner ? await askNamedMiner(ctx, String(body.miner), q) : await askNetwork(ctx, q, "ask");
     return c.json(card, card.ok ? 200 : 502);
   });
 }
