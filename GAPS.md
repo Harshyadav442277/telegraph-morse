@@ -3,6 +3,38 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
+### G33 · Every fact check failed because one miner broke and Morse gave up — `FIXED 2026-09-04 16:50 UTC; retry not reproduced live`
+Measured on the newest 200 ledger rows: 29 failures, but **all 11 failures on kinds that still
+exist were the same one** — `FACT_CHECK` → `qarinah-proofpack`, which answers
+`500 {"code":"PROOF_PIPELINE_ERROR"}`. Morse's own routing put it first, and the candidate loop
+only moved to the next miner when the failure was a refused payment or the node's 422
+pre-validation. A 5xx ended the attempt, so **every fact-check question a visitor asked failed**,
+while `assay-miner`, `livecert` and `tavily` all serve the same intent. Fact check is one of the
+eight chips on the landing page and one of the five buttons on Telegram `/start`, so a judge had a
+good chance of hitting it: 10.3% of live-kind calls failed, and every one of them was this.
+
+The old rule was written to avoid paying twice, and it was too broad. The node **"settles only on
+2xx; failed calls are free"** (docs/TELEGRAPH_FACTS.md, read 2026-09-02), so a 5xx costs nothing
+and is safe to move on from. A **timeout still is not**, because the outcome was never seen and the
+call can land afterwards — that is exactly what the chain-only settlements on `/proof` are. The
+rule is now *known outcome*, not *bad outcome*: `isFreeFailure()` in `src/core/ask.ts`, covered by
+test/free-failure.test.ts.
+
+Also fixed with it: a failed question used to show the node's raw JSON — `Engine returned 500:
+{"error":"upstream call failed: …PROOF_PIPELINE_ERROR…"}` — to whoever asked. The ledger row still
+keeps that text; the person now gets a sentence that names the miner and says whether they were
+charged.
+
+**What is and is not verified, exactly.** The predicate is covered by six unit assertions. In
+production the `fact` recipe — which skips Telegraph's router and so runs Morse's own candidate
+loop, the path that was failing — now answers: FACT_CHECK → livecert #1 in 652 ms, verdict
+"contradicted". But **the retry itself was not reproduced live**: by the time the fix deployed,
+`qarinah-proofpack` had recovered (it answered a direct `/miner` call with confidence 0.83) and had
+moved from #1 to #3, with livecert #1. So the first candidate no longer fails and there is nothing
+to retry past. The fix is insurance against the next time any #1 miner has a bad hour — which is
+the general case, since one broken leader currently takes a whole intent down for every user — not
+a repair of something still broken today. Do not claim the retry was observed in production.
+
 ### G1 · Vercel function duration vs miner latency — `MEASURED 2026-09-02`
 Real paid calls through the deployment complete in **200 ms – 4 s**, far inside the 60s ceiling —
 because Morse calls miners directly. The router would have blown it: `/engine/v1/ask` takes ~47s

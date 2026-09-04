@@ -53,7 +53,7 @@ function row(r: CallRow): string {
 
 function latestReceipt(r: CallRow): string {
   return `
-<section class="panel hero"><h2>What a receipt looks like <span class="badge">latest real answer</span></h2>
+<section class="panel hero"><h2>The last question anyone asked <span class="badge">live, not a sample</span></h2>
 <p class="q">“${h(r.preview)}”</p>
 <div class="card">${h(r.answer ?? "")}</div>
 <dl class="rcpt">
@@ -86,13 +86,14 @@ export function landingPage(d: LandingData): string {
 <p class="sub-lede">No wallet, no key, no sign-up. Type a question, Telegraph's router sends it to the best-ranked miner for that intent, Morse pays the $0.01 fee, and the answer comes back naming who answered, what it cost, and a signal hash you can check on the node and on-chain.</p>
 <div class="cta">${telegram}<span class="muted">or try it right here ↓</span></div>
 ${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The payer wallet or daily budget is not configured, so asking is disabled until the operator funds it. Everything else on this page is live.</div>`}
-<section class="panel"><h2>Ask the network</h2>
+
+${d.latest ? latestReceipt(d.latest) : ""}
+
+<section class="panel"><h2>Ask it something yourself</h2>
 <form class="ask" id="ask"><input id="q" name="q" placeholder="Try: Is the SSL certificate for github.com valid, and who issued it?" maxlength="2000" required autocomplete="off"><button id="go" type="submit">Ask</button></form>
 <div class="chips"><span class="muted">Try one:</span>${quick}</div>
 <div class="chips"><span class="muted">Recipes (several miners at once):</span>${recipeChips}</div>
 <div id="out"></div></section>
-
-${d.latest ? latestReceipt(d.latest) : ""}
 
 <section class="grid">
 <div class="stat"><b>${s.usersAnswered}</b><span>people answered<br><span class="muted">of ${s.users} who asked</span></span></div>

@@ -99,11 +99,7 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
       } catch (inner) {
         const err = inner instanceof TelegraphError ? inner : new TelegraphError((inner as Error).message, "network");
         lastError = err;
-        // Only move on when this attempt provably cost nothing: a refused payment, or
-        // the node's free pre-validation. A 500 may already have been paid for, and a
-        // timeout may still land, so neither is retried — that would risk paying twice.
-        const freeFailure = err.kind === "unpaid" || err.status === 422;
-        if (!freeFailure) throw err;
+        if (!isFreeFailure(err)) throw err;
       }
     }
     throw lastError ?? new TelegraphError("No miner could take this question.", "engine");
@@ -121,8 +117,46 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
       row.routedBy = "morse";
     }
     await ledger.recordCall(row);
-    return { ok: false, kind, question, receipt: null, error: err.message, remaining, rowId: row.id, routedBy: row.routedBy };
+    // The row keeps the node's raw text; the person gets a sentence. Nobody should be
+    // shown `{"error":"upstream call failed: …PROOF_PIPELINE_ERROR…"}` and left to
+    // guess whether they were charged.
+    return { ok: false, kind, question, receipt: null, error: humanError(err, chosen), remaining, rowId: row.id, routedBy: row.routedBy };
   }
+}
+
+/** What a person should read when every miner that could take their question failed. */
+export function humanError(err: TelegraphError, chosen: Route | null): string {
+  const who = chosen ? ` The last one tried was ${chosen.miner.slug}.` : "";
+  if (err.kind === "timeout") {
+    return `That miner took too long to answer.${who} If the call lands late it will show on /proof as a settlement with no ledger row — Morse does not retry it, because retrying could pay twice.`;
+  }
+  if (err.kind === "unpaid") {
+    return `Morse could not pay for this call, so nothing was asked and nothing was charged.${who}`;
+  }
+  if (err.status !== null && err.status >= 500) {
+    return `Every miner serving this kind of question is failing right now.${who} That is the miner's error, not yours, and failed calls are not charged.`;
+  }
+  return err.message;
+}
+
+/**
+ * Whether a failed attempt provably cost nothing, and so another miner may be tried.
+ *
+ * The node "settles only on 2xx; failed calls are free" (docs/TELEGRAPH_FACTS.md,
+ * read 2026-09-02), so a refused payment, the node's free pre-validation and a 5xx
+ * from a miner that broke are all safe to move on from. A **timeout is not**: we
+ * never saw the outcome, the call may land and settle after we gave up, and the
+ * chain-only settlements listed on /proof are exactly those. Unknown outcomes are
+ * never retried; known-free ones are.
+ *
+ * This was too strict until 2026-09-04 and it cost real answers: every FACT_CHECK
+ * question died on one miner returning `PROOF_PIPELINE_ERROR`, 11 of the 107 rows
+ * on live kinds, while three other miners served the same intent (GAPS G33).
+ */
+export function isFreeFailure(err: TelegraphError): boolean {
+  if (err.kind === "timeout") return false;
+  if (err.kind === "unpaid") return true;
+  return err.status !== null && (err.status === 422 || err.status >= 500);
 }
 
 /**
