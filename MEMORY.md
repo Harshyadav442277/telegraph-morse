@@ -21,15 +21,43 @@ report and the miner-check idea are retired. Telegraph's leaderboard is the cons
 pick is the answer. What Morse is: Telegraph in Telegram and in one hosted MCP/REST URL, no wallet,
 every answer a receipt in a public ledger reconciled on chain. Nothing else.
 
-**Done this session:** `SECOND_OPINION_THRESHOLD` defaults to 0 (deployed), so Morse never pays a
-second miner unasked; README, PLAN, PRD, PHASES, GAPS, DEMO, SUBMISSION, ARCHITECTURE and the X
-drafts say what is retired and why. **Next session, in order:** 1) remove the podium button,
-`/podium`, `/second`, `telegraph_podium`, `telegraph_second_opinion`, `POST /api/podium`,
-`/api/second`, `/v1/podium`, the `/consensus` page and nav item, `podium.ts`, `agree.ts`,
-`consensus.ts` and their tests, in one commit; keep ledger rows and their labels as history; keep
-`/miner <slug>` (direct dispatch is what the organizers' reference apps do) but drop the "test your
-own miner" framing; 2) rewrite DEMO steps 8 and 10 and the landing FAQ entry; 3) paid e2e green,
-deploy; 4) everything after that is sharing, not building.
+**Done 2026-09-04, and the build is finished.** Three commits, in this order:
+
+1. **The removal, one commit.** Podium button and its `pd:` callback, `/podium`, `/second`, their
+   `/start`, `/help` and `setMyCommands` entries, `POST /api/podium`, `/api/second`, `/v1/podium`,
+   `telegraph_podium`, `telegraph_second_opinion`, the `/consensus` page, `/api/consensus`, the nav
+   item and its help panel, `podium.ts`, `agree.ts`, `consensus.ts`, the web consensus page and
+   four test files, `secondOpinion` / `secondOpinionOn` / `shouldSeekSecondOpinion`, `podiumHtml`,
+   `secondOpinionHtml`, `AnswerCard.second`, `SECOND_OPINION_THRESHOLD`, and the two ledger lookups
+   nothing else used. Kept: `callMinerDirect`, `askNamedMiner`, `/miner <slug>`,
+   `telegraph_ask_miner`, the REST `miner` field, `withEndpointIntents`, `endpointFor`, `/proof`,
+   and every historical ledger row of kind `podium` / `second-opinion` with its label.
+2. **The repositioning.** "Telegraph in Telegram. Ask, get an answer from a ranked miner, with a
+   receipt." is the claim on the landing page, in README's first paragraph and in PLAN's Claim.
+   Above the fold: the claim, the bot button, the ask box, one real receipt. Then the ledger and
+   `/proof` as evidence. Nothing presents Morse as a verification or consensus layer any more.
+3. **DEMO** steps 8 and 10 are one-line dated records; step 1's expected screenful, step 6's tool
+   list and step 7's Telegram walkthrough match what ships.
+
+**Verified on production 15:28 UTC** (deployed 15:25): `/consensus`, `/api/consensus`,
+`/api/podium`, `/api/second` and `/v1/podium` all 404; `tools/list` returns exactly the seven
+remaining tools; `/`, `/proof`, `/keys` 200; health ok, postgres, 77.43 USDC, telegram true.
+Typecheck clean, 66 unit tests, `npm run e2e` 6 passed + 1 skipped, `MORSE_E2E_PAID=1 npm run e2e`
+**7/7 in 22 s** — the paid call went to txlens #1 for SSL_VERIFICATION in 695 ms for $0.01, signal
+`0xa93d4e87…54ce`, settled `0x2990bb3d…2eca`. The journey now also asserts the two MCP tools are
+absent, so the removal cannot silently come back. Ledger at 15:28: **315 calls / 252 answered, 48
+people answered of 68, 20 intents, 44 miners, $2.52**; today 134 calls from 15 identities.
+
+**One thing the operator must still do, and it is visible to users:** the Telegram `/` menu is
+published by `setMyCommands` and still lists `/podium` and `/second`. Both are gone from the
+deployment, so tapping either now does nothing at all. Republishing the menu needs a valid
+`ADMIN_TOKEN` (the local one answered 401 on 2026-09-04):
+
+```bash
+curl -X POST https://telegraph-morse.vercel.app/admin/telegram/webhook -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+**After that, nothing is left to build.** Everything remaining is sharing the bot.
 
 **Lesson, so it is not repeated:** ask the organizers what they want before building anything that
 sits between a user and the protocol's own judgement. Two days went into features that the people

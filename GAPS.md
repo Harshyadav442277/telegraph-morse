@@ -439,7 +439,7 @@ again at 10:42 UTC. The gap was the process, not the code: the UI change shipped
 journey the same day. The cost of the miss was one cent and eleven hours of a wrong "7/7" in the
 handoff.
 
-### G32 · Podium, automatic second opinion and the consensus report were judged re-ranking and spam — `RETIRED 2026-09-04 ~15:30 UTC`
+### G32 · Podium, automatic second opinion and the consensus report were judged re-ranking and spam — `REMOVED 2026-09-04 15:28 UTC`
 An organizer (Discord, ~14:50 UTC) answered a "would a miner-check tool be useful" question and a
 "how does the podium reach all three ranked miners" question with one reply: the explorer already
 holds the miner data; checking or re-ranking miners is "building a router for our direct miners,
@@ -447,14 +447,30 @@ which is already handled by Telegraph"; paying N miners per request to find the 
 protocol is designed to do once for everyone, "doesn't work economically for the end user", and is
 spamming. What was good: extending Telegraph into Telegram; focus on adoption of the app and agent.
 
-**Followed completely.** Retired: Ask the Podium (G25), the automatic second opinion (G14, G15), the
-`/consensus` report, and the never-built miner-check idea. `SECOND_OPINION_THRESHOLD` now defaults
-to 0, so nothing pays a second miner unasked as of the next deploy. The podium button, `/podium`,
-`/second`, the two MCP tools, `POST /api/podium`, `/api/second`, `/v1/podium`, the `/consensus`
-page and nav item, and `podium.ts` / `agree.ts` / `consensus.ts` with their tests are removed in one
-commit before the freeze; the ledger keeps every historical row with its label. `/miner <slug>`
-stays, because direct dispatch to a named miner is what the organizers' own reference apps do, but
-the "test your own miner" framing goes.
+**Followed completely, and done.** Retired: Ask the Podium (G25), the automatic second opinion
+(G14, G15), the `/consensus` report, and the never-built miner-check idea.
+
+**Removal closed 2026-09-04 15:20 UTC, deployed 15:25, verified on production 15:28.** One commit
+took out the podium button and its `pd:` callback, `/podium`, `/second`, their `/start`, `/help`
+and `setMyCommands` entries, `POST /api/podium`, `/api/second`, `/v1/podium`, `telegraph_podium`,
+`telegraph_second_opinion`, the `/consensus` page and `/api/consensus` with the Consensus nav item
+and its help panel, `podium.ts`, `agree.ts`, `consensus.ts`, the web consensus page, their four
+test files, `secondOpinion`, `secondOpinionOn`, `shouldSeekSecondOpinion`, `podiumHtml`,
+`secondOpinionHtml`, the `AnswerCard.second` field, `SECOND_OPINION_THRESHOLD`, and the two ledger
+lookups only these used. Typecheck clean, 66 unit tests, judge journey 7/7 paid. On production all
+five retired routes return 404, `tools/list` returns the seven remaining tools, and the journey
+asserts the two are absent so they cannot come back by accident. The ledger keeps every historical
+row of kind `podium` and `second-opinion` with its label, and the ledger help panel says what those
+labels mean and that the features are gone — history is not rewritten.
+
+`/miner <slug>` stays, because direct dispatch to a named miner is what the organizers' own
+reference apps do; it is now described that way everywhere, and the "test your own miner" framing
+is gone.
+
+**Still open, and only the operator can close it:** the Telegram `/` menu is published by
+`setMyCommands` and still advertises `/podium` and `/second` until the webhook install is re-run
+with a valid `ADMIN_TOKEN`. Both commands are gone from the deployment, so tapping either does
+nothing at all. See the handoff in [MEMORY.md](MEMORY.md).
 
 **What this cost and taught.** About two days of build went into features the judges consider a
 bug, and 47 of 185 ledger rows (podium legs and second opinions) are calls the organizer would

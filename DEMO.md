@@ -7,8 +7,8 @@ Every output below was captured from the live deployment on the date stated. Ste
 - **✅ verified** — run against production, output pasted verbatim.
 - **⏳ operator step** — needs an action only the operator can take.
 
-Last capture: **2026-09-04 10:42 UTC**, with the wallet funded and Morse paying; the paid judge
-journey is 7/7.
+Last capture: **2026-09-04 15:28 UTC**, with the wallet funded and Morse paying; the paid judge
+journey is 7/7 against the deployment that removed the podium and the second opinion.
 
 **Removed 2026-09-04 (GAPS G32):** steps 8 (Ask the podium) and 10 (consensus report) described
 features an organizer judged as re-ranking their leaderboard and as spam. They are gone from the
@@ -38,14 +38,14 @@ first screenful rather than letting a visitor discover it by asking.
 
 Type `Is the TLS certificate for github.com valid right now, and who issued it?` and press **Ask**.
 
-Verified against production, 2026-09-04 10:33 UTC:
+Verified against production, 2026-09-04 15:28 UTC, on the rebuilt page:
 
 ```
 miner  : txlens #1 for SSL_VERIFICATION
 routing: Telegraph's own router
-conf   : 100%   cost: $0.01   latency: 525 ms
-hash   : 0x579bacc9efae0c8e133e77e88d77503ef1d479bfe3640ddb6a1b699baaea7d0b
-tx     : 0x4c58f68cecde025f361b5b49231132ac5e1ad01193d2b36cc29fc5988d2dafa8
+conf   : 100%   cost: $0.01   latency: 695 ms
+hash   : 0xa93d4e871ca5baf89dfb5b5ce62aee0d701021ae97634fcc87d94cc2cf0754ce
+tx     : 0x2990bb3d19baeaec50280d4bcf71fac93af0081d793e18d6f7ad96c890a72eca
 answer : "The TLS/SSL certificate configuration for github.com is valid. Certificate validity:
           currently valid, expiring in 86 days on 2026-11-29, issued by Sectigo Limited on
           2026-09-01. Chain trust: the server presented a chain of 3 certificate(s)…"
@@ -224,18 +224,19 @@ git clone https://github.com/Harshyadav442277/telegraph-morse && cd telegraph-mo
 npm run e2e
 ```
 
-Verified against production, 2026-09-04 10:42 UTC, with `MORSE_E2E_PAID=1`:
+Verified against production, 2026-09-04 15:28 UTC, with `MORSE_E2E_PAID=1`, on the deployment that
+removed the podium and the second opinion:
 
 ```
 Running 7 tests using 1 worker
-  ok 1 › the landing page states the claim and shows live counters (6.8s)
-  ok 2 › the ledger on the page matches the API and the ledger is durable (1.6s)
-  ok 3 › every signal hash in the ledger verifies on the node (6.8s)
+  ok 1 › the landing page states the claim and shows live counters (1.3s)
+  ok 2 › the ledger on the page matches the API and the ledger is durable (1.4s)
+  ok 3 › every signal hash in the ledger verifies on the node (6.9s)
   ok 4 › an agent can pick up a key and reach the MCP server without a wallet (1.3s)
-  ok 5 › the free discovery endpoints answer from the live network (1.8s)
-  ok 6 › Morse fails honestly instead of inventing an answer (893ms)
-  ok 7 › a funded Morse answers, receipts it, and the receipt verifies (7.2s)
-  7 passed (27.0s)
+  ok 5 › the free discovery endpoints answer from the live network (517ms)
+  ok 6 › Morse fails honestly instead of inventing an answer (1.1s)
+  ok 7 › a funded Morse answers, receipts it, and the receipt verifies (9.0s)
+  7 passed (22.1s)
 ```
 
 Without `MORSE_E2E_PAID=1` the suite is free to run and test 7 skips, so no schedule can ever spend
@@ -243,9 +244,14 @@ money or manufacture traffic (rule 04). Test 4 needs an API key and caches the o
 `.morse-e2e-key`, because keys are capped at three per network per UTC day (GAPS G18). Test 6
 asserts the honest-failure contract whether or not the wallet is funded.
 
-The run before this one, at 10:33 UTC the same day, failed step 7 while production answered
-correctly: the answer card had been rebuilt the day before and the test still looked for the old
-markup (GAPS G31). Re-run the paid journey the same day as any UI change.
+Test 4 also asserts that `telegraph_podium` and `telegraph_second_opinion` are **absent**, so the
+removal cannot quietly come back. Test 6's free half is now `GET /api/verify/0x000…`, a hash the
+node never issued, because the second-opinion endpoint it used to call is gone.
+
+An earlier run, at 10:33 UTC the same day, failed step 7 while production answered correctly: the
+answer card had been rebuilt the day before and the test still looked for the old markup (GAPS
+G31). Re-run the paid journey the same day as any UI change — this run, after the landing page was
+rebuilt again, is why the selectors were checked before the handoff rather than after.
 
 Point it at any deployment with `MORSE_BASE_URL=https://… npm run e2e`.
 

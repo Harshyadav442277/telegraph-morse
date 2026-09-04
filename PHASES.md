@@ -110,10 +110,20 @@ four unreferenced functions were deleted; nothing was added.
 - [x] **Retire re-ranking (2026-09-04 15:30 UTC, organizer feedback, GAPS G32):** automatic
       second opinion off (`SECOND_OPINION_THRESHOLD` default 0); README, PLAN, PRD, DEMO,
       SUBMISSION and the X drafts say the podium and consensus report are retired and why
-- [ ] **Remove their surfaces in one commit:** podium button and `/podium`, `/second`,
-      `telegraph_podium`, `telegraph_second_opinion`, `POST /api/podium`, `/api/second`,
-      `/v1/podium`, `/consensus` page and nav item, `podium.ts`, `agree.ts`, `consensus.ts` and
-      their tests; keep ledger rows and labels; rewrite DEMO steps 8 and 10; paid e2e green; deploy
+- [x] **Removed in one commit (2026-09-04 15:20 UTC), deployed 15:25, verified 15:28:** podium
+      button and its `pd:` callback, `/podium`, `/second`, `telegraph_podium`,
+      `telegraph_second_opinion`, `POST /api/podium`, `/api/second`, `/v1/podium`, the `/consensus`
+      page, `/api/consensus` and the nav item, `podium.ts`, `agree.ts`, `consensus.ts`, the web
+      consensus page and four test files, plus `SECOND_OPINION_THRESHOLD` and the dead ledger
+      lookups. Ledger rows and their labels kept. On production all five routes 404 and
+      `tools/list` returns seven tools. Typecheck clean, 66 unit tests, `MORSE_E2E_PAID=1` 7/7
+- [x] **Repositioned on the organizer's own framing:** "Telegraph in Telegram. Ask, get an answer
+      from a ranked miner, with a receipt." — landing page above the fold (claim, bot link, ask
+      box, one real receipt), then the ledger and `/proof` as evidence; README's first paragraph
+      and PLAN's Claim match; DEMO steps 8 and 10 are one-line dated records
+- [ ] **Operator: republish the Telegram `/` menu.** `setMyCommands` still advertises `/podium`
+      and `/second`, which no longer exist, so tapping either does nothing. Needs a valid
+      `ADMIN_TOKEN`; the local one is stale (401)
 - [ ] **Operator, every remaining hour:** share the bot — Discord (with the organizer's own words
       about Telegram as the good part), your groups, university; reply to every user; X posts
       with real numbers; top up the wallet before Sep 7
