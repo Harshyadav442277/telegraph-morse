@@ -37,7 +37,7 @@ Two versions. Use the short one if the field is small.
 **Short**
 
 ```
-Morse is a front door to Telegraph for people and agents without a wallet. Ask in Telegram, on the web, or from any MCP client; Morse classifies the intent, calls the best-ranked live miner, pays the x402 fee, and returns the answer with a receipt: the miner and its rank, its confidence, the cost, the on-chain settlement, and a signal hash anyone can verify. Then "Ask the podium": the other top-ranked miners answer the same question side by side, and Morse says whether they agree. Every call it has ever made is in a public ledger.
+Morse lets people and agents use Telegraph without a wallet — in Telegram, on the web, or from any MCP client — and turns every answer into evidence. Telegraph's ranked router picks the miner (Morse never does); Morse pays the x402 fee and returns the answer with a receipt: miner and rank, confidence, cost, the USDC settlement on Base Sepolia, and a signal hash anyone can verify on the node. "Ask the podium" has the other top-ranked miners answer the same question and says whether they agree. Every call is in a public ledger, reconciled hash-for-hash against the payer wallet's on-chain settlements at /proof, and every podium round feeds a public per-intent consensus report at /consensus. Not an aggregator: a verification layer on the network's own routing.
 ```
 
 **Longer, if there is room**

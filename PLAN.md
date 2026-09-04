@@ -1,8 +1,9 @@
 # Morse — Telegraph Hackathon Season I, Track 3 plan
 
-**Last updated 2026-09-02 08:40 UTC.** Track 3 closes **2026-09-07 23:59 UTC** (the site's "SEP 7
-23:59 UTC" countdown; the submissions page will show the exact hour once its Track 3 tab opens).
-Resolve every deadline with `date -u`, never the local date. About **135 hours** remain.
+**Last updated 2026-09-03 ~20:30 UTC** (re-judgment below). Track 3 closes **2026-09-07 23:59:59
+UTC**, verbatim from the submission form. Feature freeze **2026-09-05 18:00 UTC**. Resolve every
+deadline with `date -u`, never the local date — a handoff note in this repo was dated a day late by
+reading the local clock.
 
 Repo: <https://github.com/Harshyadav442277/telegraph-morse>. Verified protocol facts, with
 dates, live in [docs/TELEGRAPH_FACTS.md](docs/TELEGRAPH_FACTS.md).
@@ -100,6 +101,74 @@ Every feature below maps to one of these rows. No mapping, no build.
   traffic (machine volume, no users). Morse removes the wallet from the user, is multi-intent, and
   shows the person asking who answered, how confident, and where to verify.
 - **The one unforgettable thing:** *Ask Telegram, get a receipt from the Telegraph network.*
+
+## Re-judged 2026-09-03 ~20:30 UTC — where Morse loses, and what was done about it
+
+Rubric re-read on the live rules page (Track 3 tab, client-rendered): **45%** real users + actual
+volume of Telegraph calls · **25%** usefulness, creativity, depth (off-chain *and on-chain*) ·
+**25%** X · **5%** technical. Plus the framing the judges wrote for themselves: "not the best demo",
+"surface-level integrations will not stand out", and "a competitive intelligence layer for machines
+rather than **another aggregator**".
+
+**Where Morse stands, measured, not estimated.** Ledger: 153 calls, 118 answered, 37 identities
+answered of 58 that asked, 16 intents, 27 miners, $1.18; on 2026-09-03 alone 96 calls from 23
+identities; channels web 90, Telegram 26, REST 1, MCP 1. Network, same day: **1,219 user-paid
+calls in 24 h** (3,442 in 7 days), and a 153-signal sample of them resolves to **eight payer
+wallets** — one direct caller of `degenlens-onchain` is 45% of everything, two weather-heavy apps
+are 16% and 15%, and **Morse is fifth at about 6.5%**. About half the network's user traffic is
+direct dispatch that never touches the router; Morse is one of the few apps exercising
+`/engine/v1/ask` at all. On chain: **120 USDC settlements** from Morse's payer to the Diamond, and
+every one of the ledger's 118 settlement hashes is among them; two chain settlements have no ledger
+row (calls Morse recorded as timed out that settled anyway).
+
+**The visible field** (GitHub, 2026-09-03): `amanat` — miner + scorer + parametric cover settled
+through ERC-8183 jobs, an MCP server on the official registry, a deck and a film; `qarinah-proofpack`
+— an evidence firewall that binds every miner result to the node's attestation before an agent
+acts; `karan68/proofgate` — an agent URL firewall whose paid path is switched off in production;
+`tripwire` — consensus-gated payments, mocked until its wallet is funded; `signal-jury` — a
+multi-miner jury that calls miner URLs directly, so its calls bypass the node and are not Telegraph
+calls; `rxtruth` — an autonomous six-hourly misinformation pipeline; `certsentinel-agent`,
+`payproof`. Nobody else is serving humans without a wallet, and nobody else publishes a ledger.
+
+### How and where we lose, ranked
+
+1. **Adoption (45%) — volume and users.** Fifth by paid volume among eight payers, and the
+   identities we count are mostly our own (G20). No distribution has happened: the bot is unshared
+   and no X post is up. Nothing Claude builds changes this; only sharing does. What was built makes
+   the usage we do get count for more: **on-chain proof** so the volume is undeniable, and
+   **ask-a-miner** so the 300 miner authors in Discord have a reason to be users (test your own
+   miner from Telegram or Claude Code, with a receipt, no wallet).
+2. **"Another aggregator" (25%).** A "front door" is exactly what the rules page says Telegraph is
+   not. Fixed by positioning, truthfully: Morse does not pick providers or blend answers; the ranked
+   router picks, Morse pays, receipts, and verifies. The page now says so, and two pages exist that
+   only a verification layer would have: `/proof` and `/consensus`.
+3. **On-chain depth (25%).** The rubric says off-chain *and* on-chain; amanat writes jobs on chain.
+   `/proof` reads the chain and reconciles it with the ledger. Writing to chain (ERC-8183 anchoring
+   of a podium verdict) is not built: it needs escrow, a wallet action and contract work that do not
+   fit before the freeze (G27).
+4. **Rule 04 optics.** 41% of our traffic lands on the operator's own miner (disclosed, G22);
+   podiums and recipes multiply calls per question; a bot in a group could have paid for every line
+   of conversation. Fixed the last one: in groups Morse answers only when @mentioned or replied to.
+5. **Judging-window fragility (Sep 8–18).** 58.8 USDC in the wallet (~5,800 calls), health probe
+   hours-late (G19), `/proof` depends on Blockscout and degrades honestly when it is down. Operator:
+   top up before Sep 7 and do not delete the Vercel project.
+6. **Submission and X.** Not made yet; operator only. X is out of scope by instruction.
+
+### Novel suggestions — kept, and deliberately not built
+
+Built today: the **consensus report** (every podium round per intent, agreement rate, every
+disagreement named, receipts linked — a public, independent reading of the leaderboard that costs
+nothing and grows with use), **on-chain proof of usage** (ledger reconciled hash-for-hash against
+the payer's USDC transfers via a public indexer), **ask a named miner** on MCP, REST and Telegram,
+and the **group guard**.
+
+Not built, with reasons: **human "was this right?" ratings per miner** (a validator-vs-human signal,
+genuinely novel, but with 37 users the data would be noise before the close — the first thing to add
+if Morse lives on); **a Daemon WebSocket feed pushed to a Telegram channel** (real-time streaming is
+a named high-value area, but it needs ≥ $1 USDC in escrow — a wallet action — and an always-on
+process, which serverless is not; G28); **ERC-8183 anchoring** (above); **MCP registry listing**
+(distribution to agents; the publish step is the operator's, `server.json` is a ten-minute job on
+request).
 
 ## What we build
 

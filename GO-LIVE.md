@@ -112,7 +112,7 @@ that one stays unread.
 curl -X POST https://telegraph-morse.vercel.app/admin/telegram/webhook -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
 
 **The bearer is `ADMIN_TOKEN`, not the Telegram bot token.** Sending the bot token here returns
-`{"error":"unauthorized"}` (it happened on 2026-09-04). If the bot token is ever pasted into a
+`{"error":"unauthorized"}` (it happened on 2026-09-03). If the bot token is ever pasted into a
 chat, a terminal log or a screenshot, rotate it in @BotFather (`/revoke`), put the new value in
 Vercel as `TELEGRAM_BOT_TOKEN`, redeploy, and run this call again — it re-registers the webhook
 and publishes the command menu in one go.

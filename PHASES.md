@@ -69,6 +69,17 @@ share the bot so the ledger stops being our own testing (GAPS G20).
       Both miners and both ranks are shown.
 - [x] Routing visibility: "served by #k for INTENT" on every receipt, from the live leaderboard
 - [x] Daemon "what's hot" (`/hot` in Telegram, `telegraph_hot_signals` over MCP)
+- [x] **Consensus report** `/consensus` + `/api/consensus` (2026-09-03): every podium round per
+      intent, agreement rate, every disagreement named with receipts; computed from rows that
+      already exist, spends nothing [D]
+- [x] **On-chain proof** `/proof` + `/api/proof` (2026-09-03): the ledger's settlement hashes
+      reconciled against the payer's USDC transfers read from Blockscout — 118/118 matched, two
+      chain-only settlements shown rather than hidden (GAPS G29) [D, A]
+- [x] **Ask a named miner** (2026-09-03): `telegraph_ask_miner` over MCP, `{"miner": …}` on
+      `POST /v1/ask`, `/miner <slug> <question>` in Telegram; routing bypassed at the caller's
+      request and the receipt says so. The hook for miner authors to become users [A, D]
+- [x] **Group guard** (2026-09-03): in Telegram groups the bot answers only when @mentioned or
+      replied to, so a busy chat cannot pay for unrequested answers [rule 04]
 - [x] **done:** each recipe produces one combined verdict and N verifiable ledger rows. Running them
       for real found three routing bugs no unit test would have — see GAPS G14
 - [x] Measured the whole catalogue for free (`npm run catalogue`): 57% of miners declare a

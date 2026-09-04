@@ -339,7 +339,7 @@ page, the bot's `/help`, and docs/TRY_THESE.md before anyone shares it. Kept rat
 because hiding it would weaken the adoption evidence that is 45% of the score — but a user typing
 into a Telegram bot should not have to read the API to learn this.
 
-### G25 · Ask the Podium — what it can and cannot say — `MEASURED 2026-09-04`
+### G25 · Ask the Podium — what it can and cannot say — `MEASURED 2026-09-03`
 Podium asks the other top-ranked *addressable* miners for the same intent the same question,
 directly, and compares the answers. Verified live: SSL_VERIFICATION on github.com — txlens #1 (router)
 + livecert #2 + preflight #3, "3 of 3 agree: valid", 5.6 s, two extra receipts. Limits, stated on the
@@ -355,13 +355,44 @@ page and in the code (`src/core/agree.ts`):
   temporarily unavailable"; a timeout (15 s per miner) is recorded as `timeout` and not charged.
 - **Verdict extraction is heuristic.** A miner whose prose says "not valid" but whose label says
   "valid" is read as valid (the label wins). Both are shown, so a reader can see the disagreement.
-- **Older ledger rows have no stored answer text**, so a podium on a row from before 2026-09-04
+- **Older ledger rows have no stored answer text**, so a podium on a row from before 2026-09-03 18:45 UTC
   compares only the new answers and marks the original as not comparable.
 - **Cost and pacing:** at most two extra paid calls, sequential (the facilitator rejected concurrent
   payments), user-initiated only — never automatic, never scheduled (rule 04).
 
-### G26 · Engine-routed rows before 2026-09-04 carry display names and no rank — `CLOSED, history kept`
+### G26 · Engine-routed rows before 2026-09-03 18:26 UTC carry display names and no rank — `CLOSED, history kept`
 The Engine returns `miner_name` as a display name ("TxLens"), so `minerBySlug(miner_name)` found
 nothing and engine-routed receipts lost their rank and signal mapping. Fixed by resolving on
 `miner_id` (`resolveMiner`). Rows from 18:18 to 18:26 UTC on 2026-09-03 keep the display name and
 a null rank; they are not rewritten.
+
+### G27 · Morse writes nothing on chain — `OPEN, deliberately not built`
+The depth axis says "off-chain and on-chain", and at least one rival (amanat) settles parametric
+cover through ERC-8183 jobs. Morse only reads the chain: `/proof` reconciles the payer's USDC
+transfers with the ledger. Anchoring a podium verdict on chain would need an escrow deposit and a
+job contract — a wallet action plus contract work that does not fit before the 2026-09-05 18:00 UTC
+freeze and would add a failure mode to the judging window (Sep 8–18). Recorded so the choice is
+visible. The honest on-chain claim is "every payment is on chain and reconciled", not "verdicts are
+anchored".
+
+### G28 · The Daemon WebSocket feed is not consumed — `OPEN, deliberately not built`
+"Real-time streaming & persistent intelligence" is a named high-value area. The node offers
+`wss://devnode.telegraphprotocol.com/engine/ws` subscriptions (recorded in the miner repo's
+docs/TELEGRAPH_FACTS.md, "Consumer surfaces"), but a subscription needs `personal_sign` wallet auth
+plus at least $1 USDC deposited in escrow through `EscrowFacet.depositUSDC()` — a wallet action —
+and a socket held open, which a Vercel function cannot do. A "Morse Wire" Telegram channel fed by
+Daemon signals would need a small always-on worker and the operator's escrow deposit. Not built;
+decide after the hackathon, not inside the judging window.
+
+### G29 · Two on-chain settlements have no ledger row — `MEASURED 2026-09-03, shown on /proof`
+Blockscout lists 120 USDC transfers from the payer to the Diamond; the ledger holds 118 settlement
+hashes and all 118 are on chain. The two extra settlements (2026-09-02 17:56:56Z and 2026-09-03 18:11:04Z) have no
+failed ledger row at those minutes either. The likeliest causes: the operator's local diagnostic run
+on 2026-09-02, which paid from the same key outside the deployed ledger; and a Telegraph-router
+attempt that hit Morse's 20 s budget and settled after Morse had already fallen back and paid a
+second miner — a router failure is not written as a row, so a late settlement leaves no trace and one
+question was paid for twice. Either way, "nothing charged" after a timeout is a hope, not a
+guarantee: the node may settle after Morse stops waiting. `/proof` lists such settlements
+under "on chain, not in the ledger" rather than hiding them, and Morse does not count them as
+answered calls. A back-fill that attaches a late settlement to its row would close this; not before
+the freeze.

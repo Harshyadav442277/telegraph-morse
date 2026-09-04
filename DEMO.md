@@ -150,7 +150,7 @@ verdict over three receipted calls. `/second` re-asks the next-ranked miner and 
 their ranks. `/hot` shows the Daemon's top signals. `/stats` prints the same numbers as
 `/api/stats`.
 
-### 8 · Ask the podium — ✅ verified 2026-09-04 18:46 UTC
+### 8 · Ask the podium — ✅ verified 2026-09-03 18:46 UTC
 
 After step 2, click **Ask the podium — the other top-ranked miners answer this too**.
 

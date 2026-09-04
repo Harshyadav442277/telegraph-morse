@@ -28,11 +28,13 @@ what makes usage **auditable**: every call is a USDC transfer from that address 
 and every signal record on the node carries `wallet_address`. The address is published on the
 stats page. Claude never handles the key; the operator sets it. Never the Track 1 miner wallet.
 
-### A2 — Auto-routed `ask` is the default; direct ask is for second opinions only
+### A2 — Auto-routed `ask` is the default; every direct ask is explicit and says so
 `POST /engine/v1/ask` lets Telegraph's router classify and route, which is what the protocol
-measures and what the organizers want proven. Direct `POST /engine/v1/ask/{minerId}` is used only
-to fetch a second opinion from the next-ranked miner of the intent the router chose, so the
-routing table itself is what we exercise. Miner ids are read live from `/api/miners?intent=`, never
+measures and what the organizers want proven. Direct `POST /engine/v1/ask/{minerId}` runs only when
+a person or agent asks for it: a second opinion from the next-ranked miner, a Podium round, or a
+miner named outright (`telegraph_ask_miner`, REST `miner`, Telegram `/miner` — the dispatch the
+organizers' own reference apps use). Every direct receipt states that routing was bypassed and
+why, so plain questions still exercise the routing table. Miner ids are read live from `/api/miners?intent=`, never
 hardcoded (they are not stable).
 
 ### A3 — Every answer carries a receipt, and the receipt is verifiable by anyone
@@ -88,6 +90,13 @@ answers. Tests that need the network run against the live 402 gate and are marke
 ### A11 — Secrets never enter the repo
 `.env` is gitignored from the first commit. `.mcp.json` references `${ENV_VARS}` only. The payer
 key exists in the operator's shell and Vercel env, nowhere else.
+
+### A13 — Evidence pages read; they never spend
+`/proof` reads the payer wallet's USDC transfers from Blockscout and reconciles them with the
+ledger's settlement hashes; `/consensus` derives agreement statistics from Podium rows that already
+exist. Neither makes a Telegraph call, so a judge (or a crawler) reloading them cannot inflate
+anything (rule 04), and both degrade honestly: a failed chain read is reported as such, and an
+empty consensus report says so.
 
 ### A12 — Conventions
 TypeScript strict, ESM, Node 22. Files under ~300 lines. Boring, explicit code. One task = one

@@ -3,7 +3,42 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
-## 2026-09-04 19:00 UTC — HANDOFF STATE (read this first)
+## 2026-09-03 ~21:00 UTC — HANDOFF STATE (read this first)
+
+**Re-judged against the live rubric; four fixes shipped; see [PLAN.md](PLAN.md) § "Re-judged
+2026-09-03".** The measured position: Morse is fifth of eight payer wallets on the network at
+~6.5% of the 1,219 user-paid calls of the last 24 h, its 118 ledger settlements all reconcile
+hash-for-hash against 120 USDC transfers on chain, and the visible competitor field is agent
+firewalls and on-chain pipelines (amanat, qarinah-proofpack, proofgate, tripwire) rather than
+anything serving humans. The losses, ranked: adoption volume (only sharing fixes it), the
+"another aggregator" reading, thin on-chain depth, rule-04 optics, judging-window fragility.
+
+**Shipped 2026-09-03 evening (78 unit tests, typecheck clean):**
+- `/proof` + `/api/proof` — the ledger reconciled against the payer wallet's USDC transfers read
+  from Blockscout, hash for hash; names chain-only settlements instead of hiding them (G29).
+- `/consensus` + `/api/consensus` — every Podium round per intent, agreement rate, every
+  disagreement named with receipts; computed from existing rows, spends nothing.
+- **Ask a named miner**: `telegraph_ask_miner` on MCP, `{"miner": "...", "question": "..."}` on
+  `POST /v1/ask`, `/miner <slug> <question>` in Telegram. The organizers' reference apps dispatch
+  this way; it is the hook for miner authors to become users. Receipt says routing was bypassed.
+- **Group guard**: in Telegram groups Morse answers only when @mentioned or replied to.
+- Landing page says plainly that Morse is not an aggregator and links both new pages.
+
+**Deliberately not built (reasons in PLAN.md):** human ratings, a Daemon WebSocket feed (needs
+escrow + an always-on process, G28), ERC-8183 anchoring (G27), MCP registry listing (operator
+publishes; ask and `server.json` is ten minutes).
+
+**Date hygiene:** the previous handoff was stamped 2026-09-04 by reading the local clock; the
+events happened 2026-09-03 18:30–19:40 UTC. Corrected here, in DEMO, GAPS, GO-LIVE and README.
+The feature freeze is **2026-09-05 18:00 UTC** — still ahead, not behind.
+
+**Next session, in order:** 1) confirm the Telegram `/` menu shows `/miner` — it appears only
+after the operator re-runs `POST /admin/telegram/webhook` (setMyCommands runs there); the
+command itself already works; 2) `MORSE_E2E_PAID=1 npm run e2e` once; 3) share the bot and post —
+the 45% axis; 4) submit before 2026-09-07 23:59 UTC using SUBMISSION.md; 5) no features after
+the freeze.
+
+## 2026-09-03 19:00 UTC — previous handoff (dates corrected from "09-04")
 
 **Shipped and verified live: Ask the Podium, onboarding, the visible receipt trail.** Deployed to
 production. Podium: after any answer, the other top-ranked addressable miners for the intent answer
@@ -25,7 +60,7 @@ restored rank and signal mapping on engine-routed receipts. The ledger now also 
 one example per intent, a seven-question FAQ, slash commands typed on the web run recipes, Telegram
 `/start` shows five tappable examples and every answer carries an **Ask the podium** button.
 
-**DONE 2026-09-04 19:40 UTC:** the operator rotated the bot token, set it in Vercel, and the admin
+**DONE 2026-09-03 19:40 UTC:** the operator rotated the bot token, set it in Vercel, and the admin
 call returned `{"ok":true, "webhook":true, "commands":true}`; production was redeployed after the
 env change so the running function holds the new token. The Telegram `/` menu now shows the new
 commands. Remaining operator items: X draft 9, sharing the bot, wallet top-up, submission.
@@ -41,7 +76,7 @@ once the old token is revoked, the bot is down until the new one is deployed. Th
 **Next session, in order:** 1) confirm the bot answers after the token rotation and try `/start` →
 TLS check → Ask the podium on a phone; 2) `MORSE_E2E_PAID=1 npm run e2e` once; 3) distribution and
 X posts (the 45% axis); 4) submit at submissions.telegraphprotocol.com before 2026-09-07 23:59 UTC
-using SUBMISSION.md; 5) do not add features — freeze was 2026-09-05 18:00 UTC.
+using SUBMISSION.md; 5) do not add features after the freeze, 2026-09-05 18:00 UTC.
 
 ## 2026-09-03 16:15 UTC — HANDOFF STATE (read this first)
 

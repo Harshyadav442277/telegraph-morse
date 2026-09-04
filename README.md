@@ -22,10 +22,25 @@ claimed.
 the same question, directly, and shows the answers side by side with ranks and receipts. When the
 answers are verdicts (valid/unsafe/true) or figures (a price, a temperature), Morse compares them
 and says whether they agree, with the tolerance it used; free-text answers are shown side by side
-and marked as not judged. Live example, 2026-09-04: "Is the SSL certificate for github.com valid?"
+and marked as not judged. Live example, 2026-09-03: "Is the SSL certificate for github.com valid?"
 was routed by Telegraph to txlens #1; the podium added livecert #2 and preflight #3; **3 of 3
 agree: valid**, in 5.6 s, two extra receipts. Routing is never replaced: Podium only runs after an
 answer exists, at the user's request.
+
+**Two checks that do not rely on Morse's word.** [`/proof`](https://telegraph-morse.vercel.app/proof)
+reads the payer wallet's USDC transfers on Base Sepolia from a public indexer and matches them,
+hash for hash, against the ledger's settlement transactions — the "actual volume of Telegraph
+calls" counted from the chain, with any settlement the ledger lacks shown rather than hidden.
+[`/consensus`](https://telegraph-morse.vercel.app/consensus) is every podium round so far, per
+intent: how often the network's top-ranked miners agreed, and every disagreement named with its
+receipts. Both are computed from data that already exists and spend nothing.
+
+**Not an aggregator.** Morse does not pick providers or blend answers. Telegraph's ranked router
+picks the miner; Morse pays, keeps the receipt, and lets you check the answer against the other
+ranked miners. When you *do* want a specific miner — the dispatch the organizers' own reference
+apps use, or a miner author trying their own miner — name it: `telegraph_ask_miner` over MCP,
+`{"miner": "livecert", "question": "…"}` on REST, `/miner livecert <question>` in Telegram. The
+receipt says routing was bypassed at your request.
 
 ## Why
 
@@ -46,8 +61,9 @@ claude mcp add --transport http morse https://telegraph-morse.vercel.app/mcp --h
 
 Then ask Claude anything the network can answer — *"use telegraph_ask: is the TLS certificate for
 github.com valid, and who issued it?"*, then *"use telegraph_podium on that signal_hash"*. Tools:
-`telegraph_ask`, `telegraph_podium`, `telegraph_recipe`, `telegraph_second_opinion`,
-`telegraph_verify_signal`, `telegraph_intents`, `telegraph_leaderboard`, `telegraph_hot_signals`.
+`telegraph_ask`, `telegraph_ask_miner`, `telegraph_podium`, `telegraph_recipe`,
+`telegraph_second_opinion`, `telegraph_verify_signal`, `telegraph_intents`,
+`telegraph_leaderboard`, `telegraph_hot_signals`.
 
 ### Cursor, or any Streamable-HTTP MCP client
 
@@ -72,6 +88,12 @@ curl -X POST https://telegraph-morse.vercel.app/api/keys -H "content-type: appli
 curl -X POST https://telegraph-morse.vercel.app/v1/ask -H "Authorization: Bearer morse_YOURKEY" -H "content-type: application/json" -d '{"question":"What is the current weather in Chennai?"}'
 ```
 
+Ask one named miner directly (miner authors: your own slug goes here):
+
+```bash
+curl -X POST https://telegraph-morse.vercel.app/v1/ask -H "Authorization: Bearer morse_YOURKEY" -H "content-type: application/json" -d '{"miner":"livecert","question":"Is the SSL certificate for github.com valid?"}'
+```
+
 Free, no key needed — the discovery endpoints and the ledger:
 
 ```bash
@@ -89,9 +111,11 @@ curl -s https://telegraph-morse.vercel.app/api/stats
 ### Telegram
 
 **<https://t.me/MyMorse_Bot>** — `/start` shows tappable example questions; answers free text,
-and every answer carries an **Ask the podium** button. Commands: `/podium`, `/second`, `/safe`,
-`/wallet`, `/weather`, `/fact`, `/hot`, `/verify`, `/stats`. Every answer carries the same receipt the web and API
-surfaces return, and lands in the same public ledger.
+and every answer carries an **Ask the podium** button. Commands: `/podium`, `/second`,
+`/miner <slug> <question>`, `/safe`, `/wallet`, `/weather`, `/fact`, `/hot`, `/verify`, `/stats`.
+Every answer carries the same receipt the web and API surfaces return, and lands in the same
+public ledger. In a group, Morse answers only when it is @mentioned or replied to, so a busy chat
+never pays for answers nobody asked for.
 
 ## What a receipt contains
 
@@ -172,6 +196,12 @@ can manufacture traffic.
 - **A second opinion may not be possible for every intent.** Direct miner calls are built from the
   miner's declared input schema, and some miners reject a request they did not shape themselves —
   which fails honestly and costs nothing (GAPS G14).
+- **`/proof` depends on a third-party indexer.** It reads Blockscout, which can lag the chain by a
+  few blocks or be down; the page then says so and shows the ledger alone. It proves payments, not
+  people. Two settlements on chain have no ledger row — calls Morse recorded as timed out that the
+  network settled anyway — and are listed rather than removed (GAPS G29).
+- **Nothing is written on chain by Morse.** Payments settle on Base Sepolia through x402; Morse
+  reads that trail but does not anchor verdicts or run ERC-8183 jobs (GAPS G27).
 
 ## License
 
