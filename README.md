@@ -1,15 +1,16 @@
-# Morse — ask in plain language, get a receipt from the Telegraph network
+# Morse — Telegraph in Telegram
 
 A Telegraph Hackathon Season I, **Track 3** application.
 **Live: <https://telegraph-morse.vercel.app>** · [public ledger](https://telegraph-morse.vercel.app/#ledger) · [API & MCP](https://telegraph-morse.vercel.app/keys)
 
-Morse lets anyone use the [Telegraph](https://telegraphprotocol.com) miner network without a
-wallet: ask a question in Telegram or on the web, or point an agent at one hosted MCP/REST
-endpoint. Telegraph's own router classifies the question and picks a ranked miner (Morse falls
-back to its own routing only when the router does not answer), Morse pays the x402 fee from one
-app-owned wallet, and returns the answer with a **receipt** — the miner that served it, the intent and why it was chosen, that miner's rank, its
-confidence, the cost, the latency, the on-chain settlement transaction, and a `signal_hash` you can
-verify on the node.
+**Telegraph in Telegram. Ask, get an answer from a ranked miner, with a receipt.** Send a question
+to the bot — no wallet, no key, no sign-up — and [Telegraph](https://telegraphprotocol.com)'s own
+router classifies it and picks a ranked miner (Morse falls back to its own routing only when the
+router does not answer), Morse pays the x402 fee from one app-owned wallet, and the answer comes
+back with a **receipt**: the miner that served it, the intent and why it was chosen, that miner's
+rank, its confidence, the cost, the latency, the on-chain settlement transaction, and a
+`signal_hash` you can verify on the node. The same thing is on the web and behind one hosted
+MCP/REST endpoint for agents.
 
 Live example, 2026-09-02: LiveCert #1 for `SSL_VERIFICATION`, $0.01, signal
 [`0x0691ca3f…0821a1`](https://telegraph-morse.vercel.app/verify/0x0691ca3f54514e5ea5ce342d8dadc30c58c48ada711cdfde01e171b4ee0821a1),

@@ -12,7 +12,11 @@ main{max-width:980px;margin:0 auto;padding:32px 20px 64px}
 header.top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
 header.top h1{font-size:28px;margin:0;letter-spacing:.5px}header.top h1 span{color:var(--accent)}
 header.top nav a{margin-left:16px;color:var(--muted)}
-.lede{font-size:18px;color:var(--muted);max-width:720px;margin:0 0 24px}
+.lede{font-size:22px;color:var(--fg);max-width:720px;margin:0 0 10px;line-height:1.35}
+.sub-lede{font-size:16px;color:var(--muted);max-width:720px;margin:0 0 16px}
+.cta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 20px}
+a.tg{display:inline-block;background:var(--accent);color:#111;font-weight:700;padding:12px 18px;border-radius:8px}
+a.tg:hover{text-decoration:none;filter:brightness(1.08)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:20px 0}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .stat b{display:block;font-size:26px;font-variant-numeric:tabular-nums}.stat span{color:var(--muted);font-size:13px}
@@ -105,7 +109,7 @@ document.querySelectorAll('button.q').forEach(function(b){b.addEventListener('cl
 
 export function page(title: string, body: string, opts: { description?: string } = {}): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escapeHtml(title)}</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="description" content="${escapeHtml(opts.description ?? "Ask Telegram, get a receipt from the Telegraph network.")}">
+<title>${escapeHtml(title)}</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="description" content="${escapeHtml(opts.description ?? "Telegraph in Telegram. Ask, get an answer from a ranked miner, with a receipt.")}">
 <style>${CSS}</style></head><body><main>
 <header class="top"><h1><a href="/" style="color:inherit">M<span>·</span>O<span>·</span>R<span>·</span>S<span>·</span>E</a></h1>
 <nav>${navItem("/#ledger", "Ledger", "ledger")}${navItem("/proof", "Proof", "proof")}${navItem("/keys", "API &amp; MCP", "keys")}${navItem("https://github.com/Harshyadav442277/telegraph-morse", "GitHub", "github")}${navItem("https://telegraphprotocol.com", "Telegraph", "telegraph")}</nav></header>

@@ -12,11 +12,17 @@ dates, live in [docs/TELEGRAPH_FACTS.md](docs/TELEGRAPH_FACTS.md).
 
 ## Claim
 
-**Anyone with Telegram, a browser, or an AI agent can now get a verified, paid-for answer from
-the Telegraph miner network in one message — without a wallet, testnet USDC, or an x402
-client — because we solved the access problem:** Morse holds one funded payer wallet, pays
+**Telegraph in Telegram. Ask, get an answer from a ranked miner, with a receipt.**
+
+Anyone with Telegram — and, the same way, a browser or an AI agent — can now get a paid-for
+answer from the Telegraph miner network in one message, without a wallet, testnet USDC, or an
+x402 client, **because we solved the access problem:** Morse holds one funded payer wallet, pays
 x402 for every call, and publishes a public, independently verifiable ledger of every request
 it makes (signal hash on the node, USDC transfer on Base Sepolia).
+
+The claim is deliberately narrow. Morse is a front door, not a layer on top of the protocol's
+judgement: it does not re-rank miners, check one against another, or blend answers. The router's
+pick is the answer (GAPS G32).
 
 ## Reality checks
 

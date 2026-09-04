@@ -78,8 +78,13 @@ export function landingPage(d: LandingData): string {
       return `<div><h3>${h(g.title)}</h3><ul>${items}</ul></div>`;
     })
     .join("");
+  const telegram = d.botUsername
+    ? `<a class="tg" href="https://t.me/${h(d.botUsername)}">Open @${h(d.botUsername)} in Telegram →</a>`
+    : `<span class="muted">The Telegram bot is not connected yet.</span>`;
   const body = `
-<p class="lede">Ask a question in plain language. Telegraph routes it to a ranked miner, Morse pays the fee, and you get the answer <b>with a receipt</b> you can verify on the node and on-chain.</p>
+<p class="lede"><b>Telegraph in Telegram.</b> Ask, get an answer from a ranked miner, with a receipt.</p>
+<p class="sub-lede">No wallet, no key, no sign-up. Type a question, Telegraph's router sends it to the best-ranked miner for that intent, Morse pays the $0.01 fee, and the answer comes back naming who answered, what it cost, and a signal hash you can check on the node and on-chain.</p>
+<div class="cta">${telegram}<span class="muted">or try it right here ↓</span></div>
 ${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The payer wallet or daily budget is not configured, so asking is disabled until the operator funds it. Everything else on this page is live.</div>`}
 <section class="panel"><h2>Ask the network</h2>
 <form class="ask" id="ask"><input id="q" name="q" placeholder="Try: Is the SSL certificate for github.com valid, and who issued it?" maxlength="2000" required autocomplete="off"><button id="go" type="submit">Ask</button></form>
@@ -101,7 +106,7 @@ ${d.latest ? latestReceipt(d.latest) : ""}
 <section class="panel"><details><summary><b>What can I ask?</b> <span class="muted">— one example per intent the network serves; click any to ask it</span></summary><div class="groups">${groups}</div></details></section>
 
 <section class="panel"><h2>Questions people ask about Morse</h2>
-<details><summary>What is this, in one sentence?</summary><p>A front door to the Telegraph network: dozens of independent "miners" (APIs and models) compete on a public leaderboard to answer questions, and Morse lets you ask them without a wallet.</p></details>
+<details><summary>What is this, in one sentence?</summary><p>Telegraph, inside Telegram: dozens of independent "miners" (APIs and models) compete on a public leaderboard to answer questions, and Morse lets you ask them from a chat, without a wallet.</p></details>
 <details><summary>What can I ask?</summary><p>Anything the network has a miner for: certificate and link safety checks, weather and storm risk, crypto and stock prices, wallet balances and fraud risk, fact checks, translations, news and papers, plus general questions. The list above has one example per intent.</p></details>
 <details><summary>Is it free? Who pays?</summary><p>Free for you. Each answer costs about $0.01 in testnet USDC, which Morse's own wallet pays via x402. Limits: 20 questions per day on the web, 40 in Telegram, 100 per API key.</p></details>
 <details><summary>What is the receipt, and how do I verify it?</summary><p>Every answer names the miner, its leaderboard rank, who routed the question, the miner's confidence, the cost, the on-chain settlement, and a <b>signal hash</b>. Click "verify" on any answer or ledger row: Morse fetches the node's own record for that hash, shows the wallet that paid and checks it is Morse's, and links the USDC transfer on BaseScan.</p></details>
@@ -110,15 +115,15 @@ ${d.latest ? latestReceipt(d.latest) : ""}
 </section>
 
 <section class="panel" id="ledger"><h2>Public ledger <span class="badge">${d.ledgerKind === "postgres" ? "durable" : "ephemeral · dev"}</span></h2>
-<p class="muted">Every call Morse makes, newest first, including the operator's own testing — nothing is separated out and nothing is manufactured. "Routed" says who chose the miner: Telegraph's router for a normal ask; Morse when you named the miner, or as a fallback when the router did not answer. Payer wallet: ${d.payer ? `<a href="https://sepolia.basescan.org/address/${h(d.payer)}"><code>${h(d.payer)}</code></a>` : "<i>not configured</i>"}. Cross-check any row at its verify link, or on the node with <code>GET /engine/v1/signal/{hash}</code>. JSON: <a href="/api/stats">/api/stats</a> · <a href="/api/recent">/api/recent</a> · <a href="/api/health">/api/health</a>. A check that does not rely on this table: <a href="/proof"><b>on-chain proof</b></a> matches every settlement hash here against the payer wallet's USDC transfers on Base Sepolia.</p>
+<p class="muted">The evidence behind the counters above: every call Morse has made, newest first, including the operator's own testing — nothing is separated out and nothing is manufactured. "Routed" says who chose the miner: Telegraph's router for a normal ask; Morse when you named the miner, or as a fallback when the router did not answer. Payer wallet: ${d.payer ? `<a href="https://sepolia.basescan.org/address/${h(d.payer)}"><code>${h(d.payer)}</code></a>` : "<i>not configured</i>"}. Cross-check any row at its verify link, or on the node with <code>GET /engine/v1/signal/{hash}</code>. JSON: <a href="/api/stats">/api/stats</a> · <a href="/api/recent">/api/recent</a> · <a href="/api/health">/api/health</a>. A check that does not rely on this table: <a href="/proof"><b>on-chain proof</b></a> matches every settlement hash here against the payer wallet's USDC transfers on Base Sepolia.</p>
 <div class="tablewrap"><table><thead><tr><th>time (UTC)</th><th>channel</th><th>kind</th><th>intent</th><th>miner</th><th>routed</th><th>conf.</th><th>cost</th><th>ms</th><th>status</th><th>verify</th></tr></thead>
 <tbody>${d.recent.length ? d.recent.map(row).join("") : `<tr><td colspan="11" class="muted">No calls yet.</td></tr>`}</tbody></table></div></section>
 
 <section class="panel"><h2>How routing works</h2>
 <p>Your question goes to Telegraph's own router (<code>POST /engine/v1/ask</code>), which classifies it into one of the network's 45 canonical intents with an LLM and picks a ranked miner — 70% of traffic goes to #1, 20% to #2, 10% to #3, re-ranked from validator scores every 9-hour epoch. If the router does not answer within 20 seconds (on 2 September it timed out at ~47 s for a day), Morse falls back to its own keyword classifier over the live leaderboard and calls the best-ranked miner directly. Every receipt says which of the two happened.</p>
-<p><b>Not an aggregator, not a validator.</b> Morse does not pick providers, does not blend answers and does not re-rank miners — Telegraph's leaderboard already does that, once, for everyone. The ranked router picks the miner; Morse pays the fee, shows the answer, and keeps the receipt where anyone can check it: <a href="/proof">every payment reconciled against the chain</a>.</p>
+<p><b>Not an aggregator, not a validator.</b> Morse does not pick providers, does not blend answers and does not check one miner against another. Telegraph's leaderboard already decides which miner is best, once, for everyone; the router's pick is the answer. Morse pays the fee, shows the answer, and keeps the receipt where anyone can check it: <a href="/proof">every payment reconciled against the chain</a>.</p>
 <p><b>Disclosure:</b> one miner the network often routes to, <code>livecert</code>, is operated by the same person who built Morse. It holds its ranks on the public leaderboard; Morse neither skips it nor favours it, and every ledger row names the miner it went to.</p>
-<p>Also in Telegram: ${d.botUsername ? `<b><a href="https://t.me/${h(d.botUsername)}">@${h(d.botUsername)}</a></b>` : "<b>not connected yet</b>"}. For agents: <a href="/keys">hosted MCP and REST, no wallet needed</a>. Source and honest limits: <a href="https://github.com/Harshyadav442277/telegraph-morse">GitHub</a>.</p></section>
+<p>In Telegram: ${d.botUsername ? `<b><a href="https://t.me/${h(d.botUsername)}">@${h(d.botUsername)}</a></b>` : "<b>not connected yet</b>"}. For agents: <a href="/keys">hosted MCP and REST, no wallet needed</a>. Source and honest limits: <a href="https://github.com/Harshyadav442277/telegraph-morse">GitHub</a>.</p></section>
 
 <script>
 const form=document.getElementById('ask'),q=document.getElementById('q'),out=document.getElementById('out'),go=document.getElementById('go');
@@ -132,5 +137,7 @@ form.addEventListener('submit',e=>{e.preventDefault();run({question:q.value})});
 document.querySelectorAll('.ex,.exq').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();q.value=b.dataset.q;q.scrollIntoView({block:'center'});run({question:q.value})}));
 document.querySelectorAll('.rc').forEach(b=>b.addEventListener('click',()=>{q.value=b.dataset.fill;q.focus()}));
 </script>`;
-  return page("Morse · ask Telegram, get a receipt from the Telegraph network", body);
+  return page("Morse · Telegraph in Telegram", body, {
+    description: "Telegraph in Telegram. Ask, get an answer from a ranked miner, with a receipt.",
+  });
 }
