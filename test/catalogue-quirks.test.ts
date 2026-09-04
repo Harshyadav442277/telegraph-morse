@@ -51,14 +51,16 @@ describe("miners that map a risk score into confidence_field (GAPS G8)", () => {
     expect(shouldSeekSecondOpinion(calm)).toBe(false);
   });
 
-  it("still treats a real confidence normally", () => {
+  it("still treats a real confidence normally, and never seeks a second opinion unasked", () => {
     const r = buildReceipt(
       { miner_name: "livecert", intent: "SSL_VERIFICATION", result: { confidence: 0.2, verdict: "unclear" } },
       { confidence_field: "confidence" },
       1,
     );
     expect(r.confidenceIsRisk).toBe(false);
-    expect(shouldSeekSecondOpinion(r)).toBe(true);
+    // Default threshold is 0 since 2026-09-04: paying a second miner without being asked
+    // was judged re-ranking and spam by an organizer (GAPS G32).
+    expect(shouldSeekSecondOpinion(r)).toBe(false);
     expect(confidenceText(r.confidence, r.confidenceIsRisk)).toBe("confidence 20%");
   });
 });
