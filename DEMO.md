@@ -10,10 +10,10 @@ Every output below was captured from the live deployment on the date stated. Ste
 Last capture: **2026-09-04 10:42 UTC**, with the wallet funded and Morse paying; the paid judge
 journey is 7/7.
 
-**Retired 2026-09-04 15:30 UTC (GAPS G32):** steps 8 (Ask the podium) and 10 (consensus report)
-describe features an organizer judged as re-ranking their leaderboard and as spam. They are kept
-below as dated records of what was verified, and are removed from the running app before the
-freeze; do not demonstrate them.
+**Removed 2026-09-04 (GAPS G32):** steps 8 (Ask the podium) and 10 (consensus report) described
+features an organizer judged as re-ranking their leaderboard and as spam. They are gone from the
+running app, from Telegram, from MCP and from REST; each keeps a one-line dated record below so
+the history is legible. Do not demonstrate them.
 
 **Integrity note:** the ledger rows visible today are our own verification calls, not users. Real
 and receipted, but not adoption — see GAPS G20.
@@ -26,11 +26,13 @@ and receipted, but not adoption — see GAPS G20.
 
 Open <https://telegraph-morse.vercel.app>.
 
-Expected: the M·O·R·S·E header; a one-paragraph claim mentioning **receipt**; six counters (people
-answered / of who asked, answered calls, intents used, miners served, USDC paid, calls today); the
-**Public ledger** table with a `durable` badge; a "How routing works" panel. While the wallet is
-funded, there is no warning panel; when it is not, a yellow panel says so in the first screenful
-rather than letting a visitor discover it by asking.
+Expected, in this order in the first screenful: the M·O·R·S·E header; the claim, **"Telegraph in
+Telegram. Ask, get an answer from a ranked miner, with a receipt."**; a yellow **Open @MyMorse_Bot
+in Telegram →** button; the ask box. Below it: one real receipt from the newest answered call, six
+counters (people answered / of who asked, answered calls, intents used, miners served, USDC paid,
+calls today), the **Public ledger** table with a `durable` badge, and a "How routing works" panel.
+While the wallet is funded there is no warning panel; when it is not, a yellow panel says so in the
+first screenful rather than letting a visitor discover it by asking.
 
 ### 2 · Ask a question — ✅ verified
 
@@ -147,9 +149,10 @@ event: message
 data: {"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"morse","version":"0.1.0"}},"jsonrpc":"2.0","id":1}
 ```
 
-`tools/list` returns nine tools (re-verified 2026-09-04): `telegraph_ask`, `telegraph_ask_miner`,
-`telegraph_podium`, `telegraph_recipe`, `telegraph_second_opinion`, `telegraph_verify_signal`,
-`telegraph_intents`, `telegraph_leaderboard`, `telegraph_hot_signals`. Without a key, `/mcp` returns **401** with a
+`tools/list` returns seven tools: `telegraph_ask`, `telegraph_ask_miner`, `telegraph_recipe`,
+`telegraph_verify_signal`, `telegraph_intents`, `telegraph_leaderboard`, `telegraph_hot_signals`.
+`telegraph_podium` and `telegraph_second_opinion` were removed on 2026-09-04 and the judge journey
+asserts they are absent. Without a key, `/mcp` returns **401** with a
 `WWW-Authenticate: Bearer realm="morse"` header — ✅ verified.
 
 ### 7 · Telegram — ✅ verified
@@ -159,41 +162,17 @@ Open **<https://t.me/MyMorse_Bot>**, send `/help`, then ask it anything.
 Verified 2026-09-03: **13 answered calls across 6 intents** — SSL_VERIFICATION, URL_SCAN,
 IP_GEOLOCATION, WEATHER_CHECK, WEATHER_FORECAST, STORM_ALERT — every one with its own on-chain
 settlement, and including the `weather` and `safe` recipes run in-chat. By 2026-09-04 10:30 UTC the
-Telegram channel had 52 calls in the ledger, including podium rounds started from the button under
-an answer.
+Telegram channel had 52 calls in the ledger.
 
 `/safe https://example.com` returns "Asking the network (safe)…" edited in place into a combined
-verdict over three receipted calls. `/second` re-asks the next-ranked miner and prints both with
-their ranks. `/hot` shows the Daemon's top signals. `/stats` prints the same numbers as
-`/api/stats`.
+verdict over three receipted calls. `/miner <slug> <question>` dispatches straight at one named
+miner. `/hot` shows the Daemon's top signals. `/stats` prints the same numbers as `/api/stats`.
 
-### 8 · Ask the podium — RETIRED 2026-09-04 (was ✅ verified 2026-09-03 18:46 UTC; record only)
+### 8 · Ask the podium — REMOVED 2026-09-04
 
-After step 2, click **Ask the podium — the other top-ranked miners answer this too**.
-
-Verified against production, same question as step 2:
-
-```
-routed  : Telegraph's own router → txlens, #1 for SSL_VERIFICATION (9.0 s, engine)
-podium  : livecert #2 and preflight-ssl-verification #3 asked directly (5.6 s total)
-verdict : 3 of 3 miners agree: valid.
-receipts: 0xa488f91a… (original) · 0x3a4e74a6… (#2) · 0x9eb30b2f… (#3), each settled on-chain
-ledger  : two rows of kind `podium`, grouped to the original answer's row id
-```
-
-And the honest failure, same session, `What is the price of BTC right now?` (CRYPTO_PRICE):
-
-```
-routed  : onchain-intel-miner #1 → "BTC is 81019.01 USD"
-podium  : pricepulse-crypto-consensus #2 skipped (cannot be addressed from a sentence);
-          sentinel-risk-oracle #3 answered "price data temporarily unavailable";
-          kriterion-pramagraph #4 timed out at 15 s (recorded as timeout, nothing charged)
-verdict : Only 1 of 2 answers contained a comparable figure, so agreement cannot be judged.
-```
-
-Podium never fakes agreement: the second case is shown exactly like that, with every attempt in
-the ledger. In Telegram the same flow is the **Ask the podium** button under every answer, or
-`/podium` for your last question.
+Built 2026-09-03, verified 2026-09-03 18:46 UTC, and removed from every surface on 2026-09-04
+after an organizer judged re-asking the other ranked miners to be building a router for their
+miners and, at N paid calls per question, spam (GAPS G32). Its ledger rows are kept and labelled.
 
 ---
 
@@ -216,20 +195,10 @@ read from Blockscout rather than from Morse's own database. The four chain-only 
 listed on the page, not hidden (GAPS G29). The page reads the chain and never asks the network, so
 reloading it costs nothing.
 
-### 10 · Consensus report — RETIRED 2026-09-04 (was ✅ verified 2026-09-04 04:15 UTC; record only)
+### 10 · Consensus report — REMOVED 2026-09-04
 
-Open <https://telegraph-morse.vercel.app/consensus>, or:
-
-```bash
-curl -s https://telegraph-morse.vercel.app/api/consensus
-```
-
-→ totals `{"rounds":16,"agree":2,"disagree":1,"undetermined":13,"extraCalls":29,"secondOpinions":23}`
-(2026-09-04 10:35 UTC; the response also carries every round and a per-intent table) — 16 rounds
-over 11 intents: SSL_VERIFICATION "3 of 3 miners agree: valid"; WEATHER_CHECK one round agreeing
-and one disagreeing; CRYPTO_PRICE "only 1 of 2 answers contained a comparable figure"; the
-free-text intents shown side by side and not judged. Every member links its receipt. Computed from
-ledger rows that already exist.
+`/consensus` scored 16 podium rounds over 11 intents for agreement; verified 2026-09-04 04:15 UTC,
+and removed with the podium it reported on (GAPS G32). Telegraph's leaderboard is the consensus.
 
 ### 11 · Ask a named miner — ✅ verified 2026-09-04 04:16 UTC
 
@@ -318,8 +287,8 @@ npm run catalogue
 Reads the public `/api/miners` once, engages no miner, spends nothing. It is where the numbers in
 GAPS G8 and G14 come from, and it found two real bugs in Morse: four miners publish a *risk* score
 in their `confidence_field` (a high number means more danger, not more certainty), and 29 miners
-publish more than one endpoint, so picking `endpoints[0]` for a direct second opinion sent
-fraud questions to a transaction-lookup endpoint. Both are fixed and covered by tests.
+publish more than one endpoint, so picking `endpoints[0]` for a direct call sent fraud questions
+to a transaction-lookup endpoint. Both are fixed and covered by tests.
 
 ## Health probe
 
