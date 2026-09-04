@@ -4,7 +4,7 @@ import { guardPaid } from "./guards.js";
 import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
-import { askMiner, askRouted, getMiners, leaderboard, rankOf, resolveMiner, TelegraphError, withEndpointIntents, type Miner, type MinerEndpoint } from "./telegraph.js";
+import { askMiner, askRouted, getMiners, rankOf, resolveMiner, TelegraphError, withEndpointIntents, type Miner, type MinerEndpoint } from "./telegraph.js";
 import { CHAT_INTENTS, classifyIntent, MESSAGES_KEY, PROSE_KEYS, routeCandidates, SUBJECT_KEYS, type Route } from "./route.js";
 
 /**
@@ -23,8 +23,6 @@ export interface AnswerCard {
   kind: string;
   question: string;
   receipt: Receipt | null;
-  /** Second opinion from the next-ranked miner, when fetched. */
-  second: Receipt | null;
   error: string | null;
   /** Calls this identity may still make today. */
   remaining: number | null;
@@ -58,7 +56,7 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
     const g = await guard(ctx, 1);
     remaining = g.remaining;
     if (!g.allowed) {
-      return { ok: false, kind, question, receipt: null, second: null, error: g.reason ?? "Not allowed.", remaining, rowId: null };
+      return { ok: false, kind, question, receipt: null, error: g.reason ?? "Not allowed.", remaining, rowId: null };
     }
   }
   const row = baseRow(ctx, kind, question);
@@ -75,7 +73,7 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
         fillRow(row, viaEngine, "ok");
         row.routedBy = "engine";
         await ledger.recordCall(row);
-        return { ok: true, kind, question, receipt: viaEngine, second: null, error: null, remaining, rowId: row.id, routedBy: "engine" };
+        return { ok: true, kind, question, receipt: viaEngine, error: null, remaining, rowId: row.id, routedBy: "engine" };
       }
     }
 
@@ -97,7 +95,7 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
         fillRow(row, receipt, "ok");
         row.routedBy = "morse";
         await ledger.recordCall(row);
-        return { ok: true, kind, question, receipt, second: null, error: null, remaining, rowId: row.id, routedBy: "morse" };
+        return { ok: true, kind, question, receipt, error: null, remaining, rowId: row.id, routedBy: "morse" };
       } catch (inner) {
         const err = inner instanceof TelegraphError ? inner : new TelegraphError((inner as Error).message, "network");
         lastError = err;
@@ -123,7 +121,7 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
       row.routedBy = "morse";
     }
     await ledger.recordCall(row);
-    return { ok: false, kind, question, receipt: null, second: null, error: err.message, remaining, rowId: row.id, routedBy: row.routedBy };
+    return { ok: false, kind, question, receipt: null, error: err.message, remaining, rowId: row.id, routedBy: row.routedBy };
   }
 }
 
@@ -139,7 +137,7 @@ async function tryEngineRouter(question: string): Promise<Receipt | null> {
   try {
     const raw = await askRouted(question);
     // The Engine names the miner by display name and by catalogue id; the slug is
-    // what the ledger, the leaderboard and Podium key on, so resolve it here.
+    // what the ledger and the leaderboard key on, so resolve it here.
     const miner = await resolveMiner({ id: raw.miner_id ?? null, name: raw.miner_name ?? null });
     const receipt = buildReceipt(raw, miner?.signal_mapping ?? null, rankOf(miner, raw.intent ?? null));
     if (miner) receipt.minerSlug = miner.slug;
@@ -160,8 +158,7 @@ export interface DirectOutcome {
 
 /**
  * Call one named miner directly for one intent, and record the row whatever
- * happens. Shared by second opinions and Podium. The caller has already applied the
- * spending guard for this call.
+ * happens. The caller has already applied the spending guard for this call.
  */
 export async function callMinerDirect(
   ctx: AskContext,
@@ -169,10 +166,9 @@ export async function callMinerDirect(
   rank: number | null,
   intent: string,
   question: string,
-  opts: { kind: string; groupId?: string | null; timeoutMs?: number; subject?: string },
+  opts: { kind: string; timeoutMs?: number; subject?: string },
 ): Promise<DirectOutcome> {
   const row = baseRow(ctx, opts.kind, question);
-  row.groupId = opts.groupId ?? null;
   row.routedBy = "morse";
   row.intent = intent;
   row.minerSlug = miner.slug;
@@ -211,15 +207,15 @@ export function intentForMiner(miner: Miner, question: string): string | null {
 }
 
 /**
- * Ask one named miner directly, by slug or catalogue id. This is the dispatch the
- * organizers' own reference apps use, and it is how a miner author can try their own
- * miner with a receipt and no wallet. Routing is bypassed on purpose and the receipt
- * says so; every other rule — guards, ledger row, honest failure — is unchanged.
+ * Ask one named miner directly, by slug or catalogue id. This is the same direct
+ * dispatch the organizers' own reference apps use — `/subnet-dispatcher/v1/<id>/…`
+ * rather than the router. Routing is bypassed on purpose and the receipt says so;
+ * every other rule — guards, ledger row, honest failure — is unchanged.
  */
 export async function askNamedMiner(ctx: AskContext, ref: string, question: string): Promise<AnswerCard> {
   const kind = "direct";
   const fail = (error: string, remaining: number | null = null): AnswerCard => ({
-    ok: false, kind, question, receipt: null, second: null, error, remaining, rowId: null, routedBy: "morse",
+    ok: false, kind, question, receipt: null, error, remaining, rowId: null, routedBy: "morse",
   });
   const key = ref.trim().replace(/^@/, "").toLowerCase();
   if (!key) return fail("Name a miner: its slug from the leaderboard, or its catalogue id.");
@@ -235,57 +231,15 @@ export async function askNamedMiner(ctx: AskContext, ref: string, question: stri
   const g = await guard(ctx, 1);
   if (!g.allowed) return fail(g.reason ?? "Not allowed.", g.remaining);
   const out = await callMinerDirect(ctx, miner, rankOf(miner, intent), intent, question, { kind });
-  return { ok: Boolean(out.receipt), kind, question, receipt: out.receipt, second: null, error: out.error, remaining: g.remaining, rowId: out.row.id, routedBy: "morse" };
-}
-
-/**
- * Second opinion: call the next-ranked active miner for the same intent directly.
- * Payload construction is best-effort from the miner's declared input schema; a
- * miner that cannot be addressed this way fails honestly and costs nothing.
- */
-export async function secondOpinion(
-  ctx: AskContext,
-  question: string,
-  intent: string,
-  excludeSlug: string | null,
-): Promise<{ receipt: Receipt | null; error: string | null }> {
-  const g = await guard(ctx, 1);
-  if (!g.allowed) return { receipt: null, error: g.reason ?? "Not allowed." };
-  const board = await leaderboard(intent);
-  const candidate = board.find((e) => e.miner.slug !== excludeSlug && e.miner.name !== excludeSlug && (e.miner.endpoints?.length ?? 0) > 0);
-  if (!candidate) return { receipt: null, error: `No other active miner serves ${intent}.` };
-  const out = await callMinerDirect(ctx, candidate.miner, candidate.rank, intent, question, { kind: "second-opinion" });
-  return { receipt: out.receipt, error: out.error };
-}
-
-export interface SecondOpinionResult {
-  first: CallRow | null;
-  second: Receipt | null;
-  error: string | null;
-}
-
-/**
- * Second opinion on an answer already in the ledger, shared by every channel. The
- * question is re-asked from the row's stored preview, so a question longer than 200
- * characters is re-asked in its clipped form (GAPS G15).
- */
-export async function secondOpinionOn(ctx: AskContext, row: CallRow | null): Promise<SecondOpinionResult> {
-  if (!row) {
-    return { first: null, second: null, error: "I have no earlier answer of yours to compare against — ask something first." };
-  }
-  if (!row.intent) {
-    return { first: row, second: null, error: "That answer did not name an intent, so there is no leaderboard to draw a second miner from." };
-  }
-  const r = await secondOpinion(ctx, row.preview, row.intent, row.minerSlug);
-  return { first: row, second: r.receipt, error: r.error };
+  return { ok: Boolean(out.receipt), kind, question, receipt: out.receipt, error: out.error, remaining: g.remaining, rowId: out.row.id, routedBy: "morse" };
 }
 
 /**
  * Pick the endpoint that serves `intent`. 29 of the 129 active miners publish more
  * than one endpoint (measured 2026-09-02), and they name the intent at the start of
  * each description — degenlens-onchain lists 33, of which `endpoints[0]` is
- * ONCHAIN_TX_LOOKUP, so asking it for a FRAUD_DETECTION second opinion used to hit
- * the wrong endpoint entirely. Falls back to the first endpoint (GAPS G14).
+ * ONCHAIN_TX_LOOKUP, so asking it a FRAUD_DETECTION question used to hit the wrong
+ * endpoint entirely. Falls back to the first endpoint (GAPS G14).
  */
 export function endpointFor(miner: Miner, intent: string | null): MinerEndpoint | undefined {
   const eps = miner.endpoints ?? [];
@@ -330,13 +284,6 @@ export function directRequest(
     for (const k of props) if (SUBJECT_KEYS.includes(k)) payload[k] = subject;
   }
   return { method, endpoint: ep?.path ?? "/", payload };
-}
-
-export function shouldSeekSecondOpinion(receipt: Receipt): boolean {
-  // A risk score is not a confidence: a low one means "safe", not "unsure", and would
-  // otherwise trigger a second opinion on every calm weather report (GAPS G8).
-  if (receipt.confidenceIsRisk) return false;
-  return receipt.confidence !== null && receipt.confidence < config().SECOND_OPINION_THRESHOLD && Boolean(receipt.intent);
 }
 
 export function baseRow(ctx: AskContext, kind: string, question: string): CallRow {

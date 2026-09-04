@@ -44,7 +44,7 @@ console.log(
 );
 console.log(`  a RISK score, not confidence ${risky.length} → ${risky.map((m) => `${m.slug} (${m.signal_mapping.confidence_field})`).join(", ") || "none"}`);
 console.log("    ↑ a high number here means more danger, not more certainty. Morse labels these");
-console.log("      as risk and keeps them out of the second-opinion threshold.");
+console.log("      as risk rather than as confidence.");
 
 // --- Direct addressing (GAPS G14) ----------------------------------------
 const multi = miners.filter((m) => (m.endpoints?.length ?? 0) > 1);
@@ -57,7 +57,7 @@ const intentNamed = multi.filter((m) =>
 );
 const widest = [...miners].sort((a, b) => (b.endpoints?.length ?? 0) - (a.endpoints?.length ?? 0))[0];
 
-console.log("\nDIRECT ADDRESSING, i.e. second opinions (G14)");
+console.log("\nDIRECT ADDRESSING, i.e. /miner and telegraph_ask_miner (G14)");
 console.log(`  publish more than 1 endpoint ${multi.length} (${pct(multi.length)})`);
 console.log(`    of those, name the intent   ${intentNamed.length} in an endpoint description — how Morse picks`);
 console.log(`  widest surface               ${widest?.slug} with ${widest?.endpoints?.length} endpoints`);
@@ -73,4 +73,4 @@ console.log("\nINTENT COVERAGE");
 console.log(`  intents with at least 1 miner ${sorted.length}`);
 console.log(`  busiest   ${sorted.slice(0, 5).map(([k, v]) => `${k} ${v}`).join(", ")}`);
 console.log(`  thinnest  ${sorted.slice(-5).map(([k, v]) => `${k} ${v}`).join(", ")}`);
-console.log(`  served by exactly one miner   ${sorted.filter(([, v]) => v === 1).length} — no second opinion is possible there\n`);
+console.log(`  served by exactly one miner   ${sorted.filter(([, v]) => v === 1).length} — only one miner can answer there\n`);

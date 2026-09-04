@@ -165,7 +165,7 @@ export function askRouted(query: string, timeoutMs = config().ROUTER_TIMEOUT_MS)
   return paidPost("/engine/v1/ask", { query }, timeoutMs);
 }
 
-/** Direct ask: skip routing and call one miner's endpoint. Used for second opinions only. */
+/** Direct ask: skip routing and call one named miner's endpoint, as `/miner` does. */
 export function askMiner(
   minerId: string,
   req: { method: "GET" | "POST"; endpoint: string; payload: Record<string, unknown> },

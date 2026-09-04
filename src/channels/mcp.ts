@@ -3,9 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Hono } from "hono";
 import { z } from "zod";
 import { config } from "../config.js";
-import { askNamedMiner, askNetwork, secondOpinionOn, type AskContext } from "../core/ask.js";
-import { getLedger } from "../core/ledger/index.js";
-import { askPodium } from "../core/podium.js";
+import { askNamedMiner, askNetwork, type AskContext } from "../core/ask.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
 import { getIntents, hotSignals, leaderboard, verifySignal } from "../core/telegraph.js";
 import { authenticateKey, type AppEnv } from "./rest.js";
@@ -41,7 +39,7 @@ export function buildServer(ctx: AskContext): McpServer {
     {
       title: "Ask one named miner directly",
       description:
-        "Bypass routing and ask a specific miner by slug or catalogue id — the same direct dispatch Telegraph's reference apps use, and how a miner author tests their own miner with a receipt and no wallet. Costs one paid call; the receipt says routing was bypassed at your request. Find slugs with telegraph_leaderboard.",
+        "Bypass routing and ask a specific miner by slug or catalogue id — the same direct dispatch Telegraph's own reference apps use. Costs one paid call; the receipt says routing was bypassed at your request. Find slugs with telegraph_leaderboard.",
       inputSchema: { miner: z.string().min(1).max(64), question: z.string().min(3).max(2000) },
     },
     async ({ miner, question }) => text(await askNamedMiner(ctx, miner, question)),
@@ -58,48 +56,6 @@ export function buildServer(ctx: AskContext): McpServer {
       const r = RECIPES[recipe];
       if (!r) return text({ error: "unknown recipe" });
       return text(await runRecipe(ctx, r, input));
-    },
-  );
-
-  server.registerTool(
-    "telegraph_second_opinion",
-    {
-      title: "Second opinion on an answer",
-      description:
-        "Re-ask a previous Morse answer's question directly to the next-ranked active miner for the same intent, and return both miners with their ranks. Give it the signal_hash from an earlier telegraph_ask receipt. Costs one paid call.",
-      inputSchema: { signal_hash: z.string().regex(/^0x[0-9a-fA-F]{8,64}$/) },
-    },
-    async ({ signal_hash }) => {
-      const res = await secondOpinionOn(ctx, await getLedger().answerByHashPrefix(signal_hash));
-      return text({
-        first: res.first
-          ? { minerSlug: res.first.minerSlug, minerRank: res.first.minerRank, intent: res.first.intent, confidence: res.first.confidence, signalHash: res.first.signalHash }
-          : null,
-        second: res.second,
-        error: res.error,
-      });
-    },
-  );
-
-  server.registerTool(
-    "telegraph_podium",
-    {
-      title: "Ask the podium",
-      description:
-        "Verification layer on a previous answer: the other top-ranked miners for the same intent answer the same question directly, side by side, with ranks and receipts. Morse states agreement only when the answers are machine-comparable (a verdict such as valid/unsafe/true, or a figure such as a price or temperature, with a stated tolerance); free-text answers are returned side by side and marked as not judged. Give it the signal_hash from an earlier telegraph_ask receipt. Costs one paid call per extra miner, at most two.",
-      inputSchema: { signal_hash: z.string().regex(/^0x[0-9a-fA-F]{8,64}$/) },
-    },
-    async ({ signal_hash }) => {
-      const res = await askPodium(ctx, await getLedger().answerByHashPrefix(signal_hash));
-      return text({
-        question: res.question,
-        intent: res.intent,
-        agreement: res.agreement,
-        members: res.members.map(({ receipt, ...m }) => ({ ...m, costUsd: receipt?.costUsd ?? null, durationMs: receipt?.durationMs ?? null })),
-        paidCalls: res.paidCalls,
-        skipped: res.skipped,
-        error: res.error,
-      });
     },
   );
 

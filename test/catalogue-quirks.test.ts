@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { directRequest, endpointFor, shouldSeekSecondOpinion } from "../src/core/ask.js";
+import { directRequest, endpointFor } from "../src/core/ask.js";
 import { buildReceipt, isRiskField } from "../src/core/receipt.js";
 import { confidenceText, receiptLine } from "../src/core/format.js";
 import { parseEndpointIntents, type Miner } from "../src/core/telegraph.js";
@@ -40,27 +40,23 @@ describe("miners that map a risk score into confidence_field (GAPS G8)", () => {
   });
 
   it("does not let a calm forecast masquerade as an unsure miner", () => {
-    // risk 0.05 is a *good* forecast. Read as confidence it would look like 5% sure
-    // and fire a second opinion on every quiet day.
+    // risk 0.05 is a *good* forecast. Read as confidence it would look like 5% sure.
     const calm = buildReceipt(
       { miner_name: "amanat-weather-risk", intent: "STORM_ALERT", result: { risk: 0.05, summary: "Clear." } },
       { confidence_field: "risk" },
       1,
     );
     expect(calm.confidenceIsRisk).toBe(true);
-    expect(shouldSeekSecondOpinion(calm)).toBe(false);
+    expect(confidenceText(calm.confidence, calm.confidenceIsRisk)).toContain("risk 5%");
   });
 
-  it("still treats a real confidence normally, and never seeks a second opinion unasked", () => {
+  it("still treats a real confidence normally", () => {
     const r = buildReceipt(
       { miner_name: "livecert", intent: "SSL_VERIFICATION", result: { confidence: 0.2, verdict: "unclear" } },
       { confidence_field: "confidence" },
       1,
     );
     expect(r.confidenceIsRisk).toBe(false);
-    // Default threshold is 0 since 2026-09-04: paying a second miner without being asked
-    // was judged re-ranking and spam by an organizer (GAPS G32).
-    expect(shouldSeekSecondOpinion(r)).toBe(false);
     expect(confidenceText(r.confidence, r.confidenceIsRisk)).toBe("confidence 20%");
   });
 });

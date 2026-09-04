@@ -1,6 +1,4 @@
 import type { AnswerCard } from "./ask.js";
-import type { CallRow } from "./ledger/types.js";
-import type { PodiumResult } from "./podium.js";
 import type { Receipt } from "./receipt.js";
 import type { RecipeResult } from "./recipes.js";
 
@@ -20,13 +18,11 @@ export function confidenceText(c: number | null, isRisk = false): string {
   return isRisk ? `risk ${pct}% (the miner's own metric, not confidence)` : `confidence ${pct}%`;
 }
 
-/** Who chose the miner. Morse chooses on purpose for a podium, a second opinion or a named miner; "fallback" is only the ask kind. */
+/** Who chose the miner. Morse chooses on purpose for a named miner; "fallback" is only the ask kind. */
 export function routedByText(r: "engine" | "morse" | null | undefined, kind?: string): string {
   if (r === "engine") return "routed by Telegraph";
   if (r !== "morse") return "";
   if (kind === "direct") return "asked directly at your request";
-  if (kind === "podium") return "podium leg, asked directly";
-  if (kind === "second-opinion") return "second opinion, asked directly";
   return "Morse fallback routing";
 }
 
@@ -51,59 +47,7 @@ export function cardHtml(card: AnswerCard, publicUrl: string | undefined): strin
     return `⚠️ ${esc(card.error ?? "The network did not answer.")}`;
   }
   const r = card.receipt;
-  const answer = clip(r.answer, 1500);
-  let out = `${esc(answer)}\n\n${receiptLine(r, publicUrl, card.routedBy, card.kind)}`;
-  if (card.second) {
-    out += `\n\n<b>Second opinion</b>\n${esc(clip(card.second.answer, 700))}\n\n${receiptLine(card.second, publicUrl)}`;
-  }
-  return out;
-}
-
-/**
- * A second opinion is only meaningful next to the first one, so both miners and both
- * ranks are named. The ledger keeps the first answer's receipt, not its text, so the
- * first miner is shown as a receipt line and the second in full.
- */
-export function secondOpinionHtml(
-  first: CallRow,
-  second: Receipt | null,
-  error: string | null,
-  publicUrl: string | undefined,
-): string {
-  const rank = (n: number | null) => (n ? ` #${n}` : "");
-  const head =
-    `<b>Second opinion</b> · <i>${esc(clip(first.preview, 160))}</i>\n\n` +
-    `<b>1.</b> ${esc(first.minerSlug ?? "?")}${rank(first.minerRank)}` +
-    `${first.intent ? ` for ${esc(first.intent)}` : ""} · ${confidenceText(first.confidence)}` +
-    (first.signalHash && publicUrl ? ` · <a href="${publicUrl}/verify/${first.signalHash}">receipt</a>` : "");
-  if (!second) return `${head}\n\n⚠️ ${esc(error ?? "No other miner could answer.")}`;
-  return `${head}\n\n<b>2.</b> ${esc(second.minerSlug ?? "?")}${rank(second.minerRank)}\n${esc(clip(second.answer, 1200))}\n${receiptLine(second, publicUrl)}`;
-}
-
-/** Telegram rendering of a podium round: the verdict line first, then every miner. */
-export function podiumHtml(res: PodiumResult, publicUrl: string | undefined): string {
-  if (res.error) return `⚠️ ${esc(res.error)}`;
-  const a = res.agreement;
-  const mark = a?.verdict === "agree" ? "✅" : a?.verdict === "disagree" ? "⚠️" : "➖";
-  const parts = [
-    `<b>Podium</b> · ${esc(res.intent ?? "?")} · <i>${esc(clip(res.question, 140))}</i>`,
-    `${mark} <b>${esc(a?.summary ?? "No comparison possible.")}</b>`,
-  ];
-  for (const m of res.members) {
-    const rank = m.minerRank ? `#${m.minerRank}` : "unranked";
-    const tag = m.isOriginal ? " · your answer" : "";
-    const head = `<b>${esc(rank)} ${esc(m.minerSlug)}</b>${tag} · ${confidenceText(m.confidence, m.confidenceIsRisk)}`;
-    if (m.answer) {
-      const verify = m.signalHash && publicUrl ? `\n<a href="${publicUrl}/verify/${m.signalHash}">verify ${shortHash(m.signalHash)}</a>` : "";
-      const tx = m.settlementTx ? ` · <a href="https://sepolia.basescan.org/tx/${m.settlementTx}">paid on-chain</a>` : "";
-      parts.push(`${head}\n${esc(clip(m.answer, 600))}${verify}${tx}`);
-    } else {
-      parts.push(`${head}\n<i>${esc(m.error ?? "no answer")}</i>`);
-    }
-  }
-  if (res.skipped.length) parts.push(`<i>Not asked (cannot be addressed from a sentence): ${esc(res.skipped.join(", "))}</i>`);
-  parts.push(`<i>${res.paidCalls} extra paid call${res.paidCalls === 1 ? "" : "s"}, each with its own receipt.</i>`);
-  return parts.join("\n\n");
+  return `${esc(clip(r.answer, 1500))}\n\n${receiptLine(r, publicUrl, card.routedBy, card.kind)}`;
 }
 
 export function recipeHtml(res: RecipeResult, publicUrl: string | undefined): string {

@@ -31,11 +31,6 @@ td.mono,code,pre{font-family:var(--mono);font-size:12.5px}pre{background:var(--b
 
 .hero{border-color:var(--accent)}.hero .q{font-size:16px;color:var(--muted);margin:0 0 8px;font-style:italic}
 .rcpt{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:10px 0 0;font-size:13px}.rcpt dt{color:var(--muted)}.rcpt dd{margin:0;word-break:break-word}
-.sub{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
-button.pd,button.so{background:var(--panel);color:var(--fg);border:1px solid var(--accent);font-weight:600}
-.podium{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--panel)}
-.podium .verdict{font-weight:600;margin-bottom:10px;font-size:15px}.podium .verdict.ok{color:var(--ok)}.podium .verdict.warn{color:var(--warn)}
-.member{padding:10px 0;border-top:1px solid var(--line)}.member .ans{white-space:pre-wrap;margin-top:4px}
 .chips .ex{border-color:var(--accent)}.chips span.muted{align-self:center;font-size:13px}
 .groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 24px;margin-top:10px}.groups h3{font-size:14px;margin:8px 0 4px}.groups ul{margin:0;padding-left:18px}.groups li{margin:3px 0;font-size:14px}
 details{margin:6px 0}details summary{cursor:pointer;padding:6px 0}details p{margin:4px 0 8px 0;color:var(--fg)}
@@ -52,7 +47,7 @@ const HELP: Record<string, { title: string; qa: Array<[string, string]> }> = {
     title: "The public ledger",
     qa: [
       ["What is this list?", "Every call Morse has ever made to the Telegraph network, newest first, including the operator's own testing. Nothing is separated out and nothing is manufactured."],
-      ["What does the routed column mean?", "<b>Telegraph</b>: Telegraph's own router picked the miner. <b>Morse (podium)</b>, <b>(2nd opinion)</b>, <b>(named miner)</b>: you asked for that miner, so Morse called it directly. <b>Morse (fallback)</b>: the router did not answer within 20 s and Morse routed the question itself."],
+      ["What does the routed column mean?", "<b>Telegraph</b>: Telegraph's own router picked the miner. <b>Morse (named miner)</b>: you named the miner, so Morse dispatched to it directly. <b>Morse (fallback)</b>: the router did not answer within 20 s and Morse routed the question itself. Older rows also read <b>Morse (podium)</b> and <b>(2nd opinion)</b> — two features retired on 4 September; the rows stay because history is not rewritten."],
       ["Is my question public?", "Yes, clipped to 200 characters, with the answer excerpt. Who asked is stored only as a salted hash. Do not type anything private."],
     ],
   },
@@ -64,19 +59,11 @@ const HELP: Record<string, { title: string; qa: Array<[string, string]> }> = {
       ["Why does this matter?", "Because \"people used it\" is otherwise a claim. Here it is a number anyone can recompute from the chain."],
     ],
   },
-  consensus: {
-    title: "The consensus report",
-    qa: [
-      ["What is a podium round?", "After any answer, one click asks the other top-ranked miners for that intent the same question, directly, and lays the answers side by side with ranks and receipts."],
-      ["How is agreement judged?", "Only when the answers are machine-comparable: verdicts (valid / unsafe / true) or figures (a price, a temperature) within a stated tolerance. Free-text answers are shown side by side and marked as not judged."],
-      ["Does it change routing?", "No. A podium only runs after an answer exists and only when you ask; the ranked router still picks every first answer."],
-    ],
-  },
   keys: {
     title: "API and MCP",
     qa: [
       ["Do I need a wallet?", "No. Morse's own wallet pays the x402 fee for every call. Get a free key on this page; each key has a daily cap so the budget cannot be drained by one caller."],
-      ["How do I use it from Claude Code or Cursor?", "One command adds Morse as an MCP server: <code>claude mcp add --transport http morse https://telegraph-morse.vercel.app/mcp --header \"Authorization: Bearer morse_YOURKEY\"</code>. The tools include asking the network, asking the podium, and asking a named miner."],
+      ["How do I use it from Claude Code or Cursor?", "One command adds Morse as an MCP server: <code>claude mcp add --transport http morse https://telegraph-morse.vercel.app/mcp --header \"Authorization: Bearer morse_YOURKEY\"</code>. The tools cover asking the network, asking a named miner, running a recipe, and free discovery."],
       ["Can I call a specific miner?", "Yes: the <code>miner</code> field on REST, <code>telegraph_ask_miner</code> over MCP, <code>/miner &lt;slug&gt; &lt;question&gt;</code> in Telegram. The receipt says routing was bypassed at your request."],
     ],
   },
@@ -121,7 +108,7 @@ export function page(title: string, body: string, opts: { description?: string }
 <title>${escapeHtml(title)}</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="description" content="${escapeHtml(opts.description ?? "Ask Telegram, get a receipt from the Telegraph network.")}">
 <style>${CSS}</style></head><body><main>
 <header class="top"><h1><a href="/" style="color:inherit">M<span>·</span>O<span>·</span>R<span>·</span>S<span>·</span>E</a></h1>
-<nav>${navItem("/#ledger", "Ledger", "ledger")}${navItem("/proof", "Proof", "proof")}${navItem("/consensus", "Consensus", "consensus")}${navItem("/keys", "API &amp; MCP", "keys")}${navItem("https://github.com/Harshyadav442277/telegraph-morse", "GitHub", "github")}${navItem("https://telegraphprotocol.com", "Telegraph", "telegraph")}</nav></header>
+<nav>${navItem("/#ledger", "Ledger", "ledger")}${navItem("/proof", "Proof", "proof")}${navItem("/keys", "API &amp; MCP", "keys")}${navItem("https://github.com/Harshyadav442277/telegraph-morse", "GitHub", "github")}${navItem("https://telegraphprotocol.com", "Telegraph", "telegraph")}</nav></header>
 ${helpPanels()}
 ${body}
 ${HELP_SCRIPT}

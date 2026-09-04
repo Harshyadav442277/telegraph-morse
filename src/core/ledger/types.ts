@@ -11,7 +11,8 @@ export interface CallRow {
   at: string; // ISO
   channel: Channel;
   userHash: string;
-  /** "ask" for free text, or the recipe name, or "second-opinion". */
+  /** "ask" for free text, "direct" for a named miner, or the recipe name. Historical
+   * rows also carry "podium" and "second-opinion", retired on 2026-09-04. */
   kind: string;
   /** Short, non-identifying preview of what was asked (≤120 chars). */
   preview: string;
@@ -27,11 +28,11 @@ export interface CallRow {
   settlementTx: string | null;
   /** Which router chose the miner: Telegraph's engine, or Morse's own fallback. */
   routedBy: "engine" | "morse" | null;
-  /** The miner's own verdict label, when it declares one. Podium compares these. */
+  /** The miner's own verdict label, when it declares one. */
   label: string | null;
   /** The answer text Morse showed, clipped to 500 characters. */
   answer: string | null;
-  /** Links the rows of one podium round to the answer that started it. */
+  /** Grouped historical rows to the answer that started them. Null on every new row. */
   groupId: string | null;
   status: CallStatus;
   error: string | null;
@@ -72,10 +73,6 @@ export interface Ledger {
   /** All paid calls network-wide (ours) in the current UTC day. */
   callsToday(): Promise<number>;
   recent(limit: number): Promise<CallRow[]>;
-  /** This identity's newest answered call that named an intent, for "/second". */
-  lastAnswerFor(userHash: string): Promise<CallRow | null>;
-  /** One call by signal hash or by a unique prefix of one (Telegram callback data is capped at 64 bytes). */
-  answerByHashPrefix(prefix: string): Promise<CallRow | null>;
   /** The newest answered row that stored its answer text, for the landing page's example receipt. */
   latestAnswered(): Promise<CallRow | null>;
   stats(): Promise<Stats>;

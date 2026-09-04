@@ -43,6 +43,6 @@ ${verdict}
 
 ${r.chainOnly.length ? `<section class="panel"><h2>On chain, not in the ledger <span class="badge">${r.chainOnly.length}</span></h2><div class="tablewrap"><table><thead><tr><th>time (UTC)</th><th>transaction</th><th>amount</th><th>to</th></tr></thead><tbody>${chainOnlyRows}</tbody></table></div></section>` : ""}
 ${r.ledgerOnly.length ? `<section class="panel"><h2>In the ledger, not yet on chain <span class="badge">${r.ledgerOnly.length}</span></h2><div class="tablewrap"><table><thead><tr><th>time (UTC)</th><th>transaction</th><th>intent</th><th>miner</th></tr></thead><tbody>${ledgerOnlyRows}</tbody></table></div></section>` : ""}
-<p class="muted">Back to the <a href="/#ledger">public ledger</a> · <a href="/consensus">consensus report</a>.</p>`;
+<p class="muted">Back to the <a href="/#ledger">public ledger</a>.</p>`;
   return page("Proof · Morse", body, { description: "Morse's paid Telegraph calls, reconciled against USDC settlements on Base Sepolia." });
 }

@@ -39,20 +39,8 @@ export class MemoryLedger implements Ledger {
     return this.calls.slice(-limit).reverse();
   }
 
-  async lastAnswerFor(userHash: string): Promise<CallRow | null> {
-    return (
-      [...this.calls]
-        .reverse()
-        .find((c) => c.userHash === userHash && c.status === "ok" && c.intent && c.kind !== "second-opinion") ?? null
-    );
-  }
-
-  async answerByHashPrefix(prefix: string): Promise<CallRow | null> {
-    return [...this.calls].reverse().find((c) => c.signalHash?.startsWith(prefix)) ?? null;
-  }
-
   async latestAnswered(): Promise<CallRow | null> {
-    // The showcase row: a routed answer with substance, never a podium leg or an "unavailable" reply.
+    // The showcase row: a routed answer with substance, never an "unavailable" reply.
     return (
       [...this.calls]
         .reverse()

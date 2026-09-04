@@ -2,14 +2,12 @@ import { Bot, InlineKeyboard, webhookCallback, type Context } from "grammy";
 import type { Hono } from "hono";
 import type { AppEnv } from "./rest.js";
 import { config } from "../config.js";
-import { askNamedMiner, askNetwork, secondOpinion, secondOpinionOn, shouldSeekSecondOpinion, type AskContext } from "../core/ask.js";
+import { askNamedMiner, askNetwork, type AskContext } from "../core/ask.js";
 import { defer } from "../core/defer.js";
 import { EXAMPLES, QUICK } from "../core/examples.js";
-import { cardHtml, esc, podiumHtml, recipeHtml, secondOpinionHtml } from "../core/format.js";
+import { cardHtml, esc, recipeHtml } from "../core/format.js";
 import { hashId } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
-import type { CallRow } from "../core/ledger/types.js";
-import { askPodium } from "../core/podium.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
 import { hotSignals, verifySignal } from "../core/telegraph.js";
 
@@ -54,8 +52,6 @@ const START = [
   "<b>Morse</b> — ask anything, and Telegraph's miner network answers <b>with a receipt</b>.",
   "",
   "Just type a question. Or tap one below to see what an answer looks like: who answered, their rank, how confident, what it cost, and a signal hash you can verify.",
-  "",
-  "After any answer, tap <b>Ask the podium</b>: the other top-ranked miners answer the same question, side by side, and Morse says whether they agree.",
 ].join("\n");
 
 const HELP = [
@@ -67,9 +63,7 @@ const HELP = [
   "<b>Recipes</b> (several miners at once):",
   ...Object.values(RECIPES).map((r) => `${esc(r.usage)} — ${esc(r.description)}`),
   "",
-  "/podium — the other top-ranked miners answer your last question; Morse compares them",
-  "/second — one more miner, the next-ranked, on your last question",
-  "/miner &lt;slug&gt; &lt;question&gt; — ask one named miner directly, routing bypassed (miner authors: try your own, with a receipt)",
+  "/miner &lt;slug&gt; &lt;question&gt; — ask one named miner directly, the same dispatch Telegraph's reference apps use",
   "/hot — what the network is asking itself right now",
   "/verify &lt;signal hash&gt; — check any receipt on the node",
   "/stats — public usage numbers",
@@ -79,8 +73,6 @@ const HELP = [
 
 export const COMMANDS = [
   { command: "start", description: "What Morse is, with example questions" },
-  { command: "podium", description: "Other top-ranked miners answer your last question" },
-  { command: "second", description: "A second opinion on your last question" },
   { command: "miner", description: "Ask one named miner directly: /miner <slug> <question>" },
   { command: "safe", description: "URL safety: link scan + TLS + IP location" },
   { command: "weather", description: "Current weather + 48h storm risk for a place" },
@@ -107,18 +99,10 @@ export function getBot(): Bot {
   if (!c.TELEGRAM_BOT_TOKEN) throw new Error("TELEGRAM_BOT_TOKEN is not set");
   const b = new Bot(c.TELEGRAM_BOT_TOKEN);
 
-  /** Ask, then edit the progress message into the answer with a podium button. */
+  /** Ask, then edit the progress message into the answer. */
   async function answer(ctx: Context, q: string, progressId: number): Promise<void> {
-    const a = ctxFor(ctx);
-    const card = await askNetwork(a, q);
-    if (card.ok && card.receipt && shouldSeekSecondOpinion(card.receipt) && card.receipt.intent) {
-      const s = await secondOpinion(a, q, card.receipt.intent, card.receipt.minerSlug);
-      card.second = s.receipt;
-    }
-    const kb = card.ok && card.receipt?.signalHash && card.receipt.intent
-      ? new InlineKeyboard().text("Ask the podium", `pd:${card.receipt.signalHash.slice(0, 40)}`)
-      : undefined;
-    await edit(ctx, progressId, cardHtml(card, c.MORSE_PUBLIC_URL), kb);
+    const card = await askNetwork(ctxFor(ctx), q);
+    await edit(ctx, progressId, cardHtml(card, c.MORSE_PUBLIC_URL));
   }
 
   b.command("start", (ctx) => ctx.reply(START, { ...OPTS, reply_markup: startKeyboard() }));
@@ -181,33 +165,6 @@ export function getBot(): Bot {
     });
   }
 
-  /** Podium on a row: the other top-ranked miners for the same intent, side by side. */
-  async function podiumOn(ctx: Context, row: CallRow | null, progressId: number): Promise<void> {
-    const res = await askPodium(ctxFor(ctx), row);
-    await edit(ctx, progressId, podiumHtml(res, c.MORSE_PUBLIC_URL));
-  }
-
-  b.command("podium", async (ctx) => {
-    const progress = await ctx.reply("Asking the other top-ranked miners… (up to ~30 s)");
-    defer(
-      (async () => {
-        const row = await getLedger().lastAnswerFor(ctxFor(ctx).userHash);
-        await podiumOn(ctx, row, progress.message_id);
-      })(),
-    );
-  });
-
-  b.callbackQuery(/^pd:(.+)$/, async (ctx) => {
-    const prefix = ctx.match[1] ?? "";
-    await ctx.answerCallbackQuery({ text: "Asking the other top-ranked miners…" });
-    const progress = await ctx.reply("Asking the other top-ranked miners… (up to ~30 s)");
-    defer(
-      (async () => {
-        await podiumOn(ctx, await getLedger().answerByHashPrefix(prefix), progress.message_id);
-      })(),
-    );
-  });
-
   b.command("miner", async (ctx) => {
     const m = /^(\S+)\s+([\s\S]{3,})$/.exec((ctx.match ?? "").trim());
     if (!m) return ctx.reply("Usage: /miner <slug or id> <question> — e.g. /miner livecert Is the certificate for github.com valid?");
@@ -216,21 +173,6 @@ export function getBot(): Bot {
       (async () => {
         const card = await askNamedMiner(ctxFor(ctx), m[1]!, m[2]!);
         await edit(ctx, progress.message_id, cardHtml(card, c.MORSE_PUBLIC_URL));
-      })(),
-    );
-  });
-
-  b.command("second", async (ctx) => {
-    const progress = await ctx.reply("Asking the next-ranked miner…");
-    defer(
-      (async () => {
-        const row = await getLedger().lastAnswerFor(ctxFor(ctx).userHash);
-        const res = await secondOpinionOn(ctxFor(ctx), row);
-        await edit(
-          ctx,
-          progress.message_id,
-          res.first ? secondOpinionHtml(res.first, res.second, res.error, c.MORSE_PUBLIC_URL) : `⚠️ ${esc(res.error ?? "Nothing to compare.")}`,
-        );
       })(),
     );
   });
@@ -252,14 +194,14 @@ export function getBot(): Bot {
   return b;
 }
 
-async function edit(ctx: Context, messageId: number, html: string, kb?: InlineKeyboard): Promise<void> {
+async function edit(ctx: Context, messageId: number, html: string): Promise<void> {
   const chat = ctx.chat?.id;
   if (!chat) return;
   try {
-    await ctx.api.editMessageText(chat, messageId, html, { ...OPTS, ...(kb ? { reply_markup: kb } : {}) });
+    await ctx.api.editMessageText(chat, messageId, html, OPTS);
   } catch {
     // HTML the miner produced may not parse; fall back to plain text.
-    await ctx.api.editMessageText(chat, messageId, html.replace(/<[^>]+>/g, ""), kb ? { reply_markup: kb } : {});
+    await ctx.api.editMessageText(chat, messageId, html.replace(/<[^>]+>/g, ""));
   }
 }
 

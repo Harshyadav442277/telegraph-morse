@@ -141,14 +141,18 @@ test.describe("judge journey", () => {
     expect(names).toEqual(
       expect.arrayContaining([
         "telegraph_ask",
+        "telegraph_ask_miner",
         "telegraph_recipe",
-        "telegraph_second_opinion",
         "telegraph_verify_signal",
         "telegraph_intents",
         "telegraph_leaderboard",
         "telegraph_hot_signals",
       ]),
     );
+    // Retired on 2026-09-04: re-ranking Telegraph's own leaderboard, at N paid calls
+    // per question, is what the organizers asked us not to build (GAPS G32).
+    expect(names).not.toContain("telegraph_podium");
+    expect(names).not.toContain("telegraph_second_opinion");
   });
 
   test("5 · the free discovery endpoints answer from the live network", async ({ request }) => {
@@ -170,14 +174,11 @@ test.describe("judge journey", () => {
   test("6 · Morse fails honestly instead of inventing an answer", async ({ page, request }) => {
     // The honest-failure contract holds whether or not the wallet is funded, so this
     // asserts it both ways rather than skipping once Morse can pay. The always-on half
-    // costs nothing: a second opinion on a hash that does not exist.
-    const res = await request.post("/api/second", {
-      headers: { "content-type": "application/json" },
-      data: { hash: `0x${"0".repeat(64)}` },
-    });
-    expect([404, 502]).toContain(res.status());
-    const body = (await res.json()) as { first: unknown; second: unknown; error: string | null };
-    expect(body.second, "no receipt may be invented for a call that never happened").toBeNull();
+    // costs nothing: verifying a signal hash that was never issued.
+    const res = await request.get(`/api/verify/0x${"0".repeat(64)}`);
+    expect(res.status()).toBe(404);
+    const body = (await res.json()) as { record?: unknown; error: string | null };
+    expect(body.record ?? null, "no record may be invented for a call that never happened").toBeNull();
     expect(body.error, "the failure must be explained").toBeTruthy();
 
     const h = await health(request);

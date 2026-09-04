@@ -13,7 +13,6 @@ function fakeAsker(intentFor: (q: string) => string, answer = "fine", label: str
     kind,
     question,
     receipt: { minerSlug: "m", minerId: "1", intent: intentFor(question), minerRank: 1, confidence: 0.9, confidenceIsRisk: false, label, answer, costUsd: 0.01, durationMs: 10, signalHash: "0x" + "a".repeat(64), settlementTx: null, routerReasoning: null, warnings: [], raw: {} },
-    second: null,
     error: null,
     remaining: 9,
     rowId: "r",
@@ -40,7 +39,7 @@ describe("recipes", () => {
 
   it("safe: raises caution when any receipt carries a red flag", async () => {
     const flagged: AnswerCard[] = [
-      { ok: true, kind: "safe", question: "a", receipt: { minerSlug: "m", minerId: "1", intent: "URL_SCAN", minerRank: 1, confidence: 0.9, confidenceIsRisk: false, label: "malicious", answer: "Phishing detected.", costUsd: 0.01, durationMs: 1, signalHash: null, settlementTx: null, routerReasoning: null, warnings: [], raw: {} }, second: null, error: null, remaining: 1, rowId: null },
+      { ok: true, kind: "safe", question: "a", receipt: { minerSlug: "m", minerId: "1", intent: "URL_SCAN", minerRank: 1, confidence: 0.9, confidenceIsRisk: false, label: "malicious", answer: "Phishing detected.", costUsd: 0.01, durationMs: 1, signalHash: null, settlementTx: null, routerReasoning: null, warnings: [], raw: {} }, error: null, remaining: 1, rowId: null },
     ];
     expect(safe.verdict(flagged)).toMatch(/Caution/);
     expect(safe.verdict([])).toMatch(/No miner/);

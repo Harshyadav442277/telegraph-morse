@@ -19,7 +19,7 @@ describe("example questions", () => {
   it("parses slash commands typed into the web box", () => {
     expect(parseSlash("/safe https://example.com")).toEqual({ command: "safe", input: "https://example.com" });
     expect(parseSlash("/weather   Pune ")).toEqual({ command: "weather", input: "Pune" });
-    expect(parseSlash("/podium")).toEqual({ command: "podium", input: "" });
+    expect(parseSlash("/hot")).toEqual({ command: "hot", input: "" });
     expect(parseSlash("/Fact@MyMorse_Bot the moon is cheese")).toEqual({ command: "fact", input: "the moon is cheese" });
     expect(parseSlash("what is the weather")).toBeNull();
   });

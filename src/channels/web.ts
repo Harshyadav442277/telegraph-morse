@@ -2,15 +2,12 @@ import type { Context, Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { randomUUID } from "node:crypto";
 import { config, configProblems, paidWorkEnabled } from "../config.js";
-import { askNetwork, secondOpinion, secondOpinionOn, shouldSeekSecondOpinion, type AskContext } from "../core/ask.js";
-import { consensusReport } from "../core/consensus.js";
+import { askNetwork, type AskContext } from "../core/ask.js";
 import { EXAMPLES, GROUPS, parseSlash, QUICK } from "../core/examples.js";
 import { getReconciliation } from "../core/proof.js";
-import { consensusPage } from "../web/consensus.js";
 import { proofPage } from "../web/proof.js";
 import { hashId } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
-import { askPodium } from "../core/podium.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
 import { payerAddress, payerUsdcBalance, verifySignal } from "../core/telegraph.js";
 import { keysPage } from "../web/keys.js";
@@ -88,10 +85,6 @@ export function webRoutes(app: Hono<AppEnv>): void {
   });
   app.get("/api/proof", async (c) => c.json(await getReconciliation(await getLedger().recent(2000))));
 
-  /** Consensus report: every Podium round so far, per intent, computed from ledger rows. */
-  app.get("/consensus", async (c) => c.html(consensusPage(consensusReport(await getLedger().recent(2000)))));
-  app.get("/api/consensus", async (c) => c.json(consensusReport(await getLedger().recent(2000))));
-
   app.post("/api/ask", async (c) => {
     const ctx = sessionCtx(c);
     const body = (await c.req.json().catch(() => ({}))) as { question?: string; recipe?: string; input?: string };
@@ -105,8 +98,6 @@ export function webRoutes(app: Hono<AppEnv>): void {
       if (RECIPES[slash.command]) {
         recipeName = slash.command;
         input = slash.input;
-      } else if (slash.command === "podium" || slash.command === "second") {
-        return c.json({ error: `On the web, ask a question first, then use the "${slash.command === "podium" ? "Ask the podium" : "second opinion"}" button under the answer.` }, 400);
       } else {
         return c.json({ error: `Unknown command /${slash.command}. Just type your question, or use /safe, /wallet, /weather or /fact.` }, 400);
       }
@@ -119,43 +110,7 @@ export function webRoutes(app: Hono<AppEnv>): void {
     }
     if (q.length < 3 || q.length > 2000) return c.json({ error: "Ask a question between 3 and 2000 characters." }, 400);
     const card = await askNetwork(ctx, q, "ask");
-    // Same rule as Telegram: a miner that reports low confidence gets checked against
-    // the next-ranked one, in the same response.
-    if (card.ok && card.receipt && shouldSeekSecondOpinion(card.receipt) && card.receipt.intent) {
-      const s = await secondOpinion(ctx, q, card.receipt.intent, card.receipt.minerSlug);
-      card.second = s.receipt;
-    }
     return c.json(card, card.ok ? 200 : 502);
-  });
-
-  /** Ask the Podium: the other top-ranked miners answer the same question, side by side. */
-  app.post("/api/podium", async (c) => {
-    const ctx = sessionCtx(c);
-    const { hash } = (await c.req.json().catch(() => ({}))) as { hash?: string };
-    if (!hash || !/^0x[0-9a-fA-F]{8,64}$/.test(hash)) return c.json({ error: "Send {\"hash\": \"0x…\"} — the signal hash of an answer." }, 400);
-    const row = await getLedger().answerByHashPrefix(hash);
-    const res = await askPodium(ctx, row);
-    // The original row's answer excerpt is public already (/api/recent); strip raw miner payloads.
-    const members = res.members.map(({ receipt, ...m }) => ({ ...m, routerReasoning: receipt?.routerReasoning ?? null, costUsd: receipt?.costUsd ?? null, durationMs: receipt?.durationMs ?? null }));
-    return c.json({ ...res, original: res.original ? { minerSlug: res.original.minerSlug, minerRank: res.original.minerRank, intent: res.original.intent, signalHash: res.original.signalHash, routedBy: res.original.routedBy } : null, members }, res.error ? (row ? 400 : 404) : 200);
-  });
-
-  /** Explicit second opinion on a receipt already in the ledger. */
-  app.post("/api/second", async (c) => {
-    const ctx = sessionCtx(c);
-    const { hash } = (await c.req.json().catch(() => ({}))) as { hash?: string };
-    if (!hash || !/^0x[0-9a-fA-F]{8,64}$/.test(hash)) return c.json({ error: "Send {\"hash\": \"0x…\"}." }, 400);
-    const res = await secondOpinionOn(ctx, await getLedger().answerByHashPrefix(hash));
-    return c.json(
-      {
-        first: res.first
-          ? { minerSlug: res.first.minerSlug, minerRank: res.first.minerRank, intent: res.first.intent, confidence: res.first.confidence, signalHash: res.first.signalHash }
-          : null,
-        second: res.second,
-        error: res.error,
-      },
-      res.second ? 200 : res.first ? 502 : 404,
-    );
   });
 
   app.get("/api/verify/:hash", async (c) => {

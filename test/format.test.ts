@@ -5,11 +5,10 @@ import { cardHtml, esc, receiptLine, routedByText, shortHash } from "../src/core
 describe("routedByText", () => {
   it("calls Morse a fallback only for a plain ask", () => {
     expect(routedByText("engine")).toBe("routed by Telegraph");
-    expect(routedByText("engine", "podium")).toBe("routed by Telegraph");
+    expect(routedByText("engine", "direct")).toBe("routed by Telegraph");
     expect(routedByText("morse", "ask")).toBe("Morse fallback routing");
     expect(routedByText("morse")).toBe("Morse fallback routing");
-    expect(routedByText("morse", "podium")).toBe("podium leg, asked directly");
-    expect(routedByText("morse", "second-opinion")).toBe("second opinion, asked directly");
+    expect(routedByText("morse", "safe")).toBe("Morse fallback routing");
     expect(routedByText("morse", "direct")).toBe("asked directly at your request");
     expect(routedByText(null)).toBe("");
   });
@@ -21,7 +20,6 @@ const card: AnswerCard = {
   kind: "ask",
   question: "q",
   receipt: { minerSlug: "livecert", minerId: "4433", intent: "SSL_VERIFICATION", minerRank: 2, confidence: 0.93, confidenceIsRisk: false, label: "valid", answer: "<b>bold</b> & valid", costUsd: 0.01, durationMs: 412, signalHash: "0x" + "ab".repeat(32), settlementTx: null, routerReasoning: null, warnings: [], raw: {} },
-  second: null,
   error: null,
   remaining: 3,
   rowId: "r",

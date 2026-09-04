@@ -13,7 +13,6 @@ const base: Config = {
   PER_API_KEY_DAILY: 3,
   KILL_SWITCH: false,
   TELEGRAPH_NODE: "https://devnode.telegraphprotocol.com",
-  SECOND_OPINION_THRESHOLD: 0.6,
   ASK_TIMEOUT_MS: 45_000,
   USE_ENGINE_ROUTER: true,
   ROUTER_TIMEOUT_MS: 20_000,

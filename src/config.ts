@@ -41,13 +41,6 @@ const schema = z.object({
     .regex(/^@?[A-Za-z0-9_]{5,32}$/)
     .transform((v) => v.replace(/^@/, ""))
     .optional(),
-  /**
-   * Confidence below which a second opinion is fetched automatically. 0 disables it,
-   * and 0 is the default since 2026-09-04: an organizer judged paying a second miner
-   * unasked as re-ranking their leaderboard and as spam (GAPS G32). Left as a knob so
-   * the behaviour can be shown, never on by default.
-   */
-  SECOND_OPINION_THRESHOLD: z.coerce.number().min(0).max(1).default(0),
   ASK_TIMEOUT_MS: z.coerce.number().int().min(1000).default(45_000),
   /**
    * Try Telegraph's own router first. It was unusable on 2026-09-02 (settlement timing

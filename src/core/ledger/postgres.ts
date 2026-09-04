@@ -122,24 +122,6 @@ export class PostgresLedger implements Ledger {
     return rows.map(toCallRow);
   }
 
-  async lastAnswerFor(userHash: string): Promise<CallRow | null> {
-    const rows = await this.q(
-      `select * from calls
-       where user_hash = $1 and status = 'ok' and intent is not null and kind <> 'second-opinion'
-       order by at desc limit 1`,
-      [userHash],
-    );
-    return rows[0] ? toCallRow(rows[0]) : null;
-  }
-
-  async answerByHashPrefix(prefix: string): Promise<CallRow | null> {
-    const rows = await this.q(
-      `select * from calls where signal_hash like $1 || '%' order by at desc limit 1`,
-      [prefix],
-    );
-    return rows[0] ? toCallRow(rows[0]) : null;
-  }
-
   async latestAnswered(): Promise<CallRow | null> {
     const rows = await this.q(
       `select * from calls

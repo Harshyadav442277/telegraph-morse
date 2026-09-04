@@ -128,8 +128,7 @@ export function buildReceipt(
   const r = ask.result;
   const mapped = toConfidence(getPath(r, mapping?.confidence_field));
   // A few miners map a risk/severity score into confidence_field. Reading that as
-  // confidence inverts its meaning, so it is kept but labelled for what it is, and
-  // it never drives the second-opinion threshold.
+  // confidence inverts its meaning, so it is kept but labelled for what it is.
   const confidenceIsRisk = mapped !== null && isRiskField(mapping?.confidence_field);
   const confidence =
     mapped ??
