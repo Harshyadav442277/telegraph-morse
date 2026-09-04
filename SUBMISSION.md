@@ -32,26 +32,22 @@ Morse — Telegraph in Telegram
 
 ## Description
 
-Two versions. Use the short one if the field is small.
-
-**Short**
-
-```
-Telegraph in Telegram. Ask, get an answer from a ranked miner, with a receipt. Morse lets people and agents use Telegraph without a wallet — in the Telegram bot @MyMorse_Bot, on the web, or from any MCP client — by paying the x402 fee itself from one app-owned wallet. Telegraph's ranked router picks the miner; Morse never re-ranks, never checks one miner against another, never blends answers. Every answer comes back with a receipt: miner and rank, confidence, cost, the USDC settlement on Base Sepolia, and a signal hash anyone can verify on the node. Every call is in a public ledger, reconciled hash-for-hash against the payer wallet's on-chain settlements at /proof. Not an aggregator, not a validator: a front door.
-```
-
-**Longer, if there is room**
+Written 2026-09-04 17:15 UTC against the live site, `/api/stats`, `/api/proof` and `npm test`.
+Every claim in it is checkable at the live URL. Before pasting, re-run `npm run x:numbers` and
+refresh the one dated sentence of numbers; nothing else should need to change.
 
 ```
-Consuming Telegraph today needs a wallet, testnet USDC and an x402 client, which keeps out everyone who is not already a developer with a burner key. Morse removes all three. Ask in Telegram (@MyMorse_Bot), on the web, or from Claude Code, Cursor or any MCP client with one line of config — Morse pays from one app-owned wallet and hands back a receipt: which miner answered and at what leaderboard rank, its own confidence, the cost, the USDC settlement transaction, and a signal hash that resolves on the node.
+Telegraph is a marketplace where independently run APIs ("miners") answer questions, validators rank them per intent, and every answer is paid per call over x402. Using it today takes a wallet, faucet USDC and an x402 client. Morse removes all three: it holds one funded payer wallet, pays the fee, and hands back the answer with a receipt. It runs as a Telegram bot (@MyMorse_Bot), a web page, a hosted MCP server and a REST endpoint. No wallet, no key, no sign-up.
 
-Every call Morse has ever made is in a public ledger at /#ledger, and every row links to /verify/{hash}, which shows the node's record, the payer wallet checked against Morse's own, and the node's keccak256 attestation. /proof goes further and reconciles the ledger against the payer wallet's USDC transfers read from a public indexer, hash for hash, so "people used it" is something a judge can recompute rather than take on trust.
+How a question travels. It goes to Telegraph's own router, which classifies the intent and picks a ranked miner. Morse falls back to its own keyword routing only if the router does not answer within 20 seconds, and every receipt says which of the two happened. Morse does not re-rank miners, does not blend answers and does not check one miner against another. Telegraph's leaderboard already decides that once, for everyone; the router's pick is the answer. When you want a specific miner, name it (/miner <slug> in Telegram, a miner field on REST and MCP) and the receipt says routing was bypassed at your request.
 
-Depth without duplicating the protocol: four recipes fan one question across several intents and combine the receipts; /miner dispatches straight at one named miner, the same call Telegraph's own reference apps make. The whole 129-miner catalogue was measured before trusting any of it, which found that four miners publish a *risk* score in the field others use for confidence — read naively, a calm weather forecast looks like an unsure miner — and that 22% publish several endpoints without naming the intent each serves. Morse handles both.
+What a receipt contains. The miner and its leaderboard rank for the intent, who routed the question, the miner's own confidence (or "not reported"), the cost, the latency, the USDC settlement transaction on Base Sepolia, and the signal hash. /verify/{hash} fetches the node's record for that hash, shows the wallet that paid and checks it is Morse's.
 
-On 4 September an organizer said that paying several miners per question to check the ranking is what the protocol already does once for everyone, does not work economically for a user, and reads as spam — and that extending Telegraph into Telegram was the good part. Morse removed its podium, its automatic second opinion and its consensus report the same day, kept their rows in the public ledger rather than rewriting history, and now does one thing.
+Evidence rather than claims. Every call Morse has ever made, including the developer's own testing, is in a public ledger at /#ledger. /proof reads the payer wallet's USDC transfers from a public block explorer and matches them against the ledger's settlement hashes; the on-chain payments that have no ledger row are listed, not hidden. Live counters are at /api/stats and /api/proof. As of 4 Sep 17:15 UTC: 322 calls, 259 answered, 20 intents, 45 miners, $2.59 paid, 265 settlements on chain. Read those with the caveat the repo's GAPS.md states: most identities in the ledger so far are the developer's own, and "users" means salted identity hashes, not verified people.
 
-Honest limits are in GAPS.md, including the one that matters most: Telegraph's own router goes first with a 20-second budget, and Morse falls back to its own keyword routing only when the router does not answer (it timed out at ~47 s for a day on 2 September, against a 60-second serverless ceiling). Every receipt and ledger row says which of the two happened.
+For agents. One command adds Morse to Claude Code or Cursor as an MCP server; a free key from /keys carries a daily cap so no single caller can drain the wallet. The same call is available over REST.
+
+Stated limits. Testnet only. Morse reads the chain but writes nothing to it. The signal hash is shown with the node's own keccak256 attestation, not re-derived. One miner the router often picks, livecert, is run by the same person who built Morse; it holds its ranks on the public leaderboard, Morse neither skips nor favours it, and every ledger row names the miner it went to. Two features that paid several miners per question were removed on 4 Sep after an organizer said Telegraph already does that ranking once for everyone; their ledger rows stay, labelled. Source, 72 unit tests and a paid end-to-end judge journey: github.com/Harshyadav442277/telegraph-morse
 ```
 
 ---
