@@ -132,9 +132,9 @@ event: message
 data: {"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"morse","version":"0.1.0"}},"jsonrpc":"2.0","id":1}
 ```
 
-`tools/list` returns eight tools: `telegraph_ask`, `telegraph_podium`, `telegraph_recipe`,
-`telegraph_second_opinion`, `telegraph_verify_signal`, `telegraph_intents`,
-`telegraph_leaderboard`, `telegraph_hot_signals`. Without a key, `/mcp` returns **401** with a
+`tools/list` returns nine tools (re-verified 2026-09-04): `telegraph_ask`, `telegraph_ask_miner`,
+`telegraph_podium`, `telegraph_recipe`, `telegraph_second_opinion`, `telegraph_verify_signal`,
+`telegraph_intents`, `telegraph_leaderboard`, `telegraph_hot_signals`. Without a key, `/mcp` returns **401** with a
 `WWW-Authenticate: Bearer realm="morse"` header — ✅ verified.
 
 ### 7 · Telegram — ✅ verified
@@ -179,6 +179,52 @@ the ledger. In Telegram the same flow is the **Ask the podium** button under eve
 `/podium` for your last question.
 
 ---
+
+### 9 · On-chain proof — ✅ verified 2026-09-04 04:15 UTC
+
+Open <https://telegraph-morse.vercel.app/proof>, or:
+
+```bash
+curl -s https://telegraph-morse.vercel.app/api/proof
+```
+
+→ (2026-09-04 04:15 UTC)
+
+```json
+{"chain":{"transfers":120,"toDiamond":120,"usdc":1.2,"first":"2026-09-02T17:56:56.000000Z","last":"2026-09-03T19:22:36.000000Z"},"ledger":{"okRows":118,"withSettlement":118},"matched":118,"ledgerOnly":0,"chainOnly":2,"error":null}
+```
+
+Every settlement hash in the ledger is a USDC transfer from Morse's payer to Telegraph's Diamond,
+read from Blockscout rather than from Morse's own database. The two chain-only settlements are
+listed on the page, not hidden (GAPS G29). The page reads the chain and never asks the network, so
+reloading it costs nothing.
+
+### 10 · Consensus report — ✅ verified 2026-09-04 04:15 UTC
+
+Open <https://telegraph-morse.vercel.app/consensus>, or:
+
+```bash
+curl -s https://telegraph-morse.vercel.app/api/consensus
+```
+
+→ `{"rounds":4,"agree":1,"disagree":0,"undetermined":3,"extraCalls":7,"secondOpinions":16}` — one
+round per intent so far: SSL_VERIFICATION "3 of 3 miners agree: valid"; CRYPTO_PRICE "only 1 of 2
+answers contained a comparable figure"; IP_GEOLOCATION and CHAT_COMPLETION shown side by side and
+not judged. Every member links its receipt. Computed from ledger rows that already exist.
+
+### 11 · Ask a named miner — ✅ verified 2026-09-04 04:16 UTC
+
+```bash
+curl -s -X POST https://telegraph-morse.vercel.app/v1/ask -H "Authorization: Bearer morse_YOURKEY" -H "content-type: application/json" -d '{"miner":"livecert","question":"Is the SSL certificate for github.com valid, and who issued it?"}'
+```
+
+→ `ok: true`, `kind: "direct"`, `routedBy: "morse"`, served by `livecert` #1 for SSL_VERIFICATION in
+810 ms for $0.01, signal `0x444c07ac…5315`, settled as `0x4d3b6885…d6af`, and
+`routerReasoning: "Morse called livecert (#1 for SSL_VERIFICATION) directly, at your request."`
+An unknown slug is refused for free: `No miner called "no-such-miner" is in the catalogue.` Over MCP
+the same is `telegraph_ask_miner` (nine tools listed); in Telegram, `/miner livecert <question>` —
+the command already works, and appears in the `/` menu after the operator re-runs the webhook
+registration.
 
 ## Run the judge journey yourself
 

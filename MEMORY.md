@@ -3,7 +3,7 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
-## 2026-09-03 ~21:00 UTC — HANDOFF STATE (read this first)
+## 2026-09-04 ~04:20 UTC — HANDOFF STATE (read this first)
 
 **Re-judged against the live rubric; four fixes shipped; see [PLAN.md](PLAN.md) § "Re-judged
 2026-09-03".** The measured position: Morse is fifth of eight payer wallets on the network at
@@ -13,7 +13,9 @@ firewalls and on-chain pipelines (amanat, qarinah-proofpack, proofgate, tripwire
 anything serving humans. The losses, ranked: adoption volume (only sharing fixes it), the
 "another aggregator" reading, thin on-chain depth, rule-04 optics, judging-window fragility.
 
-**Shipped 2026-09-03 evening (78 unit tests, typecheck clean):**
+**Shipped and verified live 2026-09-04 04:14–04:16 UTC** (built from 2026-09-03 20:00 UTC; 78 unit
+tests, typecheck clean; `/proof`, `/consensus`, the MCP tool list and one paid direct call all
+checked against production after the deploy):
 - `/proof` + `/api/proof` — the ledger reconciled against the payer wallet's USDC transfers read
   from Blockscout, hash for hash; names chain-only settlements instead of hiding them (G29).
 - `/consensus` + `/api/consensus` — every Podium round per intent, agreement rate, every

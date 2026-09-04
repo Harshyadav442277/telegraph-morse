@@ -156,7 +156,7 @@ calls; `rxtruth` — an autonomous six-hourly misinformation pipeline; `certsent
 
 ### Novel suggestions — kept, and deliberately not built
 
-Built today: the **consensus report** (every podium round per intent, agreement rate, every
+Built, deployed and verified live 2026-09-04 04:14 UTC: the **consensus report** (every podium round per intent, agreement rate, every
 disagreement named, receipts linked — a public, independent reading of the leaderboard that costs
 nothing and grows with use), **on-chain proof of usage** (ledger reconciled hash-for-hash against
 the payer's USDC transfers via a public indexer), **ask a named miner** on MCP, REST and Telegram,
