@@ -396,3 +396,28 @@ guarantee: the node may settle after Morse stops waiting. `/proof` lists such se
 under "on chain, not in the ledger" rather than hiding them, and Morse does not count them as
 answered calls. A back-fill that attaches a late settlement to its row would close this; not before
 the freeze.
+
+### G30 · Every direct call to a multi-endpoint miner went to its first endpoint — `CLOSED 2026-09-04 ~10:10 UTC, fixed and verified live`
+`endpointFor` chose an endpoint by finding the intent's name in the endpoint description, because
+`/api/miners` returns endpoints as `{path, method, description}` and drops the `intents` list the
+manifest declares. For miners whose descriptions do not name the intent — livecert, all twelve
+endpoints — every guess failed and the call went to `endpoints[0]`, `/ssl-check`, which honestly
+answered "No hostname was supplied with this request" to weather, storm, IP and paper questions,
+with confidence 0. Every livecert podium and second-opinion leg since 2026-09-03 19:13 UTC was
+wrong this way (six rows), and the ledger showed them as 0% confidence. Engine-routed asks were
+never affected: the router picks the endpoint itself.
+
+**Fix:** `withEndpointIntents` reads the miner's registered manifest (`yaml_url`, which the catalogue
+does keep) once per miner per hour and parses `- path:` / `intents:` line by line; `endpointFor`
+prefers that map, then the description guess, then `endpoints[0]`. It never throws — an unreachable
+manifest leaves the old behaviour. Live parse: livecert 12/12, chainsight-oracle 14/14, txlens 15/16,
+degenlens 9/33 (the rest declare no intents), preflight 0/12 (no `intents:` lines at all; its
+descriptions carry the fallback). Verified with one paid podium round on the 07:53 UTC
+ACADEMIC_SEARCH answer: the livecert #2 leg now returns five papers, confidence 1, label `papers`.
+Tests: parser on flow and block forms with param scopes ignored, and endpoint preference.
+
+**Also fixed in the same deploy:** the ledger's "routed" column said "Morse" for podium, second-
+opinion and named-miner rows, so three-quarters of the table read as router failures while the
+router was answering 37 of 38 asks. It now says "Morse (podium)", "Morse (2nd opinion)",
+"Morse (named miner)" or "Morse (fallback)", the hero receipt and the Telegram receipt line say
+which, and the ledger header explains all four.

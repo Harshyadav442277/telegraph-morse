@@ -5,6 +5,17 @@ what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
 ## 2026-09-04 ~04:20 UTC — HANDOFF STATE (read this first)
 
+**Addendum 2026-09-04 ~10:10 UTC — two fixes deployed and verified live (G30).** Every direct call
+to livecert had been going to `/ssl-check` regardless of intent, because the catalogue strips
+per-endpoint intents and the description guess never matched; podium legs answered "No hostname
+was supplied" at 0% confidence. `withEndpointIntents` now reads the miner's manifest (cached an
+hour) and `endpointFor` prefers it. The ledger's "routed" column also now distinguishes
+podium / 2nd opinion / named miner / fallback, because "Morse" on every podium leg had been read
+as the router failing when it was answering 37 of 38 asks. 81 tests, typecheck clean, one paid
+podium round confirmed the livecert leg returns papers with confidence 1. Router health since
+2026-09-03 18:18 UTC: 37/38 asks routed by Telegraph, median ~0.6 s; the miss was one
+RESEARCH_SYNTHESIS timeout at 20 s.
+
 **Re-judged against the live rubric; four fixes shipped; see [PLAN.md](PLAN.md) § "Re-judged
 2026-09-03".** The measured position: Morse is fifth of eight payer wallets on the network at
 ~6.5% of the 1,219 user-paid calls of the last 24 h, its 118 ledger settlements all reconcile
