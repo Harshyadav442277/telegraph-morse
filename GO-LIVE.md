@@ -163,7 +163,7 @@ Expect **7 passed**. That is the end-to-end verification the project has been wa
 npm run x:numbers
 ```
 
-Then post draft 1 from [docs/X_POSTS.md](docs/X_POSTS.md) — it needs no wallet and is ready now —
+Then post draft 1 from [docs/X_TO_POST.md](docs/X_TO_POST.md) — it needs no wallet and is ready now —
 and draft 2 with the receipt from step 8. Tag **@Telegraphprotoc** (hackathon rule 03).
 
 ---

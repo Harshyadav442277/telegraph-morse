@@ -93,7 +93,7 @@ five days**. Everything in this plan bends toward that.
 |---|---:|---|---:|
 | Real usage & adoption | 45% | live bot on day 1, forwardable answers, group-chat UX, hosted MCP + REST for agents, public counters, daily promotion | 45% (half of it is operator time: posting, sharing, replying) |
 | Usefulness, creativity, depth of integration | 25% | multi-intent recipes, direct dispatch at a named miner, signal + on-chain verification at /proof, routing visibility, live Daemon signals. The second opinion and podium that used to sit here were removed 2026-09-04 (G32) | 30% |
-| Engagement & updates on X | 25% | one post per real milestone with numbers and screenshots, tag @Telegraphprotoc, closing thread | operator daily, drafts in [docs/X_POSTS.md](docs/X_POSTS.md) |
+| Engagement & updates on X | 25% | one post per real milestone with numbers and screenshots, tag @Telegraphprotoc, closing thread | operator daily, drafts in [docs/X_TO_POST.md](docs/X_TO_POST.md) |
 | Technical execution & integration quality | 5% | typed code, tests, CI, honest README, zero mocks | 10% |
 | Sponsor technology (Telegraph itself) | — | if the engine could be swapped for a stub it isn't being used: every answer comes from `/engine/v1/ask` and carries a `signal_hash` | — |
 
@@ -238,7 +238,7 @@ Details: [PRD.md](PRD.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PHASES.md](PHASE
 2. **Telegram bot** via @BotFather; copy the token.
 3. **Vercel** project from this repo, Neon Postgres from the Vercel Marketplace, env vars from
    [.env.example](.env.example). Claude never sees or sets the private key.
-4. **X posts** from [docs/X_POSTS.md](docs/X_POSTS.md), tagged @Telegraphprotoc.
+4. **X posts** from [docs/X_TO_POST.md](docs/X_TO_POST.md), tagged @Telegraphprotoc.
 5. **Discord**: share the bot; ask whether a Discord bot is welcome; transcribe the exact Track 3
    deadline from `#announcements` into docs/TELEGRAPH_FACTS.md.
 6. **Submit** at <https://submissions.telegraphprotocol.com> when the Track 3 tab opens.
@@ -268,4 +268,4 @@ Not recommended: any X/Twitter posting MCP. Posting is the operator's action by 
 
 [PRD.md](PRD.md) · [ARCHITECTURE.md](ARCHITECTURE.md) · [PHASES.md](PHASES.md) · [GAPS.md](GAPS.md)
 · [MEMORY.md](MEMORY.md) · [DEMO.md](DEMO.md) · [docs/TELEGRAPH_FACTS.md](docs/TELEGRAPH_FACTS.md)
-· [docs/X_POSTS.md](docs/X_POSTS.md)
+· [docs/X_TO_POST.md](docs/X_TO_POST.md)
