@@ -1,9 +1,18 @@
 # X_TO_POST.md — what to post, in plain words
 
 Account **@hyadav42774**. Tag **@Telegraphprotoc** in every post (hackathon rule 03).
-Before posting any number, run `npm run x:numbers` and check it still holds.
+Every draft below is under 280 characters with URLs counted at 23, so it posts from a free account.
 
 Call it **Morse**. Not "Morse Burner" — the site, the bot and the submission all say Morse.
+
+Numbers in the drafts were re-run **2026-09-04 20:05 UTC**. Before posting any of them:
+
+```bash
+npm run x:numbers      # ledger and chain counters
+npm run catalogue      # the 129 / 73 / 4 / 29 / 33 figures in posts 5 and 6
+curl -4 -s "https://devnode.telegraphprotocol.com/daemon/api/questions?source=user&since_hours=24&limit=1" | grep -o '"total":[0-9]*'   # network 24h calls, post 3
+curl -4 -s https://telegraph-morse.vercel.app/api/proof | grep -o '"chainOnly":\[' # then count entries; post 7 and 8 say 6
+```
 
 ---
 
@@ -27,12 +36,32 @@ Your Morse posts have been announcements: "live on versel", "user-friendly inter
 
 So: **post what you found out, not what you shipped.** Every draft below is something you learned.
 
-Shadrak's is worth reading for the voice — "I got rugged last month. The chart looked fine, the
-vibes were good." Short sentences. A real thing that happened. No adjectives.
+---
+
+## Schedule — Sep 4 to Sep 7
+
+Two posts a day, morning and evening UTC, so each gets its own day of feed. Post 0 goes first
+whatever the time is; it corrects the post at the top of your profile.
+
+| When | # | Post | Attach |
+|---|---|---|---|
+| Sep 4, now | 0 | Correction | nothing |
+| Sep 4, right after, quoting 0 | 1 | What's left | landing page screenshot |
+| Sep 5 morning | 2 | The receipt | `/verify` page cropped to the green payer line and the BaseScan link |
+| Sep 5 evening | 5 | The risk-score finding | nothing, or the catalogue script output |
+| Sep 6 morning | 4 | For miner authors | 10 s recording of `/miner txlens …` in Telegram |
+| Sep 6 midday, in the Discord too | 3 | The gap | ledger screenshot |
+| Sep 6 evening | 7 | Proof | `/proof` page with the "on chain, not in the ledger" table |
+| Sep 7 morning | 9 | For developers | 15 s recording: Claude Code tool call, then the row appearing in the ledger |
+| Sep 7 midday | 8 | The timeout lesson | nothing |
+| Sep 7 evening, before the form | T1–T6 | Closing thread | ledger screenshot on T1 |
+| only if the strangers' number is worth saying | 10 | Real numbers | ledger screenshot |
+
+Post 6 (one miner by name) is a spare. Use it on Sep 6 if post 4 gets replies from miner authors.
 
 ---
 
-## 0 · Post this first — the correction
+## 0 · The correction — post this first
 
 Your newest post sells "ask the podium". An organizer told you five hours later that it was spam,
 and it is now deleted from the app. That post is the top of the page a judge will read.
@@ -42,149 +71,198 @@ Don't delete the old one. The correction is better with it still there.
 ```
 Correction to my last post. Morse's "ask the podium" is gone.
 
-I asked @Telegraphprotoc whether a miner-checking tool would be useful. They said their leaderboard already ranks miners once, for everyone — paying 3 miners to re-check it is spam.
+I asked @Telegraphprotoc if a miner-checking tool would be useful. Their answer: the leaderboard already ranks miners once, for everyone. Paying 3 miners to re-check it is spam.
 
-Fair enough. I deleted it the same day.
+Fair enough. Deleted the same day.
 ```
 
-If you want a second one right after, quoting it:
+## 1 · What's left — quote post 0
 
 ```
-What's left is the bit they said was good: Telegraph inside Telegram.
+What's left is the part they said was good: Telegraph inside Telegram.
 
 Type a question. Their router picks the ranked miner. I pay the $0.01. You get the answer and a receipt you can check on-chain.
 
-No wallet, no signup. t.me/MyMorse_Bot
+No wallet, no sign-up. t.me/MyMorse_Bot @Telegraphprotoc
 ```
 
----
+## 2 · The receipt — the one thing Morse should be known for
 
-## 1 · The gap
-
-Attach a screenshot of the landing page with the ledger showing.
-
-```
-To ask @Telegraphprotoc anything you need a wallet, faucet money, and code that speaks x402.
-
-Which is why nearly all of its 2,142 paid questions in the last 24h came from developers.
-
-Morse is a Telegram bot. You type the question. I pay the $0.01.
-
-t.me/MyMorse_Bot
-```
-
----
-
-## 2 · What a receipt is
-
-Attach the `/verify` page, cropped so the green "= Morse's payer wallet" line and the BaseScan
-link are both visible.
+The hash is a real router-routed call to txlens, #1 for SSL_VERIFICATION, paid by Morse's wallet,
+verified 2026-09-04 20:10 UTC. Not a livecert call, on purpose.
 
 ```
 Every answer Morse gives you comes with a receipt.
 
-Which miner answered. Its rank. How sure it was. What it cost. The transaction that paid for it.
+Which miner answered. Its rank on the @Telegraphprotoc leaderboard. How sure it was. What it cost. The transaction that paid for it.
 
 You don't have to take my word for any of it:
-https://telegraph-morse.vercel.app/verify/0x0691ca3f54514e5ea5ce342d8dadc30c58c48ada711cdfde01e171b4ee0821a1
-
-@Telegraphprotoc
+https://telegraph-morse.vercel.app/verify/0xa93d4e871ca5baf89dfb5b5ce62aee0d701021ae97634fcc87d94cc2cf0754ce
 ```
 
----
+## 3 · The gap
 
-## 3 · The one to post if you only post one
+The 2,406 is the Daemon's `total` for `source=user&since_hours=24`. The "one wallet paid a third"
+comes from looking up 120 evenly spaced signal hashes from that feed and reading
+`signal.wallet_address`; one payer was 39 of 120. Re-run both before posting; the number moves.
+
+```
+To ask @Telegraphprotoc anything you need a wallet, faucet money and code that speaks x402.
+
+So its 2,406 paid questions in the last 24h came from scripts. In a sample of 120, one wallet paid a third.
+
+Morse is a Telegram bot. You type, I pay the cent. t.me/MyMorse_Bot
+```
+
+## 4 · For miner authors — the distribution post
+
+This is the one to also paste into the hackathon Discord, in the Track 1 channel. Every miner
+author has a reason to try it once, and each try is a real call through the node.
+
+```
+If you run a @Telegraphprotoc miner, call it from Telegram without a wallet:
+
+/miner yourslug <question> in t.me/MyMorse_Bot
+
+It goes through the node, I pay the cent, and you get the rank, the confidence and the receipt. If it fails, it's free and the reply says why.
+```
+
+## 5 · The risk-score finding — the one to post if you only post one
 
 Same shape as your 844-view post. A thing you found, that someone else would trip over.
+`npm run catalogue` prints the figures; the four miners are amanat-weather-risk,
+skywire-storm-alert, elcaro-ipi-detection and vulnfeed-onchain-security.
 
 ```
 I read all 129 @Telegraphprotoc miners before trusting any of them.
 
-73 report a confidence score. 4 of those put a *risk* score in the same field — high means more danger, not more certainty.
+73 report a confidence score. 4 of those put a *risk* score in the same field: high means more danger, not more certainty.
 
-Read it wrong and a calm weather forecast looks like a miner that isn't sure. Morse labels those.
+Read it wrong and a calm forecast looks like an unsure miner. Morse labels those.
 ```
 
----
-
-## 4 · Calling one miner by name
+## 6 · One miner by name — spare
 
 ```
 Asking one @Telegraphprotoc miner directly is harder than it looks.
 
-29 of 129 publish more than one endpoint. degenlens-onchain publishes 33. Most don't say which intent each one serves.
+29 of 129 publish more than one endpoint; one has 33. Most don't say which intent each serves.
 
-Send a fraud question to the first endpoint and you land on transaction lookup.
+Send a fraud question to the first endpoint and you get a transaction lookup. Morse reads the manifest first.
 ```
 
----
-
-## 5 · The router story — your call
-
-Their router was broken on 2 Sep and works now. Post the recovery, not the complaint. The old
-version of this draft said "so Morse does its own routing", which stopped being true on 3 Sep.
+## 7 · Proof
 
 ```
-Getting @Telegraphprotoc to take my money took a day.
+Hackathon rule 04: no inflated metrics. So I made Morse's usage checkable.
 
-On 2 Sep their router needed ~47s just to fail. A serverless function gets 60.
+/proof reads my wallet's USDC transfers from a block explorer and matches them, hash for hash, against the public ledger.
 
-It's fixed now. Morse asks their router first, and the receipt tells you whether it or my fallback picked the miner.
+The 6 payments my ledger lacks are listed, not hidden. @Telegraphprotoc
 ```
 
----
+## 8 · The timeout lesson
 
-## 6 · For developers
-
-Post it with a 15-second screen recording: the tool call in Claude Code, then the row appearing in
-the ledger.
+Behind it: GAPS G29 and G33. Failed calls are free on 2xx-only settlement; a timeout is not a
+known outcome, so the node can settle after Morse stops waiting. Morse now moves to the next
+miner on a 5xx or a refused payment, and never after a timeout.
 
 ```
-Telegraph in Claude Code. One line, no wallet:
+Something I learned paying @Telegraphprotoc miners: a timeout isn't free.
 
-claude mcp add --transport http morse https://telegraph-morse.vercel.app/mcp
+A failed call costs nothing. But if I stop waiting at 20s, the node can still settle afterwards. Six of my payments bought answers nobody received.
 
-I pay the x402 fee. 7 tools. Free key at /keys. Every call lands in a public ledger with its receipt.
-
-@Telegraphprotoc
+So Morse retries on an error and never on a timeout.
 ```
 
----
+## 9 · For developers
 
-## 7 · Real numbers — only when they're other people's
+Their MCP (`telegraph-protocol-mcp` on npm) pays from `TELEGRAPH_EVM_PRIVATE_KEY`; that is the
+whole difference, so say it once. The full `claude mcp add` command with the bearer header is on
+the site; it does not fit in a post with the rest.
 
-At 2026-09-04 15:51 UTC: 48 people answered of 68 who asked · 255 answered calls of 318 · 20
-intents · 44 miners · $2.55 paid. Network-wide in the same 24h: 2,142 user-paid calls, of which
-Morse is about 8%.
+```
+Telegraph in Claude Code or Cursor, no wallet.
 
-**You are the only one who knows how many of those 68 are strangers.** If it's six, post six.
-"48 people" when 40 of them were you is the metric inflation rule 04 forbids, and the ledger is
+One command adds Morse as an MCP server. I pay the x402 fee; you get a free key with a daily cap. Every call lands in the public ledger with a receipt.
+
+@Telegraphprotoc's own MCP needs a funded key. This one doesn't.
+```
+
+## 10 · Real numbers — only when they're other people's
+
+**You are the only one who knows how many identities are strangers.** If it's six, post six.
+"50 people" when 40 of them were you is the metric inflation rule 04 forbids, and the ledger is
 public, so anyone can check the timestamps. Say **people answered**, never "people who asked".
+If the strangers' number is embarrassing, skip this post; the thread's T2 gives call counts, which
+are real whoever made them.
 
 ```
-Morse so far: [X] people have had @Telegraphprotoc answer a question for them. [Y] questions, [Z] intents, [W] different miners, $[S] paid to the network.
+Morse so far: [X] people have had @Telegraphprotoc answer a question for them. [Y] answered calls, [Z] intents, [W] different miners, $[S] paid to the network.
 
 Every one of those has a hash you can check yourself.
 
-https://telegraph-morse.vercel.app/#ledger
+telegraph-morse.vercel.app/#ledger
 ```
 
 ---
 
-## 8 · Closing thread — Sep 6 or 7
+## Closing thread — Sep 7, before you submit
 
-Six posts, one idea each:
+Six posts, one idea each, as replies to T1. T3 is the one people will remember: almost nobody in
+a hackathon says "I deleted two days of work because you told me to."
 
-1. What Morse is, one line, ledger screenshot, live link.
-2. The final numbers, and how to check any of them.
-3. The catalogue finding from post 3, with the final numbers.
-4. What you built and then deleted, and why — the organizer's feedback, in their words.
-5. What you're not claiming: testnet, "users" means salted identities, the signal hash is shown
-   and not re-derived. Link GAPS.md.
-6. Thanks to @Telegraphprotoc, repo link.
+**T1**
+```
+Morse, for @Telegraphprotoc Track 3, in one line: Telegraph inside Telegram.
 
-Post 4 of that thread is the one people will remember. Almost nobody in a hackathon says "I
-deleted two days of work because you told me to."
+Type a question, their router picks the ranked miner, I pay the cent, you get the answer with a receipt you can check on-chain. No wallet.
+
+t.me/MyMorse_Bot
+
+A short thread on what I learned.
+```
+
+**T2** — fill from `npm run x:numbers` the minute before
+```
+Final numbers, [date] UTC: [Y] answered calls across [Z] intents and [W] miners, $[S] paid to the @Telegraphprotoc network.
+
+Every one has a signal hash and a settlement tx. Check any: telegraph-morse.vercel.app/#ledger
+
+/proof matches them against the chain and lists the ones that don't.
+```
+
+**T3**
+```
+What I built and then deleted.
+
+A podium that paid three ranked miners per question, and a consensus report. An organizer said: the leaderboard ranks them once, for everyone; paying N miners to re-check is spam.
+
+They were right. Gone the same day. @Telegraphprotoc
+```
+
+**T4**
+```
+What I'm not claiming, @Telegraphprotoc.
+
+Testnet: real answers, fake money. "Users" are salted identity hashes; most so far are me testing. The signal hash is shown, not re-derived. One miner the router often picks is mine; I neither skip nor favour it.
+
+github.com/Harshyadav442277/telegraph-morse/blob/main/GAPS.md
+```
+
+**T5**
+```
+The one thing I'd tell the next person building on @Telegraphprotoc: ask the organizers what they want before building anything that sits between a user and their protocol's judgement.
+
+It cost me two days. The Telegram bot was the part they liked, and it's the part that's left.
+```
+
+**T6**
+```
+Thanks @Telegraphprotoc. Source, tests and the limits ledger: github.com/Harshyadav442277/telegraph-morse
+
+The bot: t.me/MyMorse_Bot
+```
 
 ---
 
@@ -193,14 +271,18 @@ deleted two days of work because you told me to."
 - One idea per post. If it needs a second paragraph to explain, it's two posts.
 - No "!!!", no "pls check out", no hashtag stacks.
 - Never post a number you haven't just re-run.
-- Never describe a feature that isn't live right now.
+- Never describe a feature that isn't live right now. Nothing here names the podium as a feature,
+  a second opinion, a consensus report, recipes, or the discovery tools.
 - Screenshot or recording on anything that claims something works.
+- Reply to every reply within the day. Replies are the "meaningful engagement" the rubric names.
 
 ## Assets to have ready
 
 - Landing page screenshot with the ledger and the six counters
-- `/verify/{hash}` cropped to the green payer line and the BaseScan link
-- 15-second recording: Claude Code tool call → the row appearing in the ledger
+- `/verify/0xa93d4e87…` cropped to the green payer line and the BaseScan link
+- `/proof` with the "On chain, not in the ledger" table visible
+- 10 s recording: `/miner txlens Is the certificate for github.com valid?` in Telegram
+- 15 s recording: Claude Code tool call, then the row appearing in the ledger
 
 ---
 
@@ -220,12 +302,15 @@ deleted two days of work because you told me to."
 
 | # | Draft | Posted (UTC) | Link |
 |---|------|---|---|
-| 0 | Correction — the podium is gone | | |
-| 1 | The gap | | |
-| 2 | What a receipt is | | |
-| 3 | The catalogue finding | | |
-| 4 | Calling one miner by name | | |
-| 5 | The router story *(optional)* | | |
-| 6 | For developers | | |
-| 7 | Real numbers | | |
-| 8 | Closing thread | | |
+| 0 | Correction | | |
+| 1 | What's left | | |
+| 2 | The receipt | | |
+| 5 | The risk-score finding | | |
+| 4 | For miner authors | | |
+| 3 | The gap | | |
+| 7 | Proof | | |
+| 9 | For developers | | |
+| 8 | The timeout lesson | | |
+| 6 | One miner by name *(spare)* | | |
+| 10 | Real numbers *(only if strangers')* | | |
+| T1–T6 | Closing thread | | |
