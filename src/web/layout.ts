@@ -39,15 +39,92 @@ button.pd,button.so{background:var(--panel);color:var(--fg);border:1px solid var
 .chips .ex{border-color:var(--accent)}.chips span.muted{align-self:center;font-size:13px}
 .groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 24px;margin-top:10px}.groups h3{font-size:14px;margin:8px 0 4px}.groups ul{margin:0;padding-left:18px}.groups li{margin:3px 0;font-size:14px}
 details{margin:6px 0}details summary{cursor:pointer;padding:6px 0}details p{margin:4px 0 8px 0;color:var(--fg)}
+nav span.nl{display:inline-flex;align-items:center;gap:4px}
+button.q{padding:0;width:18px;height:18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:11px;font-weight:600;line-height:16px;cursor:pointer}
+button.q[aria-expanded="true"],button.q:hover{border-color:var(--accent);color:var(--accent)}
+.help{margin:8px 0 14px;padding:12px 16px;border:1px solid var(--accent);border-radius:10px;background:var(--panel);font-size:14px;max-width:720px}
+.help h3{margin:0 0 6px;font-size:14px}.help dt{font-weight:600;margin-top:8px}.help dd{margin:2px 0 0;color:var(--muted)}.help dd a{color:var(--accent)}
 `;
+
+/** Questions people ask before they trust a page. One entry per nav item; shown on the ? next to it. */
+const HELP: Record<string, { title: string; qa: Array<[string, string]> }> = {
+  ledger: {
+    title: "The public ledger",
+    qa: [
+      ["What is this list?", "Every call Morse has ever made to the Telegraph network, newest first, including the operator's own testing. Nothing is separated out and nothing is manufactured."],
+      ["What does the routed column mean?", "<b>Telegraph</b>: Telegraph's own router picked the miner. <b>Morse (podium)</b>, <b>(2nd opinion)</b>, <b>(named miner)</b>: you asked for that miner, so Morse called it directly. <b>Morse (fallback)</b>: the router did not answer within 20 s and Morse routed the question itself."],
+      ["Is my question public?", "Yes, clipped to 200 characters, with the answer excerpt. Who asked is stored only as a salted hash. Do not type anything private."],
+    ],
+  },
+  proof: {
+    title: "On-chain proof",
+    qa: [
+      ["What does it prove?", "That the calls in the ledger happened and were paid: every settlement hash the ledger holds is matched against the payer wallet's USDC transfers on Base Sepolia, read from a public block explorer, not from Morse."],
+      ["What is a chain-only settlement?", "A payment the chain shows but the ledger does not: usually a call Morse recorded as timed out that the node settled anyway. They are listed, not hidden, and not counted as answered calls."],
+      ["Why does this matter?", "Because \"people used it\" is otherwise a claim. Here it is a number anyone can recompute from the chain."],
+    ],
+  },
+  consensus: {
+    title: "The consensus report",
+    qa: [
+      ["What is a podium round?", "After any answer, one click asks the other top-ranked miners for that intent the same question, directly, and lays the answers side by side with ranks and receipts."],
+      ["How is agreement judged?", "Only when the answers are machine-comparable: verdicts (valid / unsafe / true) or figures (a price, a temperature) within a stated tolerance. Free-text answers are shown side by side and marked as not judged."],
+      ["Does it change routing?", "No. A podium only runs after an answer exists and only when you ask; the ranked router still picks every first answer."],
+    ],
+  },
+  keys: {
+    title: "API and MCP",
+    qa: [
+      ["Do I need a wallet?", "No. Morse's own wallet pays the x402 fee for every call. Get a free key on this page; each key has a daily cap so the budget cannot be drained by one caller."],
+      ["How do I use it from Claude Code or Cursor?", "One command adds Morse as an MCP server: <code>claude mcp add --transport http morse https://telegraph-morse.vercel.app/mcp --header \"Authorization: Bearer morse_YOURKEY\"</code>. The tools include asking the network, asking the podium, and asking a named miner."],
+      ["Can I call a specific miner?", "Yes: the <code>miner</code> field on REST, <code>telegraph_ask_miner</code> over MCP, <code>/miner &lt;slug&gt; &lt;question&gt;</code> in Telegram. The receipt says routing was bypassed at your request."],
+    ],
+  },
+  github: {
+    title: "The source",
+    qa: [
+      ["Is the code open?", "Yes: the whole app, its tests, and an honest limits ledger (GAPS.md) that names what is unverified or deliberately not built."],
+      ["Can I run my own Morse?", "Yes. It needs a burner wallet with testnet USDC and a Telegram bot token; the README and GO-LIVE.md walk through it. Never reuse a wallet that holds anything real."],
+    ],
+  },
+  telegraph: {
+    title: "Telegraph",
+    qa: [
+      ["What is Telegraph?", "A marketplace where independently run APIs, called miners, answer questions; validators score and rank them per intent; and every answer is paid for per call over x402, about $0.01 in USDC."],
+      ["Is this real money?", "No. Everything here runs on the Base Sepolia testnet with faucet USDC. The mechanics are real; the money is not."],
+      ["Where does the $0.01 go?", "To the protocol's Diamond contract, and only when the miner actually answers. Failed calls are not charged, and every paid call gets a signal hash you can look up on the node."],
+    ],
+  },
+};
+
+function helpPanels(): string {
+  return Object.entries(HELP)
+    .map(([k, v]) => `<div class="help" id="help-${k}" hidden><h3>${escapeHtml(v.title)}</h3><dl>${v.qa.map(([q, a]) => `<dt>${escapeHtml(q)}</dt><dd>${a}</dd>`).join("")}</dl></div>`)
+    .join("");
+}
+
+function navItem(href: string, label: string, key: string): string {
+  return `<span class="nl"><a href="${href}">${label}</a><button class="q" type="button" data-help="${key}" aria-controls="help-${key}" aria-expanded="false" aria-label="Questions about ${escapeHtml(label.replace(/&amp;/g, "&"))}">?</button></span>`;
+}
+
+const HELP_SCRIPT = `<script>
+document.querySelectorAll('button.q').forEach(function(b){b.addEventListener('click',function(){
+  var k=b.dataset.help,p=document.getElementById('help-'+k),open=!p.hidden;
+  document.querySelectorAll('.help').forEach(function(x){x.hidden=true});
+  document.querySelectorAll('button.q').forEach(function(x){x.setAttribute('aria-expanded','false')});
+  if(!open){p.hidden=false;b.setAttribute('aria-expanded','true')}
+})});
+</script>`;
 
 export function page(title: string, body: string, opts: { description?: string } = {}): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(title)}</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="description" content="${escapeHtml(opts.description ?? "Ask Telegram, get a receipt from the Telegraph network.")}">
 <style>${CSS}</style></head><body><main>
 <header class="top"><h1><a href="/" style="color:inherit">M<span>·</span>O<span>·</span>R<span>·</span>S<span>·</span>E</a></h1>
-<nav><a href="/#ledger">Ledger</a><a href="/proof">Proof</a><a href="/consensus">Consensus</a><a href="/keys">API &amp; MCP</a><a href="https://github.com/Harshyadav442277/telegraph-morse">GitHub</a><a href="https://telegraphprotocol.com">Telegraph</a></nav></header>
+<nav>${navItem("/#ledger", "Ledger", "ledger")}${navItem("/proof", "Proof", "proof")}${navItem("/consensus", "Consensus", "consensus")}${navItem("/keys", "API &amp; MCP", "keys")}${navItem("https://github.com/Harshyadav442277/telegraph-morse", "GitHub", "github")}${navItem("https://telegraphprotocol.com", "Telegraph", "telegraph")}</nav></header>
+${helpPanels()}
 ${body}
+${HELP_SCRIPT}
 <footer>Morse is a Telegraph Hackathon Season I Track 3 application. Every answer is a live, paid call to a Telegraph miner. Nothing is mocked or cached. Testnet (Base Sepolia).</footer>
 </main></body></html>`;
 }
