@@ -14,10 +14,11 @@ All eight fit inside 280 characters as X counts them (a URL counts as 23), check
 
 ### 1 · The gap
 
-Numbers verified 2026-09-03 05:15 UTC. Attach a screenshot of the landing page showing the ledger.
+Number re-checked 2026-09-04 15:51 UTC: **2,142** user-paid calls network-wide in 24 h. Attach a
+screenshot of the landing page showing the ledger.
 
 ```
-Using @Telegraphprotoc needs a wallet, a faucet and an x402 client. So its 1,133 user-paid calls in 24h are almost all developers.
+Using @Telegraphprotoc needs a wallet, a faucet and an x402 client. So its 2,142 user-paid calls in 24h are almost all developers.
 
 Morse is the front door: ask in plain language, Morse pays, and you get a receipt you can verify on-chain.
 
@@ -55,27 +56,33 @@ Morse labels those as risk.
 
 ---
 
-### 4 · The second-opinion finding
+### 4 · The endpoint finding
+
+Reframed 2026-09-04: the finding is about calling a *named* miner (`/miner`, `telegraph_ask_miner`),
+which is the dispatch Telegraph's own reference apps use. Do not post the old second-opinion
+version — that feature is gone (GAPS G32).
 
 ```
-Asking a second @Telegraphprotoc miner is harder than it looks.
+Calling one @Telegraphprotoc miner by name is harder than it looks.
 
 22% publish more than one endpoint — degenlens-onchain publishes 33 — and only a quarter of those name the intent they serve. Send a fraud question to endpoints[0] and you hit transaction lookup.
 ```
 
 ---
 
-### 5 · The engineering war story — *your call*
+### 5 · The engineering war story — *your call, and the text below is now out of date*
 
-Factual and not unkind, but it names a rough edge in the sponsor's product. Engineers reshare this
-kind of post. Post it only if you're comfortable with that.
+**Do not post as written (checked 2026-09-04).** The last line was true on 2 September and is not
+true now: their router recovered, Morse tries it first on every question, and it answers the large
+majority of them. Posting "so Morse does its own routing" would misdescribe our own app and the
+sponsor's. If you post a war story at all, post the *recovery*:
 
 ```
 Getting @Telegraphprotoc to take my money took a day.
 
-Their router's settlement call times out at ~47s. A serverless function gets 60.
+Their router's settlement call was timing out at ~47s on 2 Sep. A serverless function gets 60.
 
-So Morse does its own routing — picks the intent, calls the #1 ranked miner directly. ~4s, and the receipt tells you which rule chose it.
+It's fixed now — Morse asks their router first, and the receipt tells you whether it or my fallback chose the miner.
 ```
 
 ---
@@ -130,7 +137,7 @@ Fill this in as you go — the closing thread and the submission both need the l
 | 1 | The gap | | | |
 | 2 | What a receipt is | | | |
 | 3 | Catalogue / risk-vs-confidence | | | |
-| 4 | Second-opinion finding | | | |
+| 4 | Endpoint finding | | | |
 | 5 | War story (optional) | | | |
 | 6 | Developers / MCP | | | |
 | 7 | First real numbers | | | |

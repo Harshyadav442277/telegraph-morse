@@ -11,7 +11,7 @@ Code conforms to this. Update this file **before** deviating. Grounded in
  MCP client   ──/mcp─────▶  │  ├ channels: telegram, web,   │      x402 (USDC, Base Sepolia)
  REST client  ──/v1/ask──▶  │  │   mcp, rest                │ ────────────────────────────▶ Telegraph node
                             │  ├ core: ask(), recipes,      │  POST /engine/v1/ask          devnode.telegraphprotocol.com
-                            │  │   second-opinion, verify   │  POST /engine/v1/ask/{id}
+                            │  │   direct /miner, verify   │  POST /engine/v1/ask/{id}
                             │  ├ guards: rate, budget, keys │  GET  /engine/v1/signal/{hash}
                             │  └ ledger: Neon Postgres      │  GET  /api/miners, /engine/v1/intents
                             └──────────────────────────────┘  GET  /daemon/api/questions/top
@@ -46,8 +46,8 @@ payload the hash commits to. If the node's hash derivation is reproducible we re
 ### A4 — Confidence is read from the miner's declared `signal_mapping.confidence_field`
 Miners do not share a result schema. The catalogue's `signal_mapping` tells us where each miner
 puts confidence, label and reason; we read those paths defensively and show "not reported" when
-absent. The automatic second opinion that once keyed off this threshold is off by default since
-2026-09-04 (GAPS G32).
+absent. Nothing keys off the number to spend more: the automatic second opinion that once did was
+removed on 2026-09-04 (GAPS G32).
 
 ### A5 — Hono on Vercel Node runtime; ack fast, work in the background
 Telegram retries webhooks that do not answer quickly, and miners can take 45s. The webhook handler

@@ -11,6 +11,10 @@ the router.
 The Telegram path still acks the webhook and finishes in `waitUntil` with `maxDuration: 60`, which
 remains the right shape for a slow miner.
 
+**Superseded 2026-09-03, do not read the paragraph above as current design.** The router recovered
+and Morse asks it *first* on every question, on a 20 s leash, falling back to its own routing only
+when it does not answer (G17, A2). Direct calls are now only what a person asked for by name.
+
 ### G2 · x402 SDK 2.24.0 — `CLOSED 2026-09-02`
 **Verified against the installed 2.24.0 packages, not the docs:** `toClientEvmSigner` and
 `ExactEvmScheme` are live exports of `@x402/evm`, `wrapFetchWithPaymentFromConfig` of `@x402/fetch`,
@@ -85,8 +89,8 @@ That last one was a live bug, not a curiosity: both storm miners do it, so the `
 which asks STORM_ALERT — would have shown a judge "confidence 85%" when the miner meant "storm risk
 85%", and a calm forecast (`risk: 0.05`) would have looked like a 5%-confident miner and fired a
 spurious second opinion on every quiet day. Fixed: `Receipt.confidenceIsRisk` labels these as risk
-everywhere they are rendered and excludes them from the second-opinion threshold. Covered by
-test/catalogue-quirks.test.ts.
+everywhere they are rendered. (The second-opinion threshold it also guarded was removed on
+2026-09-04, G32; the label is what mattered and it stays.) Covered by test/catalogue-quirks.test.ts.
 
 Still open: what miners put in these fields at *runtime* (strings, 0-100, nulls) can only be seen
 with real traffic.
@@ -96,8 +100,8 @@ with real traffic.
 
 Two things had to change for the suite to be able to go green at all. Test 6 and test 7 were
 mutually exclusive — one only ran unfunded, the other only funded — so test 6 now asserts the
-honest-failure contract in *both* states, using a second opinion on a hash that does not exist,
-which costs nothing. And test 4 needed an API key, which the three-per-network-per-day cap (G18)
+honest-failure contract in *both* states, using a hash the node never issued, which costs nothing.
+(It called the second-opinion endpoint for that until 2026-09-04; it now calls `/api/verify`, G32.) And test 4 needed an API key, which the three-per-network-per-day cap (G18)
 had exhausted; running from a second network gave a fresh quota, and the suite now caches its key
 so repeat runs stop burning it.
 
@@ -159,7 +163,7 @@ free rather than charging for a failure.
 draws `batch_send_failed:missing_or_invalid_parameters` from the facilitator, silently losing a
 leg. They now run one at a time.
 
-### G15 · A second opinion re-asks the question from its stored 200-character preview — `OPEN, accepted`
+### G15 · A second opinion re-asks the question from its stored 200-character preview — `MOOT 2026-09-04: the feature was removed (G32)`
 The ledger keeps `preview` (the question clipped to 200 chars), not the full text, so `/second`,
 the web button and `telegraph_second_opinion` re-ask a longer question in its clipped form. Almost
 every real question is shorter than that. Storing the full text would put user prose in a public
@@ -339,7 +343,7 @@ page, the bot's `/help`, and docs/TRY_THESE.md before anyone shares it. Kept rat
 because hiding it would weaken the adoption evidence that is 45% of the score — but a user typing
 into a Telegram bot should not have to read the API to learn this.
 
-### G25 · Ask the Podium — what it can and cannot say — `MEASURED 2026-09-03`
+### G25 · Ask the Podium — what it can and cannot say — `REMOVED 2026-09-04 (G32); kept as the record of what was measured`
 Podium asks the other top-ranked *addressable* miners for the same intent the same question,
 directly, and compares the answers. Verified live: SSL_VERIFICATION on github.com — txlens #1 (router)
 + livecert #2 + preflight #3, "3 of 3 agree: valid", 5.6 s, two extra receipts. Limits, stated on the

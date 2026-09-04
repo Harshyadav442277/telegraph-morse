@@ -1,7 +1,9 @@
 # Morse — Telegraph Hackathon Season I, Track 3 plan
 
-**Last updated 2026-09-03 ~20:30 UTC** (re-judgment below). Track 3 closes **2026-09-07 23:59:59
-UTC**, verbatim from the submission form. Feature freeze **2026-09-05 18:00 UTC**. Resolve every
+**Last updated 2026-09-04 15:50 UTC.** Track 3 closes **2026-09-07 23:59:59 UTC**, verbatim from
+the submission form. Feature freeze took effect **2026-09-04 10:30 UTC** and the build finished at
+**15:25 UTC** with the removal in GAPS G32; everything left is submitting, posting and sharing.
+Resolve every
 deadline with `date -u`, never the local date — a handoff note in this repo was dated a day late by
 reading the local clock.
 
@@ -90,7 +92,7 @@ five days**. Everything in this plan bends toward that.
 | Criterion | Weight | What earns it | Build time |
 |---|---:|---|---:|
 | Real usage & adoption | 45% | live bot on day 1, forwardable answers, group-chat UX, hosted MCP + REST for agents, public counters, daily promotion | 45% (half of it is operator time: posting, sharing, replying) |
-| Usefulness, creativity, depth of integration | 25% | multi-intent recipes, confidence-threshold second opinion, signal + on-chain verification, routing visibility, live Daemon signals; stretch: ERC-8183 anchoring | 30% |
+| Usefulness, creativity, depth of integration | 25% | multi-intent recipes, direct dispatch at a named miner, signal + on-chain verification at /proof, routing visibility, live Daemon signals. The second opinion and podium that used to sit here were removed 2026-09-04 (G32) | 30% |
 | Engagement & updates on X | 25% | one post per real milestone with numbers and screenshots, tag @Telegraphprotoc, closing thread | operator daily, drafts in [docs/X_POSTS.md](docs/X_POSTS.md) |
 | Technical execution & integration quality | 5% | typed code, tests, CI, honest README, zero mocks | 10% |
 | Sponsor technology (Telegraph itself) | — | if the engine could be swapped for a stub it isn't being used: every answer comes from `/engine/v1/ask` and carries a `signal_hash` | — |
@@ -106,7 +108,8 @@ Every feature below maps to one of these rows. No mapping, no build.
   telegraph-usecases (single purpose, old subnet API), direct integrations like the degenlens
   traffic (machine volume, no users). Morse removes the wallet from the user, is multi-intent, and
   shows the person asking who answered, how confident, and where to verify.
-- **The one unforgettable thing:** *Ask Telegram, get a receipt from the Telegraph network.*
+- **The one unforgettable thing:** *Telegraph in Telegram. Ask, get an answer from a ranked
+  miner, with a receipt.* (The organizer's own words for the part they liked, adopted 2026-09-04.)
 
 ## Re-judged 2026-09-03 ~20:30 UTC — where Morse loses, and what was done about it
 
@@ -146,14 +149,18 @@ calls; `rxtruth` — an autonomous six-hourly misinformation pipeline; `certsent
    miner from Telegram or Claude Code, with a receipt, no wallet).
 2. **"Another aggregator" (25%).** A "front door" is exactly what the rules page says Telegraph is
    not. Fixed by positioning, truthfully: Morse does not pick providers or blend answers; the ranked
-   router picks, Morse pays, receipts, and verifies. The page now says so, and two pages exist that
-   only a verification layer would have: `/proof` and `/consensus`.
+   router picks, Morse pays and receipts. Since 2026-09-04 the page says something stronger and
+   narrower: not an aggregator *and not a validator* — Morse does not check one miner against
+   another, because the leaderboard already does. `/proof` is the one evidence page left, and it
+   reads the chain rather than spending on it.
 3. **On-chain depth (25%).** The rubric says off-chain *and* on-chain; amanat writes jobs on chain.
    `/proof` reads the chain and reconciles it with the ledger. Writing to chain (ERC-8183 anchoring
-   of a podium verdict) is not built: it needs escrow, a wallet action and contract work that do not
+   of a receipt) is not built: it needs escrow, a wallet action and contract work that do not
    fit before the freeze (G27).
 4. **Rule 04 optics.** 41% of our traffic lands on the operator's own miner (disclosed, G22);
-   podiums and recipes multiply calls per question; a bot in a group could have paid for every line
+   recipes multiply calls per question, and podiums used to multiply them further — 47% of the
+   newest 200 ledger rows are podium or second-opinion legs, which is exactly what the organizer
+   called spam and why they are gone; a bot in a group could have paid for every line
    of conversation. Fixed the last one: in groups Morse answers only when @mentioned or replied to.
 5. **Judging-window fragility (Sep 8–18).** 58.8 USDC in the wallet (~5,800 calls), health probe
    hours-late (G19), `/proof` depends on Blockscout and degrades honestly when it is down. Operator:
@@ -218,7 +225,7 @@ Details: [PRD.md](PRD.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PHASES.md](PHASE
 | **Sep 2** | plan + repo (done); core `ask`, Telegram bot, web skeleton, ledger; deploy | burner wallet + faucet, BotFather token, Vercel project + Neon, env vars; **X post 1** |
 | **Sep 3** | ledger UI, verify page, recipes, second opinion, error paths, tests | share in Telegraph Discord, X, own groups; **X post 2** (first real numbers) |
 | **Sep 4** | hosted MCP + REST + keys, docs, Playwright judge journey, alarms | **X post 3** (MCP in one line); reply to every user |
-| **Sep 5 18:00** | remove podium / second opinion / consensus surfaces in one commit, e2e green, deploy; then **feature freeze** — bugfixes, DEMO.md, README, gif/video | distribution push: Discord, groups, X |
+| **Sep 4 15:25** | *(done, a day early)* podium / second opinion / consensus removed in one commit, e2e 7/7, deployed; landing repositioned on "Telegraph in Telegram"; **build finished** | distribution push: Discord, groups, X |
 | **Sep 6** | rehearsal, submission dry run, stretch only with zero open P1s | **X thread** with ledger numbers |
 | **Sep 7** | final checks, keep it up | final numbers post; **submit before 23:59 UTC**; confirm it shows |
 
