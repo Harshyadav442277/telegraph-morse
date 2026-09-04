@@ -3,7 +3,39 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
-## 2026-09-04 10:45 UTC — HANDOFF STATE (read this first)
+## 2026-09-04 ~15:30 UTC — ORGANIZER FEEDBACK: THE PIVOT (read this first)
+
+An organizer (Ahmed Ali, Discord, ~14:50 UTC) answered two questions at once — a proposed
+miner-check tool, and "how does the podium reach all top-3 miners when routing is 70/20/10" — with
+one verdict:
+
+- The explorer already holds the data a miner-check tool would produce. Building it is building a
+  router and a validator for their miners, which the protocol already does.
+- Paying N miners per request "just to check which is best" is what the protocol is designed to do
+  once, for everyone. It does not work economically for an end user, and it is spamming.
+- What was good: **extending Telegraph into Telegram.** Focus on adoption of the application and
+  agent built on Telegraph, not on tooling that duplicates what is built.
+
+**Decision: follow it completely** (GAPS G32). Podium, automatic second opinion, the consensus
+report and the miner-check idea are retired. Telegraph's leaderboard is the consensus; the router's
+pick is the answer. What Morse is: Telegraph in Telegram and in one hosted MCP/REST URL, no wallet,
+every answer a receipt in a public ledger reconciled on chain. Nothing else.
+
+**Done this session:** `SECOND_OPINION_THRESHOLD` defaults to 0 (deployed), so Morse never pays a
+second miner unasked; README, PLAN, PRD, PHASES, GAPS, DEMO, SUBMISSION, ARCHITECTURE and the X
+drafts say what is retired and why. **Next session, in order:** 1) remove the podium button,
+`/podium`, `/second`, `telegraph_podium`, `telegraph_second_opinion`, `POST /api/podium`,
+`/api/second`, `/v1/podium`, the `/consensus` page and nav item, `podium.ts`, `agree.ts`,
+`consensus.ts` and their tests, in one commit; keep ledger rows and their labels as history; keep
+`/miner <slug>` (direct dispatch is what the organizers' reference apps do) but drop the "test your
+own miner" framing; 2) rewrite DEMO steps 8 and 10 and the landing FAQ entry; 3) paid e2e green,
+deploy; 4) everything after that is sharing, not building.
+
+**Lesson, so it is not repeated:** ask the organizers what they want before building anything that
+sits between a user and the protocol's own judgement. Two days went into features that the people
+judging the track consider a bug, and 47 of 185 ledger rows are calls they would call spam.
+
+## 2026-09-04 10:45 UTC — previous handoff state
 
 **Freeze in effect from this session by the operator's call; deletions, fixes and docs only.** The
 full loop ran against production and everything passed once one stale test was fixed: typecheck,

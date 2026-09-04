@@ -144,7 +144,7 @@ Fill this in as you go — the closing thread and the submission both need the l
 
 ---
 
-### 9 · Ask the podium (READY — verified live 2026-09-03)
+### 9 · Ask the podium — DO NOT POST (retired 2026-09-04 on organizer feedback, GAPS G32; kept as a record)
 
 Attach a screenshot of the podium panel showing "3 of 3 miners agree: valid" with the three receipts.
 

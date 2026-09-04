@@ -47,7 +47,7 @@ Consuming Telegraph today needs a wallet, testnet USDC and an x402 client, which
 
 Every call Morse has ever made is in a public ledger at /#ledger, and every row links to /verify/{hash}, which shows the node's record, the payer wallet checked against Morse's own, and the node's keccak256 attestation. That turns "people used it" into something a judge can check rather than take on trust.
 
-Depth: four recipes fan one question across several intents and combine the receipts; a second opinion re-asks the next-ranked miner and shows both; the whole 129-miner catalogue was measured before trusting any of it, which found that four miners publish a *risk* score in the field others use for confidence — read naively, a calm weather forecast looks like an unsure miner. Morse labels those.
+Depth: four recipes fan one question across several intents and combine the receipts; the whole 129-miner catalogue was measured before trusting any of it, which found that four miners publish a *risk* score in the field others use for confidence — read naively, a calm weather forecast looks like an unsure miner. Morse labels those.
 
 Honest limits are in GAPS.md, including the one that matters most: Telegraph's own router goes first with a 20-second budget, and Morse falls back to its own keyword routing only when the router does not answer (it timed out at ~47 s for a day on 2 September, against a 60-second serverless ceiling). Every receipt and ledger row says which of the two happened.
 ```

@@ -41,8 +41,10 @@ S1 and S2 are the must-haves. S4 and S7 are non-negotiable honesty properties.
 - Web: landing, ask box, live public ledger and counters, `/verify/{hash}`, "how routing works".
 - Hosted MCP (Streamable HTTP) and REST with self-issued keys and daily caps.
 - Recipes combining intents: `safe <url>`, `wallet <address>`, `weather <place>`, `fact <claim>`.
-- Second opinion: direct ask to the next-ranked miner for the same intent when confidence is
-  below a threshold or when the user asks.
+- ~~Second opinion: direct ask to the next-ranked miner for the same intent when confidence is
+  below a threshold or when the user asks.~~ **Retired 2026-09-04** with the podium and the
+  consensus report, on organizer feedback: the leaderboard is the consensus, N miners per
+  question is uneconomic for an end user, and it reads as spam (GAPS G32).
 - Public ledger in Postgres; counters computed from it; low-balance and error alarms.
 - Budgets: per user, per key, global daily; a kill switch.
 
@@ -53,12 +55,15 @@ S1 and S2 are the must-haves. S4 and S7 are non-negotiable honesty properties.
 - Unattended traffic generation. Scheduled watches are a stretch item with strict caps and
   labelling, and are dropped first if anything looks like inflation.
 - Mainnet, tokens, MACHINA economics.
+- **Re-ranking or checking miners ourselves** — no podium, no automatic second opinion, no
+  miner-check tooling, no consensus report. Telegraph's validators and leaderboard are the
+  judgement layer; Morse is the front door and the receipt (organizer, 2026-09-04; GAPS G32).
 
 ## Open decisions
 
 - **D1 — Bot name.** Resolved 2026-09-03: `@MyMorse_Bot`.
-- **D2 — Second-opinion threshold.** Start at confidence < 0.6 when a confidence field exists;
-  measure how often it fires; adjust before the freeze.
+- **D2 — Second-opinion threshold.** Resolved 2026-09-04: **0**, automatic second opinion off, the
+  feature removed before the freeze (GAPS G32). It fired on 16 of 118 answers while it was on.
 - **D3 — Stretch order.** Resolved 2026-09-03: none of the three ships before the close. ERC-8183
   anchoring and the Daemon feed are recorded as deliberate omissions (GAPS G27, G28); watches were
   dropped for rule-04 optics; a Discord bot was never offered by the organizers.

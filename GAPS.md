@@ -438,3 +438,26 @@ again at 10:42 UTC. The gap was the process, not the code: the UI change shipped
 2026-09-03 and the paid journey was left for the next session. Any UI change now re-runs the paid
 journey the same day. The cost of the miss was one cent and eleven hours of a wrong "7/7" in the
 handoff.
+
+### G32 · Podium, automatic second opinion and the consensus report were judged re-ranking and spam — `RETIRED 2026-09-04 ~15:30 UTC`
+An organizer (Discord, ~14:50 UTC) answered a "would a miner-check tool be useful" question and a
+"how does the podium reach all three ranked miners" question with one reply: the explorer already
+holds the miner data; checking or re-ranking miners is "building a router for our direct miners,
+which is already handled by Telegraph"; paying N miners per request to find the best one is what the
+protocol is designed to do once for everyone, "doesn't work economically for the end user", and is
+spamming. What was good: extending Telegraph into Telegram; focus on adoption of the app and agent.
+
+**Followed completely.** Retired: Ask the Podium (G25), the automatic second opinion (G14, G15), the
+`/consensus` report, and the never-built miner-check idea. `SECOND_OPINION_THRESHOLD` now defaults
+to 0, so nothing pays a second miner unasked as of the next deploy. The podium button, `/podium`,
+`/second`, the two MCP tools, `POST /api/podium`, `/api/second`, `/v1/podium`, the `/consensus`
+page and nav item, and `podium.ts` / `agree.ts` / `consensus.ts` with their tests are removed in one
+commit before the freeze; the ledger keeps every historical row with its label. `/miner <slug>`
+stays, because direct dispatch to a named miner is what the organizers' own reference apps do, but
+the "test your own miner" framing goes.
+
+**What this cost and taught.** About two days of build went into features the judges consider a
+bug, and 47 of 185 ledger rows (podium legs and second opinions) are calls the organizer would
+call spam. The question that would have prevented it — "is a second, independent reading of your
+leaderboard something you want?" — was never asked. Ask before building anything that sits between
+a user and the protocol's own judgement.

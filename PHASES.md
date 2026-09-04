@@ -70,14 +70,14 @@ four unreferenced functions were deleted; nothing was added.
       each fanning out to different #1 miners: safe → URL_SCAN + SSL_VERIFICATION + IP_GEOLOCATION,
       weather → WEATHER_CHECK + STORM_ALERT, wallet → WALLET_BALANCE_CHECK + FRAUD_DETECTION,
       fact → FACT_CHECK + NEWS_SEARCH
-- [x] Second opinion on every surface: low-confidence threshold in Telegram *and* web, `/second`
+- [x] ~~Second opinion on every surface: low-confidence threshold in Telegram *and* web, `/second`
       command, a button on the web answer card, `POST /api/second`, `telegraph_second_opinion`.
-      Both miners and both ranks are shown.
+      Both miners and both ranks are shown.~~ **Retired 2026-09-04** (GAPS G32)
 - [x] Routing visibility: "served by #k for INTENT" on every receipt, from the live leaderboard
 - [x] Daemon "what's hot" (`/hot` in Telegram, `telegraph_hot_signals` over MCP)
-- [x] **Consensus report** `/consensus` + `/api/consensus` (2026-09-04): every podium round per
+- [x] ~~**Consensus report** `/consensus` + `/api/consensus` (2026-09-04): every podium round per
       intent, agreement rate, every disagreement named with receipts; computed from rows that
-      already exist, spends nothing [D]
+      already exist, spends nothing~~ **Retired 2026-09-04** with the podium (GAPS G32)
 - [x] **On-chain proof** `/proof` + `/api/proof` (2026-09-04): the ledger's settlement hashes
       reconciled against the payer's USDC transfers read from Blockscout — 118/118 matched, two
       chain-only settlements shown rather than hidden (GAPS G29) [D, A]
@@ -107,6 +107,16 @@ four unreferenced functions were deleted; nothing was added.
 ## P5 — Freeze, rehearse, submit (2026-09-05 18:00 UTC → 09-07 23:59 UTC) [A, X, T]
 - [x] Feature freeze — in effect from 2026-09-04 10:30 UTC by the operator's call, a day ahead of
       the planned 2026-09-05 18:00 UTC. Deletions, fixes and docs only after this.
+- [x] **Retire re-ranking (2026-09-04 15:30 UTC, organizer feedback, GAPS G32):** automatic
+      second opinion off (`SECOND_OPINION_THRESHOLD` default 0); README, PLAN, PRD, DEMO,
+      SUBMISSION and the X drafts say the podium and consensus report are retired and why
+- [ ] **Remove their surfaces in one commit:** podium button and `/podium`, `/second`,
+      `telegraph_podium`, `telegraph_second_opinion`, `POST /api/podium`, `/api/second`,
+      `/v1/podium`, `/consensus` page and nav item, `podium.ts`, `agree.ts`, `consensus.ts` and
+      their tests; keep ledger rows and labels; rewrite DEMO steps 8 and 10; paid e2e green; deploy
+- [ ] **Operator, every remaining hour:** share the bot — Discord (with the organizer's own words
+      about Telegram as the good part), your groups, university; reply to every user; X posts
+      with real numbers; top up the wallet before Sep 7
 - [x] [DEMO.md](DEMO.md) — exact steps and exact expected output, every ✅ line captured from
       production, every ⏳ line named as unproven
 - [x] Health probe (`scripts/health-probe.mjs` + `.github/workflows/health.yml`), free-endpoint

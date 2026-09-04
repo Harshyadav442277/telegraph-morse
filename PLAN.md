@@ -156,6 +156,10 @@ calls; `rxtruth` — an autonomous six-hourly misinformation pipeline; `certsent
 
 ### Novel suggestions — kept, and deliberately not built
 
+*Update 2026-09-04 15:30 UTC: the consensus report and the podium below were retired the same day
+on organizer feedback (see "Organizer feedback 2026-09-04" above, and GAPS G32). The paragraph is
+kept as the record of what was built and why it was wrong for this track.*
+
 Built, deployed and verified live 2026-09-04 04:14 UTC: the **consensus report** (every podium round per intent, agreement rate, every
 disagreement named, receipts linked — a public, independent reading of the leaderboard that costs
 nothing and grows with use), **on-chain proof of usage** (ledger reconciled hash-for-hash against
@@ -170,17 +174,34 @@ process, which serverless is not; G28); **ERC-8183 anchoring** (above); **MCP re
 (distribution to agents; the publish step is the operator's, `server.json` is a ten-minute job on
 request).
 
+## Organizer feedback 2026-09-04 — the pivot
+
+Asked in Discord whether a miner-check tool would be useful and how the podium could reach all
+three ranked miners, an organizer answered both at once: the explorer already holds that data;
+checking or re-ranking miners is "building a router for our direct miners, which is already
+handled by Telegraph"; paying N miners per request to find the best one is what the protocol does
+once for everyone, does not work economically for an end user, and is spamming. What was good:
+**extending Telegraph into Telegram** — focus on adoption of the app and agent, not on tooling
+that duplicates what is built.
+
+Followed completely. Podium, automatic second opinion, the consensus report and the miner-check
+idea are retired (GAPS G32). The claim above stands unchanged; the "depth" row below is now the
+recipes, the receipt, `/proof`, and the hosted MCP — nothing that second-guesses the leaderboard.
+The remaining schedule is removal of those surfaces before the freeze, then distribution only.
+
 ## What we build
 
 - **MVP (Sep 2-3):** paying `ask` core; Telegram bot (free text plus `/weather`, `/price`,
   `/fact`, `/translate`, `/safe`, `/wallet`, `/verify`, `/stats`); web landing with the live
   ledger and `/verify/{hash}`; Neon Postgres ledger; rate limits and budgets.
-- **Depth (Sep 3-4):** multi-intent recipes; second opinion on low confidence; routing visibility
-  (which rank served you); hosted MCP (Streamable HTTP) + REST with keys and caps; Daemon
-  "what's hot" feed.
+- **Depth (Sep 3-4):** multi-intent recipes; ~~second opinion on low confidence~~ (retired
+  2026-09-04, G32); routing visibility (which rank served you); hosted MCP (Streamable HTTP) +
+  REST with keys and caps; Daemon "what's hot" feed.
 - **Stretch (only if the MVP is stable by Sep 4 evening):** ERC-8183 anchoring of a verdict;
   a Discord bot if the organizers welcome one; capped, labelled watches.
-- **Not building:** our own miners, mock data, accounts/login, mainnet, a mobile app.
+- **Not building:** our own miners, mock data, accounts/login, mainnet, a mobile app; and since
+  2026-09-04, nothing that re-ranks or checks miners — no podium, no automatic second opinion, no
+  consensus report, no miner-check tool (organizer feedback, G32).
 
 Details: [PRD.md](PRD.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PHASES.md](PHASES.md).
 
@@ -191,7 +212,7 @@ Details: [PRD.md](PRD.md), [ARCHITECTURE.md](ARCHITECTURE.md), [PHASES.md](PHASE
 | **Sep 2** | plan + repo (done); core `ask`, Telegram bot, web skeleton, ledger; deploy | burner wallet + faucet, BotFather token, Vercel project + Neon, env vars; **X post 1** |
 | **Sep 3** | ledger UI, verify page, recipes, second opinion, error paths, tests | share in Telegraph Discord, X, own groups; **X post 2** (first real numbers) |
 | **Sep 4** | hosted MCP + REST + keys, docs, Playwright judge journey, alarms | **X post 3** (MCP in one line); reply to every user |
-| **Sep 5 18:00** | **feature freeze** — then bugfixes, DEMO.md, README, gif/video | distribution push |
+| **Sep 5 18:00** | remove podium / second opinion / consensus surfaces in one commit, e2e green, deploy; then **feature freeze** — bugfixes, DEMO.md, README, gif/video | distribution push: Discord, groups, X |
 | **Sep 6** | rehearsal, submission dry run, stretch only with zero open P1s | **X thread** with ledger numbers |
 | **Sep 7** | final checks, keep it up | final numbers post; **submit before 23:59 UTC**; confirm it shows |
 

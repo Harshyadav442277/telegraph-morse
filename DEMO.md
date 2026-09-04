@@ -10,6 +10,11 @@ Every output below was captured from the live deployment on the date stated. Ste
 Last capture: **2026-09-04 10:42 UTC**, with the wallet funded and Morse paying; the paid judge
 journey is 7/7.
 
+**Retired 2026-09-04 15:30 UTC (GAPS G32):** steps 8 (Ask the podium) and 10 (consensus report)
+describe features an organizer judged as re-ranking their leaderboard and as spam. They are kept
+below as dated records of what was verified, and are removed from the running app before the
+freeze; do not demonstrate them.
+
 **Integrity note:** the ledger rows visible today are our own verification calls, not users. Real
 and receipted, but not adoption — see GAPS G20.
 
@@ -162,7 +167,7 @@ verdict over three receipted calls. `/second` re-asks the next-ranked miner and 
 their ranks. `/hot` shows the Daemon's top signals. `/stats` prints the same numbers as
 `/api/stats`.
 
-### 8 · Ask the podium — ✅ verified 2026-09-03 18:46 UTC
+### 8 · Ask the podium — RETIRED 2026-09-04 (was ✅ verified 2026-09-03 18:46 UTC; record only)
 
 After step 2, click **Ask the podium — the other top-ranked miners answer this too**.
 
@@ -211,7 +216,7 @@ read from Blockscout rather than from Morse's own database. The four chain-only 
 listed on the page, not hidden (GAPS G29). The page reads the chain and never asks the network, so
 reloading it costs nothing.
 
-### 10 · Consensus report — ✅ verified 2026-09-04 04:15 UTC
+### 10 · Consensus report — RETIRED 2026-09-04 (was ✅ verified 2026-09-04 04:15 UTC; record only)
 
 Open <https://telegraph-morse.vercel.app/consensus>, or:
 

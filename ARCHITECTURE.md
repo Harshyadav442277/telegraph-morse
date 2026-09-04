@@ -31,9 +31,9 @@ stats page. Claude never handles the key; the operator sets it. Never the Track 
 ### A2 — Auto-routed `ask` is the default; every direct ask is explicit and says so
 `POST /engine/v1/ask` lets Telegraph's router classify and route, which is what the protocol
 measures and what the organizers want proven. Direct `POST /engine/v1/ask/{minerId}` runs only when
-a person or agent asks for it: a second opinion from the next-ranked miner, a Podium round, or a
-miner named outright (`telegraph_ask_miner`, REST `miner`, Telegram `/miner` — the dispatch the
-organizers' own reference apps use). Every direct receipt states that routing was bypassed and
+a person or agent asks for it: a miner named outright (`telegraph_ask_miner`, REST `miner`,
+Telegram `/miner` — the dispatch the organizers' own reference apps use). The second opinion and
+the Podium round that also used this path were retired on 2026-09-04 (GAPS G32). Every direct receipt states that routing was bypassed and
 why, so plain questions still exercise the routing table. Miner ids are read live from `/api/miners?intent=`, never
 hardcoded (they are not stable).
 
@@ -46,7 +46,8 @@ payload the hash commits to. If the node's hash derivation is reproducible we re
 ### A4 — Confidence is read from the miner's declared `signal_mapping.confidence_field`
 Miners do not share a result schema. The catalogue's `signal_mapping` tells us where each miner
 puts confidence, label and reason; we read those paths defensively and show "not reported" when
-absent. Threshold behaviour (second opinion) only fires when a confidence exists.
+absent. The automatic second opinion that once keyed off this threshold is off by default since
+2026-09-04 (GAPS G32).
 
 ### A5 — Hono on Vercel Node runtime; ack fast, work in the background
 Telegram retries webhooks that do not answer quickly, and miners can take 45s. The webhook handler
@@ -93,10 +94,10 @@ key exists in the operator's shell and Vercel env, nowhere else.
 
 ### A13 — Evidence pages read; they never spend
 `/proof` reads the payer wallet's USDC transfers from Blockscout and reconciles them with the
-ledger's settlement hashes; `/consensus` derives agreement statistics from Podium rows that already
-exist. Neither makes a Telegraph call, so a judge (or a crawler) reloading them cannot inflate
-anything (rule 04), and both degrade honestly: a failed chain read is reported as such, and an
-empty consensus report says so.
+ledger's settlement hashes. (`/consensus`, which derived agreement statistics from Podium rows, was
+retired on 2026-09-04 — GAPS G32.) It makes no Telegraph call, so a judge (or a crawler) reloading
+it cannot inflate anything (rule 04), and it degrades honestly: a failed chain read is reported as
+such.
 
 ### A12 — Conventions
 TypeScript strict, ESM, Node 22. Files under ~300 lines. Boring, explicit code. One task = one
