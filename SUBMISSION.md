@@ -49,7 +49,7 @@ Every call Morse has ever made is in a public ledger at /#ledger, and every row 
 
 Depth: four recipes fan one question across several intents and combine the receipts; a second opinion re-asks the next-ranked miner and shows both; the whole 129-miner catalogue was measured before trusting any of it, which found that four miners publish a *risk* score in the field others use for confidence — read naively, a calm weather forecast looks like an unsure miner. Morse labels those.
 
-Honest limits are in GAPS.md, including the one that matters most: Morse does its own intent routing, because Telegraph's /engine/v1/ask router times out at ~47s against its own facilitator and a serverless function has 60.
+Honest limits are in GAPS.md, including the one that matters most: Telegraph's own router goes first with a 20-second budget, and Morse falls back to its own keyword routing only when the router does not answer (it timed out at ~47 s for a day on 2 September, against a 60-second serverless ceiling). Every receipt and ledger row says which of the two happened.
 ```
 
 ---
@@ -59,7 +59,7 @@ Honest limits are in GAPS.md, including the one that matters most: Morse does it
 - [ ] Post the X updates — 25% of the score is judged on them ([docs/X_TO_POST.md](docs/X_TO_POST.md))
 - [ ] Share @MyMorse_Bot so the ledger reflects real people, not our own testing (GAPS G20)
 - [ ] `npm run health` returns HEALTHY
-- [ ] `MORSE_E2E_PAID=1 npm run e2e` is 7/7
+- [ ] `MORSE_E2E_PAID=1 npm run e2e` is 7/7 (last run 2026-09-04 10:42 UTC: 7/7 in 27 s)
 - [ ] The payer wallet still holds USDC — judging runs Sep 8–18 and a dry wallet mid-judging
       means every demo link fails. Top up at faucet.circle.com before submitting.
 

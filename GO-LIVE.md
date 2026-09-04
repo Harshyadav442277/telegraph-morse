@@ -135,13 +135,17 @@ Same amount of work, and it puts your bot token in a URL, so 7a–7c is the bett
 
 Open the site, ask *"Is the TLS certificate for github.com valid right now, and who issued it?"*
 
-Expect an answer plus a receipt: `served by <miner> #<rank> for SSL_VERIFICATION · confidence NN% ·
-$0.01 · NNN ms · verify 0x…`. Click **verify**. The page must show **Paid by … = Morse's payer
-wallet** in green, and the node's own check as `verified — keccak256 over payload`.
+Expect an answer plus a receipt: **Answered by** `<miner> · ranked #<rank> for SSL_VERIFICATION`,
+**Routed by**, **Confidence**, **Cost** (`$0.01 · NNN ms · settled on Base Sepolia`) and **Signal
+hash** with a *verify on the node* link. In Telegram the same receipt is one line: `served by
+<miner> (#<rank> for SSL_VERIFICATION) · confidence NN% · $0.01 · NNN ms · routed by Telegraph`.
+Click **verify**. The page must show **Paid by … = Morse's payer wallet** in green, and the node's
+own check as `verified — keccak256 over payload`.
 
-Do **not** expect a per-call settlement transaction: the node publishes none (0 of 8 user-paid
-signals sampled carried one, GAPS G3b). The on-chain trail is the payer wallet's USDC history,
-linked from the page.
+Expect a per-call settlement transaction too. The node publishes it in the `payment-response`
+header of the paying request, not in the signal record it serves afterwards; Morse stores it on
+the ledger row and links it from the receipt and the verify page (GAPS G3b). `/proof` reconciles
+every stored hash against the payer wallet's USDC transfers on chain.
 
 That single call closes GAPS G17, the second half of G2, and the wallet-gated half of G9.
 

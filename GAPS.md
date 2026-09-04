@@ -384,7 +384,7 @@ and a socket held open, which a Vercel function cannot do. A "Morse Wire" Telegr
 Daemon signals would need a small always-on worker and the operator's escrow deposit. Not built;
 decide after the hackathon, not inside the judging window.
 
-### G29 · Two on-chain settlements have no ledger row — `MEASURED 2026-09-03, shown on /proof`
+### G29 · Four on-chain settlements have no ledger row — `RE-MEASURED 2026-09-04, shown on /proof`
 Blockscout lists 120 USDC transfers from the payer to the Diamond; the ledger holds 118 settlement
 hashes and all 118 are on chain. The two extra settlements (2026-09-02 17:56:56Z and 2026-09-03 18:11:04Z) have no
 failed ledger row at those minutes either. The likeliest causes: the operator's local diagnostic run
@@ -396,6 +396,13 @@ guarantee: the node may settle after Morse stops waiting. `/proof` lists such se
 under "on chain, not in the ledger" rather than hiding them, and Morse does not count them as
 answered calls. A back-fill that attaches a late settlement to its row would close this; not before
 the freeze.
+
+Re-measured 2026-09-04 10:35 UTC: 174 transfers on chain, 170 settlement hashes in the ledger, all
+170 matched, **four** chain-only. The two new ones support the late-settlement reading. 06:54:58Z
+lands sixteen seconds after a podium leg to qarinah-proofpack that Morse recorded as a 15 s timeout
+at 06:54:42Z. 09:35:12Z has no row at all, which fits a router attempt that hit its 20 s budget and
+settled after Morse had fallen back, or a function cut off before it wrote. Each is one cent paid
+for an answer nobody received; `/proof` lists them rather than hiding them.
 
 ### G30 · Every direct call to a multi-endpoint miner went to its first endpoint — `CLOSED 2026-09-04 ~10:10 UTC, fixed and verified live`
 `endpointFor` chose an endpoint by finding the intent's name in the endpoint description, because
@@ -421,3 +428,13 @@ opinion and named-miner rows, so three-quarters of the table read as router fail
 router was answering 37 of 38 asks. It now says "Morse (podium)", "Morse (2nd opinion)",
 "Morse (named miner)" or "Morse (fallback)", the hero receipt and the Telegram receipt line say
 which, and the ledger header explains all four.
+
+### G31 · The judge-journey test asserted the old answer-card markup — `CLOSED 2026-09-04`
+The web answer card was rebuilt on 2026-09-03 (a `dl.rcpt` receipt with Answered by / Routed by /
+Confidence / Cost / Signal hash), and the paid e2e step still looked for `#out .receipt` and the
+words "served by". Run on 2026-09-04 10:33 UTC it failed while production answered correctly: the
+ledger row was `ok` in 525 ms and the page showed the receipt. Selectors updated; the suite is 7/7
+again at 10:42 UTC. The gap was the process, not the code: the UI change shipped on the evening of
+2026-09-03 and the paid journey was left for the next session. Any UI change now re-runs the paid
+journey the same day. The cost of the miss was one cent and eleven hours of a wrong "7/7" in the
+handoff.

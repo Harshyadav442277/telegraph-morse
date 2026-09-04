@@ -20,6 +20,11 @@ All four channels have now paid: web, telegram, mcp, rest.
 **Still open for the operator:** post the X drafts ([docs/X_TO_POST.md](docs/X_TO_POST.md)), and
 share the bot so the ledger stops being our own testing (GAPS G20).
 
+**Rehearsed 2026-09-04 10:42 UTC, all against production:** typecheck clean, 81 unit tests,
+`npm run preflight` 7/7 protocol checks against the live 402, `npm run try-questions` 26/26,
+health probe HEALTHY (58.26 USDC), paid judge journey 7/7. The two closed-diagnostic scripts and
+four unreferenced functions were deleted; nothing was added.
+
 ## P0 — Decide and set up (2026-09-02) — DONE
 - [x] Research Track 3 rubric, client APIs, baselines → [docs/TELEGRAPH_FACTS.md](docs/TELEGRAPH_FACTS.md)
 - [x] Plan, PRD, architecture → [PLAN.md](PLAN.md)
@@ -54,7 +59,8 @@ share the bot so the ledger stops being our own testing (GAPS G20).
 - [x] `/api/stats` JSON for X screenshots and for judges; `usersAnswered` published next to `users`
       so the honest number leads (GAPS G4)
 - [x] Playwright judge journey — `e2e/judge-journey.spec.ts`, **7 passed / 0 skipped** against
-      production 2026-09-03
+      production 2026-09-03, and again 2026-09-04 10:42 UTC after its selectors were updated to the
+      rebuilt answer card (GAPS G31)
 - [x] **done:** the ledger matches the API and every listed hash verifies as paid by Morse's wallet
       (e2e test 3, green against production)
 - [ ] X post 2 with first real numbers — wait until the numbers are strangers', not ours (GAPS G20)
@@ -99,7 +105,8 @@ share the bot so the ledger stops being our own testing (GAPS G20).
 - [ ] X post 3 — ready, see [docs/X_TO_POST.md](docs/X_TO_POST.md) post 6
 
 ## P5 — Freeze, rehearse, submit (2026-09-05 18:00 UTC → 09-07 23:59 UTC) [A, X, T]
-- [ ] Feature freeze; only P1 bugs after this
+- [x] Feature freeze — in effect from 2026-09-04 10:30 UTC by the operator's call, a day ahead of
+      the planned 2026-09-05 18:00 UTC. Deletions, fixes and docs only after this.
 - [x] [DEMO.md](DEMO.md) — exact steps and exact expected output, every ✅ line captured from
       production, every ⏳ line named as unproven
 - [x] Health probe (`scripts/health-probe.mjs` + `.github/workflows/health.yml`), free-endpoint

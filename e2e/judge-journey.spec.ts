@@ -202,7 +202,7 @@ test.describe("judge journey", () => {
     const card = page.locator("#out .card");
     await expect(card).toBeVisible();
     await expect(card).toContainText(/no funded wallet|no daily budget|paused/i);
-    await expect(page.locator("#out .receipt")).toHaveCount(0);
+    await expect(page.locator("#out .rcpt")).toHaveCount(0);
   });
 
   test("7 · a funded Morse answers, receipts it, and the receipt verifies", async ({ page, request }) => {
@@ -216,10 +216,10 @@ test.describe("judge journey", () => {
     await page.locator("#q").fill("Is the TLS certificate for github.com valid right now, and who issued it?");
     await page.locator("#go").click();
 
-    const receipt = page.locator("#out .receipt").first();
+    const receipt = page.locator("#out .rcpt").first();
     await expect(receipt).toBeVisible({ timeout: 90_000 });
-    await expect(receipt).toContainText("served by");
-    await expect(receipt).toContainText(/confidence/);
+    await expect(receipt).toContainText("Answered by");
+    await expect(receipt).toContainText(/confidence/i);
 
     const verifyLink = receipt.locator('a[href^="/verify/0x"]').first();
     await expect(verifyLink).toBeVisible();

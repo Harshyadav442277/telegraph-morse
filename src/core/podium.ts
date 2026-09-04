@@ -139,15 +139,3 @@ export async function askPodium(ctx: AskContext, row: CallRow | null, size = POD
   const agree = agreement(row.intent, answered.map((m) => ({ minerSlug: m.minerSlug, minerRank: m.minerRank, label: m.label, answer: m.answer })));
   return { question, intent: row.intent, original: row, members, agreement: agree, paidCalls, skipped, error: null };
 }
-
-/** For UI copy: what kind of check this intent gets before spending anything. */
-export function podiumPromise(intent: string | null): string {
-  switch (comparisonKind(intent)) {
-    case "verdict":
-      return "Verdicts are compared automatically.";
-    case "number":
-      return "Figures are compared automatically, with a stated tolerance.";
-    default:
-      return "Answers are shown side by side; agreement is not judged automatically for this intent.";
-  }
-}

@@ -3,7 +3,57 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
-## 2026-09-04 ~04:20 UTC — HANDOFF STATE (read this first)
+## 2026-09-04 10:45 UTC — HANDOFF STATE (read this first)
+
+**Freeze in effect from this session by the operator's call; deletions, fixes and docs only.** The
+full loop ran against production and everything passed once one stale test was fixed: typecheck,
+81 unit tests, `npm run preflight` (7/7 protocol checks against the live 402 challenge),
+`npm run try-questions` 26/26, health probe HEALTHY (58.26 USDC, 1,448 budget calls left today,
+telegram true), and **`MORSE_E2E_PAID=1 npm run e2e` 7/7 in 27 s** (two paid calls, $0.02).
+
+**The paid journey failed first (GAPS G31).** Step 7 looked for `#out .receipt` and "served by", the
+card markup from before the 2026-09-03 rebuild, while production answered correctly: txlens #1 via
+Telegraph's router, 525 ms, row `ok`. Selectors updated, suite re-run. Lesson: re-run the paid
+journey the same day as any UI change; never leave it for the handoff.
+
+**Dead code removed, nothing added:** `scripts/first-call.ts` and `scripts/diagnose-payment.ts`
+(diagnostics of the closed G17; the second was built on the wrong-turn premise that the node rejects
+valid signatures), `podiumPromise`, `minerBySlug`, two unused test seams, and the Hono `/robots.txt`
+route that Vercel's static `public/robots.txt` shadows in production. Typecheck and 81 tests still
+green. `@x402/core` stays in package.json although nothing imports it: `@x402/fetch` and `@x402/evm`
+declare `~2.24.0` on it and the explicit entry is the pin the freeze protects.
+
+**Measured 2026-09-04 10:35–10:43 UTC.** Ledger 210 calls / 171 ok, 42 people answered of 62, 20
+intents, 40 miners, $1.71; 53 calls from 9 identities today. Router since the fix: 38 plain asks,
+37 by Telegraph at a median 812 ms, one fallback, 38/38 answered. Failures since the fix: 5 of 80
+rows, all podium legs (two 422 "predicted to fail" on langwire-translation, one refused payment, two
+15 s timeouts). `/proof`: 175 transfers, 171 matched, 4 chain-only (G29 updated). `/consensus`: 16
+rounds over 11 intents. Network: **1,841 user-paid calls in 24 h** (4,447 in 7 d), 129/129 miners
+active, 45 intents. Morse's 139 settled calls in the same 24 h are about 7.5% of that, up from ~6.5%
+on 09-03. Top miners by user volume in 24 h: degenlens-onchain 431, chainsight-oracle 291, livecert
+163 — so most of livecert's user traffic is not Morse's (G22 optics improve).
+
+**Handoff item 1 is still open and only the operator can close it.** The local `.env` holds the
+*revoked* bot token and a *stale* `ADMIN_TOKEN` (both answered 401 on 2026-09-04), so the Telegram
+`/` menu can be neither checked nor republished from this machine. With the current admin token:
+
+```bash
+curl -X POST https://telegraph-morse.vercel.app/admin/telegram/webhook -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+```
+
+then open the bot's `/` menu; `/miner` should be listed. The command itself already works.
+
+**Next session, in order:** 1) operator: republish the Telegram menu (above); 2) operator: share
+the bot — the 45% axis — miner authors in the Telegraph Discord first, with `/miner <slug>`, then
+docs/TRY_THESE.md into any group that will have it; 3) operator: top up the payer wallet before Sep
+7 (58 USDC is ~5,800 calls; judging runs Sep 8–18 and a dry wallet fails every demo link); 4)
+operator: delete the stale `certwatch` Vercel project (G12) and decide on the public
+`Harshyadav442277/Telegraph` fork of a rival miner (G10) before judges browse profiles; 5)
+operator: submit early rather than at 23:59 — the form needs a wallet signature; paste from
+SUBMISSION.md and screenshot the confirmation; 6) Claude: fixes only; run the free e2e after any
+deploy and the paid one after any UI change.
+
+## 2026-09-04 ~04:20 UTC — previous handoff
 
 **Addendum 2026-09-04 ~10:10 UTC — two fixes deployed and verified live (G30).** Every direct call
 to livecert had been going to `/ssl-check` regardless of intent, because the catalogue strips

@@ -56,10 +56,11 @@ S1 and S2 are the must-haves. S4 and S7 are non-negotiable honesty properties.
 
 ## Open decisions
 
-- **D1 — Bot name.** Telegram username must end in `bot`; proposed `@MorseTelegraphBot`. Operator.
+- **D1 — Bot name.** Resolved 2026-09-03: `@MyMorse_Bot`.
 - **D2 — Second-opinion threshold.** Start at confidence < 0.6 when a confidence field exists;
   measure how often it fires; adjust before the freeze.
-- **D3 — Stretch order.** ERC-8183 anchoring vs Discord bot vs watches. Decide 2026-09-04 evening
-  from real usage data: if humans are coming, Discord; if agents are coming, anchoring; watches last.
+- **D3 — Stretch order.** Resolved 2026-09-03: none of the three ships before the close. ERC-8183
+  anchoring and the Daemon feed are recorded as deliberate omissions (GAPS G27, G28); watches were
+  dropped for rule-04 optics; a Discord bot was never offered by the organizers.
 - **D4 — Key issuance friction.** Start with no signup (button issues a key, 100 calls/day, IP
   limited). Tighten only if abused.

@@ -141,8 +141,3 @@ export async function getReconciliation(rows: CallRow[]): Promise<Reconciliation
     return { ...reconcile(rows, [], payer), error: `Could not read the chain via Blockscout: ${(e as Error).message}` };
   }
 }
-
-/** Test seam. */
-export function resetProofForTests(): void {
-  cache = null;
-}

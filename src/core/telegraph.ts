@@ -299,11 +299,6 @@ export async function getIntents(): Promise<IntentInfo[]> {
   return intentsCache.intents;
 }
 
-export async function minerBySlug(slug: string | null | undefined): Promise<Miner | null> {
-  if (!slug) return null;
-  return (await getMiners()).find((m) => m.slug === slug) ?? null;
-}
-
 export async function minerById(id: string | number | null | undefined): Promise<Miner | null> {
   if (id === null || id === undefined) return null;
   const s = String(id);
@@ -372,11 +367,4 @@ export async function payerUsdcBalance(): Promise<number | null> {
   } catch {
     return null;
   }
-}
-
-/** Test seam. */
-export function resetTelegraphForTests(): void {
-  paying = null;
-  minersCache = null;
-  intentsCache = null;
 }

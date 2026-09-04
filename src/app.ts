@@ -15,8 +15,6 @@ app.onError((err, c) => {
   return c.json({ error: err.message }, 500);
 });
 
-app.get("/robots.txt", (c) => c.text("User-agent: *\nAllow: /\n"));
-
 webRoutes(app);
 restRoutes(app);
 mcpRoutes(app);

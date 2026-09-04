@@ -7,7 +7,8 @@ Every output below was captured from the live deployment on the date stated. Ste
 - **✅ verified** — run against production, output pasted verbatim.
 - **⏳ operator step** — needs an action only the operator can take.
 
-Last capture: **2026-09-02 18:15 UTC**, with the wallet funded and Morse paying.
+Last capture: **2026-09-04 10:42 UTC**, with the wallet funded and Morse paying; the paid judge
+journey is 7/7.
 
 **Integrity note:** the ledger rows visible today are our own verification calls, not users. Real
 and receipted, but not adoption — see GAPS G20.
@@ -30,23 +31,31 @@ rather than letting a visitor discover it by asking.
 
 Type `Is the TLS certificate for github.com valid right now, and who issued it?` and press **Ask**.
 
-Verified against production, 2026-09-02 18:13 UTC:
+Verified against production, 2026-09-04 10:33 UTC:
 
 ```
-miner  : LiveCert Operational Signals #1 for SSL_VERIFICATION
-routing: Morse routed this: matched the SSL_VERIFICATION rule, then called the #1 miner
-conf   : 100%   cost: $0.01   latency: ~1s
-hash   : 0x0691ca3f54514e5ea5ce342d8dadc30c58c48ada711cdfde01e171b4ee0821a1
-tx     : 0x31b9b480548034ad571448194ea09bf12a13f3ad2903f88d3307dd191e2af007
-answer : "…the certificate is currently valid, expiring in 88 days on 2026-11-29, issued by
-          Sectigo Limited…"
+miner  : txlens #1 for SSL_VERIFICATION
+routing: Telegraph's own router
+conf   : 100%   cost: $0.01   latency: 525 ms
+hash   : 0x579bacc9efae0c8e133e77e88d77503ef1d479bfe3640ddb6a1b699baaea7d0b
+tx     : 0x4c58f68cecde025f361b5b49231132ac5e1ad01193d2b36cc29fc5988d2dafa8
+answer : "The TLS/SSL certificate configuration for github.com is valid. Certificate validity:
+          currently valid, expiring in 86 days on 2026-11-29, issued by Sectigo Limited on
+          2026-09-01. Chain trust: the server presented a chain of 3 certificate(s)…"
 ```
 
-**Morse does its own routing, and says so.** Telegraph's `/engine/v1/ask` router is unusable from a
-serverless function — its settlement call times out after ~47s against Vercel's 60s ceiling — so
-Morse classifies the intent itself, picks the best-ranked live miner, and calls it directly in
-~200ms–4s. The receipt names the rule that fired and the rank that answered, which is more
-transparent than a router's black box, and honestly weaker at classification. See GAPS G17.
+The first capture, 2026-09-02 18:13 UTC, was LiveCert #1 chosen by Morse's own fallback while the
+router was down: signal `0x0691ca3f…0821a1`, settled as `0x31b9b480…2af007`. Both rows are in the
+ledger and both hashes still verify.
+
+**Telegraph routes first; Morse only falls back.** The question goes to Telegraph's own router
+(`POST /engine/v1/ask`) with a 20 s budget, and the receipt says `Routed by: Telegraph's own
+router`. When the router does not answer — it timed out at ~47 s for a day on 2026-09-02, against
+Vercel's 60 s ceiling — Morse classifies the intent with keyword rules, picks the best-ranked live
+miner from the leaderboard, calls it directly, and the receipt names the rule that fired. Every
+ledger row records which of the two happened. Since the fix of 2026-09-03 18:18 UTC: 38 plain
+asks, 37 routed by Telegraph at a median 812 ms, one fallback (a RESEARCH_SYNTHESIS ask that hit
+the 20 s budget), 38 of 38 answered. See GAPS G17 and G30.
 
 ### 3 · Verify the receipt — ✅ verified
 
@@ -77,14 +86,15 @@ An unknown hash returns 404 rather than inventing a record — ✅ verified.
 curl -s https://telegraph-morse.vercel.app/api/stats
 ```
 
-→ (2026-09-02 18:14 UTC, paying)
+→ (2026-09-04 10:42 UTC, paying)
 
 ```json
-{"users":16,"usersAnswered":4,"calls":12,"okCalls":6,"intents":2,"miners":2,"spentUsd":0.06,"byChannel":{"web":6},"byIntent":[{"intent":"CRYPTO_PRICE","calls":4},{"intent":"SSL_VERIFICATION","calls":2}],"today":{"calls":6,"users":4},"firstCallAt":"2026-09-02T18:10:28.790Z","lastCallAt":"2026-09-02T18:14:15.781Z","ledger":"postgres","payer":"0xfBB3C3bd51EC6E19BDECc786945d83719b6b4c9c"}
+{"users":62,"usersAnswered":42,"calls":210,"okCalls":171,"intents":20,"miners":40,"spentUsd":1.71,"byChannel":{"rest":2,"telegram":52,"mcp":1,"web":116},"byIntent":[{"intent":"SSL_VERIFICATION","calls":25},{"intent":"CHAT_COMPLETION","calls":24},{"intent":"WEATHER_CHECK","calls":23},{"intent":"STORM_ALERT","calls":14},{"intent":"CRYPTO_PRICE","calls":11},{"intent":"GAME_RESULT","calls":10},{"intent":"NEWS_HEADLINES","calls":8},{"intent":"ACADEMIC_SEARCH","calls":8},{"intent":"FACT_CHECK","calls":8},{"intent":"URL_SCAN","calls":7},{"intent":"CONTENT_EXTRACTION","calls":7},{"intent":"LANGUAGE_TRANSLATION","calls":6},{"intent":"WEATHER_FORECAST","calls":6},{"intent":"IP_GEOLOCATION","calls":5},{"intent":"RESEARCH_SYNTHESIS","calls":2},{"intent":"FRAUD_DETECTION","calls":2},{"intent":"AI_TEXT_DETECTION","calls":2},{"intent":"CONTENT_MODERATION","calls":1},{"intent":"WALLET_BALANCE_CHECK","calls":1},{"intent":"NEWS_SEARCH","calls":1}],"today":{"calls":53,"users":9},"firstCallAt":"2026-09-02T18:10:28.790Z","lastCallAt":"2026-09-04T10:42:41.427Z","ledger":"postgres","payer":"0xfBB3C3bd51EC6E19BDECc786945d83719b6b4c9c"}
 ```
 
-`usersAnswered` (4) is the honest headline; `users` (16) counts every identity that asked at all,
-failures and this session's own test runs included — and today **all of them are ours** (GAPS G20). `"ledger":"postgres"` is the other claim that matters: the ledger is durable, not a serverless
+`usersAnswered` (42) is the honest headline; `users` (62) counts every identity that asked at all,
+failures and our own test runs included — and most rows are still our own testing (GAPS G20).
+`"ledger":"postgres"` is the other claim that matters: the ledger is durable, not a serverless
 scratch buffer that resets. `/api/recent?limit=200` returns the same rows the page shows, with the
 user hash stripped.
 
@@ -143,7 +153,9 @@ Open **<https://t.me/MyMorse_Bot>**, send `/help`, then ask it anything.
 
 Verified 2026-09-03: **13 answered calls across 6 intents** — SSL_VERIFICATION, URL_SCAN,
 IP_GEOLOCATION, WEATHER_CHECK, WEATHER_FORECAST, STORM_ALERT — every one with its own on-chain
-settlement, and including the `weather` and `safe` recipes run in-chat.
+settlement, and including the `weather` and `safe` recipes run in-chat. By 2026-09-04 10:30 UTC the
+Telegram channel had 52 calls in the ledger, including podium rounds started from the button under
+an answer.
 
 `/safe https://example.com` returns "Asking the network (safe)…" edited in place into a combined
 verdict over three receipted calls. `/second` re-asks the next-ranked miner and prints both with
@@ -188,14 +200,14 @@ Open <https://telegraph-morse.vercel.app/proof>, or:
 curl -s https://telegraph-morse.vercel.app/api/proof
 ```
 
-→ (2026-09-04 04:15 UTC)
+→ (2026-09-04 10:35 UTC; the response also lists the chain-only and ledger-only items)
 
 ```json
-{"chain":{"transfers":120,"toDiamond":120,"usdc":1.2,"first":"2026-09-02T17:56:56.000000Z","last":"2026-09-03T19:22:36.000000Z"},"ledger":{"okRows":118,"withSettlement":118},"matched":118,"ledgerOnly":0,"chainOnly":2,"error":null}
+{"chain":{"transfers":174,"toDiamond":174,"usdc":1.74,"first":"2026-09-02T17:56:56.000000Z","last":"2026-09-04T10:33:58.000000Z"},"ledger":{"okRows":170,"withSettlement":170},"matched":170,"ledgerOnly":0,"chainOnly":4,"error":null}
 ```
 
 Every settlement hash in the ledger is a USDC transfer from Morse's payer to Telegraph's Diamond,
-read from Blockscout rather than from Morse's own database. The two chain-only settlements are
+read from Blockscout rather than from Morse's own database. The four chain-only settlements are
 listed on the page, not hidden (GAPS G29). The page reads the chain and never asks the network, so
 reloading it costs nothing.
 
@@ -207,10 +219,12 @@ Open <https://telegraph-morse.vercel.app/consensus>, or:
 curl -s https://telegraph-morse.vercel.app/api/consensus
 ```
 
-→ `{"rounds":4,"agree":1,"disagree":0,"undetermined":3,"extraCalls":7,"secondOpinions":16}` — one
-round per intent so far: SSL_VERIFICATION "3 of 3 miners agree: valid"; CRYPTO_PRICE "only 1 of 2
-answers contained a comparable figure"; IP_GEOLOCATION and CHAT_COMPLETION shown side by side and
-not judged. Every member links its receipt. Computed from ledger rows that already exist.
+→ totals `{"rounds":16,"agree":2,"disagree":1,"undetermined":13,"extraCalls":29,"secondOpinions":23}`
+(2026-09-04 10:35 UTC; the response also carries every round and a per-intent table) — 16 rounds
+over 11 intents: SSL_VERIFICATION "3 of 3 miners agree: valid"; WEATHER_CHECK one round agreeing
+and one disagreeing; CRYPTO_PRICE "only 1 of 2 answers contained a comparable figure"; the
+free-text intents shown side by side and not judged. Every member links its receipt. Computed from
+ledger rows that already exist.
 
 ### 11 · Ask a named miner — ✅ verified 2026-09-04 04:16 UTC
 
@@ -236,28 +250,28 @@ git clone https://github.com/Harshyadav442277/telegraph-morse && cd telegraph-mo
 npm run e2e
 ```
 
-Verified against production, 2026-09-02 18:14 UTC, with `MORSE_E2E_PAID=1`:
+Verified against production, 2026-09-04 10:42 UTC, with `MORSE_E2E_PAID=1`:
 
 ```
 Running 7 tests using 1 worker
-  ok 1 › the landing page states the claim and shows live counters
-  ok 2 › the ledger on the page matches the API and the ledger is durable
-  ok 3 › every signal hash in the ledger verifies on the node
-  -  4 › an agent can pick up a key and reach the MCP server without a wallet
-  ok 5 › the free discovery endpoints answer from the live network
-  -  6 › an unfunded Morse says so instead of inventing an answer
-  ok 7 › a funded Morse answers, receipts it, and the receipt verifies
-  2 skipped
-  5 passed
+  ok 1 › the landing page states the claim and shows live counters (6.8s)
+  ok 2 › the ledger on the page matches the API and the ledger is durable (1.6s)
+  ok 3 › every signal hash in the ledger verifies on the node (6.8s)
+  ok 4 › an agent can pick up a key and reach the MCP server without a wallet (1.3s)
+  ok 5 › the free discovery endpoints answer from the live network (1.8s)
+  ok 6 › Morse fails honestly instead of inventing an answer (893ms)
+  ok 7 › a funded Morse answers, receipts it, and the receipt verifies (7.2s)
+  7 passed (27.0s)
 ```
 
 Without `MORSE_E2E_PAID=1` the suite is free to run and test 7 skips, so no schedule can ever spend
-money or manufacture traffic (rule 04).
+money or manufacture traffic (rule 04). Test 4 needs an API key and caches the one it issues in
+`.morse-e2e-key`, because keys are capped at three per network per UTC day (GAPS G18). Test 6
+asserts the honest-failure contract whether or not the wallet is funded.
 
-Both skips are conditional by design. Test 6 asserts the honest-failure path and only runs when the
-wallet is *unfunded*. Test 4 skipped because this machine's network had already used its three API
-keys for the UTC day (GAPS G18); it passed earlier the same day against the same deployment, and
-the suite now caches its key so repeat runs stop burning the quota.
+The run before this one, at 10:33 UTC the same day, failed step 7 while production answered
+correctly: the answer card had been rebuilt the day before and the test still looked for the old
+markup (GAPS G31). Re-run the paid journey the same day as any UI change.
 
 Point it at any deployment with `MORSE_BASE_URL=https://… npm run e2e`.
 
@@ -308,7 +322,15 @@ fraud questions to a transaction-lookup endpoint. Both are fixed and covered by 
 node scripts/health-probe.mjs
 ```
 
-Expected today, verbatim:
+Expected today (2026-09-04 10:35 UTC), verbatim:
+
+```
+HEALTHY · https://telegraph-morse.vercel.app · 2026-09-04T10:35:32.675Z
+ledger postgres · payer 0xfBB3C3bd51EC6E19BDECc786945d83719b6b4c9c · 58.26 USDC · paid true · telegram true
+41/61 people answered · 170/209 calls answered · 20 intents · 40 miners · $1.7 spent
+```
+
+And what it printed while the deployment was unfunded on 2026-09-02, verbatim:
 
 ```
 ALARM · https://telegraph-morse.vercel.app · 2026-09-02T15:29:19.421Z
@@ -322,8 +344,8 @@ ledger postgres · payer none · ? USDC · paid false · telegram false
 Exit 1 = alarm, 0 = healthy, 2 = the probe could not run. `.github/workflows/health.yml` runs it
 on demand and, in principle, every 30 minutes; it opens (or comments on, or closes) one
 `health-alarm` issue. The probe only reads free endpoints, so no schedule can inflate call volume.
-**Caveat:** the cron has not yet been observed to fire — GitHub schedules are best-effort and this
-repo is hours old (GAPS G19). The on-demand path is proven.
+The schedule does fire, hours apart rather than every 30 minutes: the eight most recent scheduled
+runs to 2026-09-04 05:38 UTC were all green (GAPS G19). The on-demand path is proven.
 
 Proven on 2026-09-02: [run 33648541786](https://github.com/Harshyadav442277/telegraph-morse/actions/runs/33648541786)
 opened [issue #1](https://github.com/Harshyadav442277/telegraph-morse/issues/1) with exactly the
@@ -335,7 +357,7 @@ output above. Repeat runs stay quiet unless the problem set changes or six hours
 npm ci && npm test
 ```
 
-→ `Test Files 5 passed (5) · Tests 29 passed (29)` — the unit tests are offline and touch no
+→ `Test Files 13 passed (13) · Tests 81 passed (81)` — the unit tests are offline and touch no
 network.
 
 ```bash
