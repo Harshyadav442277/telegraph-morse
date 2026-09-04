@@ -216,9 +216,70 @@ export interface Miner {
   activation_status?: string;
   min_price_usdc?: number;
   total_requests_served?: number;
+  /** The registered manifest. The catalogue strips per-endpoint intents; the manifest keeps them. */
+  yaml_url?: string;
+  /** endpoint path → intents it serves, read from the manifest by `withEndpointIntents`. */
+  endpoint_intents?: Record<string, string[]>;
 }
 
 export interface IntentInfo { intent_id: string; miner_count: number; description?: string }
+
+/**
+ * Which endpoint serves which intent, from the miner's own YAML.
+ *
+ * `/api/miners` returns each endpoint as {path, method, description} and drops the
+ * `intents` list the manifest declares, so a direct call to a multi-endpoint miner had
+ * to guess from the description. For livecert every guess failed and every podium leg
+ * went to its first endpoint, /ssl-check, which honestly answered "no hostname was
+ * supplied" to weather and paper questions (GAPS G30). The manifest is the source the
+ * node itself validated, so read that, once per miner per hour, and never throw: a
+ * missing or unreachable manifest just leaves the old guess in place.
+ */
+const manifestCache = new Map<string, { at: number; intents: Record<string, string[]> }>();
+
+/** Line-based: `- path:` opens an endpoint, the first `intents:` after it closes it. */
+export function parseEndpointIntents(yaml: string): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  let path: string | null = null;
+  let block: string | null = null;
+  for (const raw of yaml.split(/\r?\n/)) {
+    const line = raw.replace(/#.*$/, "");
+    const p = line.match(/^\s*-\s*path:\s*["']?(\/\S*?)["']?\s*$/);
+    if (p) { path = p[1]!; block = null; continue; }
+    if (!path) continue;
+    const flow = line.match(/^\s*intents:\s*\[(.*)\]\s*$/);
+    if (flow && !(path in out)) {
+      out[path] = flow[1]!.split(",").map((s) => s.trim().replace(/^["']|["']$/g, "")).filter((s) => /^[A-Z][A-Z0-9_]+$/.test(s));
+      path = null;
+      continue;
+    }
+    if (/^\s*intents:\s*$/.test(line) && !(path in out)) { block = path; out[path] = []; continue; }
+    if (block) {
+      const item = line.match(/^\s*-\s*["']?([A-Z][A-Z0-9_]+)["']?\s*$/);
+      if (item) { out[block]!.push(item[1]!); continue; }
+      if (line.trim()) { block = null; path = null; }
+    }
+  }
+  return out;
+}
+
+export async function withEndpointIntents(miner: Miner, timeoutMs = 6_000): Promise<Miner> {
+  if (miner.endpoint_intents || (miner.endpoints?.length ?? 0) < 2 || !miner.yaml_url) return miner;
+  const hit = manifestCache.get(miner.id);
+  if (hit && Date.now() - hit.at < 3_600_000) return { ...miner, endpoint_intents: hit.intents };
+  try {
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), timeoutMs);
+    const res = await fetch(miner.yaml_url, { signal: ac.signal });
+    clearTimeout(t);
+    if (!res.ok) return miner;
+    const intents = parseEndpointIntents(await res.text());
+    manifestCache.set(miner.id, { at: Date.now(), intents });
+    return { ...miner, endpoint_intents: intents };
+  } catch {
+    return miner;
+  }
+}
 
 let minersCache: { at: number; miners: Miner[] } | null = null;
 let intentsCache: { at: number; intents: IntentInfo[] } | null = null;

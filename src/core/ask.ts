@@ -4,7 +4,7 @@ import { guardPaid } from "./guards.js";
 import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
-import { askMiner, askRouted, getMiners, leaderboard, rankOf, resolveMiner, TelegraphError, type Miner, type MinerEndpoint } from "./telegraph.js";
+import { askMiner, askRouted, getMiners, leaderboard, rankOf, resolveMiner, TelegraphError, withEndpointIntents, type Miner, type MinerEndpoint } from "./telegraph.js";
 import { CHAT_INTENTS, classifyIntent, MESSAGES_KEY, PROSE_KEYS, routeCandidates, SUBJECT_KEYS, type Route } from "./route.js";
 
 /**
@@ -87,7 +87,8 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
     for (const [i, cand] of candidates.entries()) {
       chosen = cand;
       try {
-        const raw = await askMiner(cand.miner.id, directRequest(cand.miner, question, cand.intent, subject));
+        const target = await withEndpointIntents(cand.miner);
+        const raw = await askMiner(cand.miner.id, directRequest(target, question, cand.intent, subject));
         raw.intent ??= cand.intent;
         const receipt = buildReceipt(raw, cand.miner.signal_mapping ?? null, cand.rank);
         receipt.minerSlug = cand.miner.slug;
@@ -179,7 +180,8 @@ export async function callMinerDirect(
   row.minerRank = rank;
   const ledger = getLedger();
   try {
-    const raw = await askMiner(miner.id, directRequest(miner, question, intent, opts.subject), opts.timeoutMs);
+    const target = await withEndpointIntents(miner);
+    const raw = await askMiner(miner.id, directRequest(target, question, intent, opts.subject), opts.timeoutMs);
     raw.intent = intent;
     const receipt = buildReceipt(raw, miner.signal_mapping ?? null, rank);
     receipt.minerSlug = miner.slug;
@@ -288,6 +290,12 @@ export async function secondOpinionOn(ctx: AskContext, row: CallRow | null): Pro
 export function endpointFor(miner: Miner, intent: string | null): MinerEndpoint | undefined {
   const eps = miner.endpoints ?? [];
   if (intent) {
+    // The manifest's own endpoint → intents map, when `withEndpointIntents` has read it.
+    // The catalogue drops that list, and matching the description below guessed
+    // /ssl-check for every livecert intent (GAPS G30).
+    const declared = miner.endpoint_intents;
+    const byManifest = declared && eps.find((e) => declared[e.path]?.includes(intent));
+    if (byManifest) return byManifest;
     const named = eps.find((e) => new RegExp(`(^|[^A-Z_])${intent}([^A-Z_]|$)`).test(e.description ?? ""));
     if (named) return named;
   }

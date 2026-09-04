@@ -20,16 +20,22 @@ export function confidenceText(c: number | null, isRisk = false): string {
   return isRisk ? `risk ${pct}% (the miner's own metric, not confidence)` : `confidence ${pct}%`;
 }
 
-export function routedByText(r: "engine" | "morse" | null | undefined): string {
-  return r === "engine" ? "routed by Telegraph" : r === "morse" ? "Morse fallback routing" : "";
+/** Who chose the miner. Morse chooses on purpose for a podium, a second opinion or a named miner; "fallback" is only the ask kind. */
+export function routedByText(r: "engine" | "morse" | null | undefined, kind?: string): string {
+  if (r === "engine") return "routed by Telegraph";
+  if (r !== "morse") return "";
+  if (kind === "direct") return "asked directly at your request";
+  if (kind === "podium") return "podium leg, asked directly";
+  if (kind === "second-opinion") return "second opinion, asked directly";
+  return "Morse fallback routing";
 }
 
-export function receiptLine(r: Receipt, publicUrl: string | undefined, routedBy?: "engine" | "morse" | null): string {
+export function receiptLine(r: Receipt, publicUrl: string | undefined, routedBy?: "engine" | "morse" | null, kind?: string): string {
   const who = r.minerSlug ?? "an unnamed miner";
   const rank = r.minerRank ? ` (#${r.minerRank}` + (r.intent ? ` for ${r.intent})` : ")") : r.intent ? ` (${r.intent})` : "";
   const cost = r.costUsd !== null ? `$${r.costUsd.toFixed(2)}` : "cost n/a";
   const ms = r.durationMs !== null ? `${r.durationMs} ms` : "";
-  const routed = routedBy ? ` · ${routedByText(routedBy)}` : "";
+  const routed = routedBy ? ` · ${routedByText(routedBy, kind)}` : "";
   const verify = r.signalHash
     ? publicUrl
       ? `\n<a href="${publicUrl}/verify/${r.signalHash}">verify ${shortHash(r.signalHash)}</a>`
@@ -46,7 +52,7 @@ export function cardHtml(card: AnswerCard, publicUrl: string | undefined): strin
   }
   const r = card.receipt;
   const answer = clip(r.answer, 1500);
-  let out = `${esc(answer)}\n\n${receiptLine(r, publicUrl, card.routedBy)}`;
+  let out = `${esc(answer)}\n\n${receiptLine(r, publicUrl, card.routedBy, card.kind)}`;
   if (card.second) {
     out += `\n\n<b>Second opinion</b>\n${esc(clip(card.second.answer, 700))}\n\n${receiptLine(card.second, publicUrl)}`;
   }
@@ -105,7 +111,7 @@ export function recipeHtml(res: RecipeResult, publicUrl: string | undefined): st
   const parts = [`<b>${esc(res.recipe)}</b> · ${esc(res.subject)}\n${esc(res.verdict)}`];
   for (const c of res.cards) {
     if (c.ok && c.receipt) {
-      parts.push(`▸ <b>${esc(c.receipt.intent ?? "answer")}</b>\n${esc(clip(c.receipt.answer, 500))}\n${receiptLine(c.receipt, publicUrl, c.routedBy)}`);
+      parts.push(`▸ <b>${esc(c.receipt.intent ?? "answer")}</b>\n${esc(clip(c.receipt.answer, 500))}\n${receiptLine(c.receipt, publicUrl, c.routedBy, c.kind)}`);
     } else {
       parts.push(`▸ <i>${esc(c.error ?? "one check failed")}</i>`);
     }

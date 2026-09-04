@@ -19,15 +19,34 @@ export interface LandingData {
   examples: Example[];
 }
 
-function routed(r: CallRow["routedBy"]): string {
-  return r === "engine" ? "Telegraph" : r === "morse" ? "Morse" : "—";
+/**
+ * Who chose the miner, and why Morse did when it did. `routedBy` alone reads as one
+ * word, and three-quarters of the rows said "Morse" for podium legs the user asked for
+ * — which looked like the router failing every time (it was answering 37 of 38).
+ */
+function routed(r: CallRow): string {
+  if (r.routedBy === "engine") return "Telegraph";
+  if (r.routedBy !== "morse") return "—";
+  if (r.kind === "podium") return "Morse (podium)";
+  if (r.kind === "second-opinion") return "Morse (2nd opinion)";
+  if (r.kind === "direct") return "Morse (named miner)";
+  return "Morse (fallback)";
+}
+
+function routedLong(r: CallRow): string {
+  if (r.routedBy === "engine") return "Telegraph's own router";
+  if (r.routedBy !== "morse") return "—";
+  if (r.kind === "podium") return "Morse, asking the podium";
+  if (r.kind === "second-opinion") return "Morse, for a second opinion";
+  if (r.kind === "direct") return "Morse, at your request";
+  return "Morse's fallback router";
 }
 
 function row(r: CallRow): string {
   const status = r.status === "ok" ? `<span class="ok">ok</span>` : `<span class="bad">${h(r.status)}</span>`;
   const verify = r.signalHash ? `<a href="/verify/${h(r.signalHash)}"><code>${h(r.signalHash.slice(0, 10))}…</code></a>` : `<span class="muted">—</span>`;
   const conf = r.confidence === null ? `<span class="muted">n/r</span>` : `${(r.confidence * 100).toFixed(0)}%`;
-  return `<tr><td class="mono muted">${h(r.at.replace("T", " ").slice(0, 19))}Z</td><td>${h(r.channel)}</td><td>${h(r.kind)}</td><td>${h(r.intent ?? "—")}</td><td>${h(r.minerSlug ?? "—")}${r.minerRank ? ` <span class="badge">#${r.minerRank}</span>` : ""}</td><td>${routed(r.routedBy)}</td><td>${conf}</td><td>${r.costUsd !== null ? `$${r.costUsd.toFixed(2)}` : "—"}</td><td>${r.durationMs ?? "—"}</td><td>${status}</td><td>${verify}</td></tr>`;
+  return `<tr><td class="mono muted">${h(r.at.replace("T", " ").slice(0, 19))}Z</td><td>${h(r.channel)}</td><td>${h(r.kind)}</td><td>${h(r.intent ?? "—")}</td><td>${h(r.minerSlug ?? "—")}${r.minerRank ? ` <span class="badge">#${r.minerRank}</span>` : ""}</td><td>${routed(r)}</td><td>${conf}</td><td>${r.costUsd !== null ? `$${r.costUsd.toFixed(2)}` : "—"}</td><td>${r.durationMs ?? "—"}</td><td>${status}</td><td>${verify}</td></tr>`;
 }
 
 function latestReceipt(r: CallRow): string {
@@ -37,7 +56,7 @@ function latestReceipt(r: CallRow): string {
 <div class="card">${h(r.answer ?? "")}</div>
 <dl class="rcpt">
 <dt>Answered by</dt><dd><b>${h(r.minerSlug ?? "?")}</b>${r.minerRank ? ` · ranked <b>#${r.minerRank}</b>` : ""}${r.intent ? ` for <code>${h(r.intent)}</code>` : ""}</dd>
-<dt>Routed by</dt><dd>${r.routedBy === "engine" ? "Telegraph's own router" : r.routedBy === "morse" ? "Morse's fallback router" : "—"}</dd>
+<dt>Routed by</dt><dd>${routedLong(r)}</dd>
 <dt>Confidence</dt><dd>${r.confidence === null ? "not reported by this miner" : `${(r.confidence * 100).toFixed(0)}%`}</dd>
 <dt>Cost</dt><dd>${r.costUsd !== null ? `$${r.costUsd.toFixed(2)}` : "—"} · ${r.durationMs ?? "?"} ms${r.settlementTx ? ` · <a href="https://sepolia.basescan.org/tx/${h(r.settlementTx)}">settled on Base Sepolia</a>` : ""}</dd>
 <dt>Signal hash</dt><dd><a href="/verify/${h(r.signalHash ?? "")}"><code>${h(r.signalHash ?? "")}</code></a> — click to see the node's record and that Morse's wallet paid for it</dd>
@@ -90,7 +109,7 @@ ${d.latest ? latestReceipt(d.latest) : ""}
 </section>
 
 <section class="panel" id="ledger"><h2>Public ledger <span class="badge">${d.ledgerKind === "postgres" ? "durable" : "ephemeral · dev"}</span></h2>
-<p class="muted">Every call Morse makes, newest first, including the operator's own testing — nothing is separated out and nothing is manufactured. "Routed" says who chose the miner: Telegraph's router, or Morse's fallback when the router did not answer. Payer wallet: ${d.payer ? `<a href="https://sepolia.basescan.org/address/${h(d.payer)}"><code>${h(d.payer)}</code></a>` : "<i>not configured</i>"}. Cross-check any row at its verify link, or on the node with <code>GET /engine/v1/signal/{hash}</code>. JSON: <a href="/api/stats">/api/stats</a> · <a href="/api/recent">/api/recent</a> · <a href="/api/health">/api/health</a>. Two checks that do not rely on this table: <a href="/proof"><b>on-chain proof</b></a> matches every settlement hash here against the payer wallet's USDC transfers on Base Sepolia, and the <a href="/consensus"><b>consensus report</b></a> scores every podium round for agreement between ranked miners.</p>
+<p class="muted">Every call Morse makes, newest first, including the operator's own testing — nothing is separated out and nothing is manufactured. "Routed" says who chose the miner: Telegraph's router for a normal ask; Morse when you asked the podium, a second opinion or a named miner, or as a fallback when the router did not answer. Payer wallet: ${d.payer ? `<a href="https://sepolia.basescan.org/address/${h(d.payer)}"><code>${h(d.payer)}</code></a>` : "<i>not configured</i>"}. Cross-check any row at its verify link, or on the node with <code>GET /engine/v1/signal/{hash}</code>. JSON: <a href="/api/stats">/api/stats</a> · <a href="/api/recent">/api/recent</a> · <a href="/api/health">/api/health</a>. Two checks that do not rely on this table: <a href="/proof"><b>on-chain proof</b></a> matches every settlement hash here against the payer wallet's USDC transfers on Base Sepolia, and the <a href="/consensus"><b>consensus report</b></a> scores every podium round for agreement between ranked miners.</p>
 <div class="tablewrap"><table><thead><tr><th>time (UTC)</th><th>channel</th><th>kind</th><th>intent</th><th>miner</th><th>routed</th><th>conf.</th><th>cost</th><th>ms</th><th>status</th><th>verify</th></tr></thead>
 <tbody>${d.recent.length ? d.recent.map(row).join("") : `<tr><td colspan="11" class="muted">No calls yet.</td></tr>`}</tbody></table></div></section>
 
@@ -104,9 +123,9 @@ ${d.latest ? latestReceipt(d.latest) : ""}
 const form=document.getElementById('ask'),q=document.getElementById('q'),out=document.getElementById('out'),go=document.getElementById('go');
 function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
 function conf(r){return r.confidence==null?'not reported':(r.confidenceIsRisk?'risk ':'')+Math.round(r.confidence*100)+'%'+(r.confidenceIsRisk?' (miner metric)':'')}
-function routedBy(x){return x==='engine'?"Telegraph's own router":x==='morse'?"Morse's fallback router":'—'}
-function receipt(r,routed){if(!r)return'';return'<dl class="rcpt"><dt>Answered by</dt><dd><b>'+esc(r.minerSlug||'?')+'</b>'+(r.minerRank?' · ranked <b>#'+r.minerRank+'</b>':'')+(r.intent?' for <code>'+esc(r.intent)+'</code>':'')+'</dd>'+(routed?'<dt>Routed by</dt><dd>'+routedBy(routed)+'</dd>':'')+'<dt>Confidence</dt><dd>'+conf(r)+'</dd><dt>Cost</dt><dd>'+(r.costUsd!=null?'$'+r.costUsd.toFixed(2):'—')+' · '+(r.durationMs||'?')+' ms'+(r.settlementTx?' · <a href="https://sepolia.basescan.org/tx/'+r.settlementTx+'">settled on Base Sepolia</a>':'')+'</dd>'+(r.signalHash?'<dt>Signal hash</dt><dd><a href="/verify/'+r.signalHash+'"><code>'+r.signalHash.slice(0,18)+'…</code> verify on the node</a></dd>':'')+'</dl>'}
-function card(c){if(!c.ok||!c.receipt)return'<div class="card bad">'+esc(c.error||'no answer')+'</div>';let s='<div class="card">'+esc(c.receipt.answer)+receipt(c.receipt,c.routedBy);if(c.second)s+='<div class="sub"><b>Second opinion</b> (low confidence triggered it)<br>'+esc(c.second.answer)+receipt(c.second)+'</div>';if(c.receipt.signalHash&&c.receipt.intent)s+='<div class="sub"><button class="pd" data-pd="'+c.receipt.signalHash+'">Ask the podium — the other top-ranked miners answer this too</button></div>';return s+'</div>'}
+function routedBy(x,k){return x==='engine'?"Telegraph's own router":x==='morse'?(k==='direct'?"Morse, at your request":"Morse's fallback router"):'—'}
+function receipt(r,routed,kind){if(!r)return'';return'<dl class="rcpt"><dt>Answered by</dt><dd><b>'+esc(r.minerSlug||'?')+'</b>'+(r.minerRank?' · ranked <b>#'+r.minerRank+'</b>':'')+(r.intent?' for <code>'+esc(r.intent)+'</code>':'')+'</dd>'+(routed?'<dt>Routed by</dt><dd>'+routedBy(routed,kind)+'</dd>':'')+'<dt>Confidence</dt><dd>'+conf(r)+'</dd><dt>Cost</dt><dd>'+(r.costUsd!=null?'$'+r.costUsd.toFixed(2):'—')+' · '+(r.durationMs||'?')+' ms'+(r.settlementTx?' · <a href="https://sepolia.basescan.org/tx/'+r.settlementTx+'">settled on Base Sepolia</a>':'')+'</dd>'+(r.signalHash?'<dt>Signal hash</dt><dd><a href="/verify/'+r.signalHash+'"><code>'+r.signalHash.slice(0,18)+'…</code> verify on the node</a></dd>':'')+'</dl>'}
+function card(c){if(!c.ok||!c.receipt)return'<div class="card bad">'+esc(c.error||'no answer')+'</div>';let s='<div class="card">'+esc(c.receipt.answer)+receipt(c.receipt,c.routedBy,c.kind);if(c.second)s+='<div class="sub"><b>Second opinion</b> (low confidence triggered it)<br>'+esc(c.second.answer)+receipt(c.second)+'</div>';if(c.receipt.signalHash&&c.receipt.intent)s+='<div class="sub"><button class="pd" data-pd="'+c.receipt.signalHash+'">Ask the podium — the other top-ranked miners answer this too</button></div>';return s+'</div>'}
 function member(m){const rank=m.minerRank?'#'+m.minerRank:'unranked';const tag=m.isOriginal?' <span class="badge">your answer</span>':'';const r={minerSlug:m.minerSlug,minerRank:m.minerRank,intent:null,confidence:m.confidence,confidenceIsRisk:m.confidenceIsRisk,costUsd:m.costUsd,durationMs:m.durationMs,settlementTx:m.settlementTx,signalHash:m.signalHash};return'<div class="member"><div><b>'+rank+' '+esc(m.minerSlug)+'</b>'+tag+'</div>'+(m.answer?'<div class="ans">'+esc(m.answer)+'</div>'+receipt(r):'<div class="muted">'+esc(m.error||'no answer')+'</div>')+'</div>'}
 function podium(p){if(p.error)return'<div class="podium bad">'+esc(p.error)+'</div>';const a=p.agreement||{};const cls=a.verdict==='agree'?'ok':a.verdict==='disagree'?'warn':'muted';let s='<div class="podium"><div class="verdict '+cls+'">'+(a.verdict==='agree'?'✅ ':a.verdict==='disagree'?'⚠️ ':'➖ ')+esc(a.summary||'')+'</div>'+p.members.map(member).join('');if(p.skipped&&p.skipped.length)s+='<div class="muted">Not asked (cannot be addressed from a sentence): '+esc(p.skipped.join(', '))+'</div>';s+='<div class="muted">'+p.paidCalls+' extra paid call'+(p.paidCalls===1?'':'s')+', each with its own receipt, all in the ledger.</div></div>';return s}
 async function run(body){go.disabled=true;out.innerHTML='<div class="card muted">Asking the Telegraph network…</div>';try{const r=await fetch('/api/ask',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(j.cards){out.innerHTML='<div class="card"><b>'+esc(j.recipe)+'</b> · '+esc(j.subject||'')+'<br>'+esc(j.verdict||j.error||'')+'</div>'+j.cards.map(card).join('')}else out.innerHTML=card(j.error&&!('ok' in j)?{ok:false,error:j.error}:j)}catch(e){out.innerHTML='<div class="card bad">'+esc(e.message)+'</div>'}go.disabled=false}

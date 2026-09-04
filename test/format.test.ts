@@ -1,6 +1,19 @@
 import { describe, expect, it } from "vitest";
 import type { AnswerCard } from "../src/core/ask.js";
-import { cardHtml, esc, receiptLine, shortHash } from "../src/core/format.js";
+import { cardHtml, esc, receiptLine, routedByText, shortHash } from "../src/core/format.js";
+
+describe("routedByText", () => {
+  it("calls Morse a fallback only for a plain ask", () => {
+    expect(routedByText("engine")).toBe("routed by Telegraph");
+    expect(routedByText("engine", "podium")).toBe("routed by Telegraph");
+    expect(routedByText("morse", "ask")).toBe("Morse fallback routing");
+    expect(routedByText("morse")).toBe("Morse fallback routing");
+    expect(routedByText("morse", "podium")).toBe("podium leg, asked directly");
+    expect(routedByText("morse", "second-opinion")).toBe("second opinion, asked directly");
+    expect(routedByText("morse", "direct")).toBe("asked directly at your request");
+    expect(routedByText(null)).toBe("");
+  });
+});
 import { hashId, newApiKey, hashKey, secretsMatch, bearer } from "../src/core/ids.js";
 
 const card: AnswerCard = {
