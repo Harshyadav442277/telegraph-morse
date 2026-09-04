@@ -3,7 +3,11 @@ import { getCookie, setCookie } from "hono/cookie";
 import { randomUUID } from "node:crypto";
 import { config, configProblems, paidWorkEnabled } from "../config.js";
 import { askNetwork, secondOpinion, secondOpinionOn, shouldSeekSecondOpinion, type AskContext } from "../core/ask.js";
+import { consensusReport } from "../core/consensus.js";
 import { EXAMPLES, GROUPS, parseSlash, QUICK } from "../core/examples.js";
+import { getReconciliation } from "../core/proof.js";
+import { consensusPage } from "../web/consensus.js";
+import { proofPage } from "../web/proof.js";
 import { hashId } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
 import { askPodium } from "../core/podium.js";
@@ -74,6 +78,19 @@ export function webRoutes(app: Hono<AppEnv>): void {
       ok ? 200 : 503,
     );
   });
+
+  /** On-chain proof: the ledger's settlement hashes matched against the payer's USDC transfers. */
+  app.get("/proof", async (c) => {
+    const ledger = getLedger();
+    const [rows, stats] = await Promise.all([ledger.recent(2000), ledger.stats()]);
+    const r = await getReconciliation(rows);
+    return c.html(proofPage(r, { okCalls: stats.okCalls, miners: stats.miners, usersAnswered: stats.usersAnswered }));
+  });
+  app.get("/api/proof", async (c) => c.json(await getReconciliation(await getLedger().recent(2000))));
+
+  /** Consensus report: every Podium round so far, per intent, computed from ledger rows. */
+  app.get("/consensus", async (c) => c.html(consensusPage(consensusReport(await getLedger().recent(2000)))));
+  app.get("/api/consensus", async (c) => c.json(consensusReport(await getLedger().recent(2000))));
 
   app.post("/api/ask", async (c) => {
     const ctx = sessionCtx(c);

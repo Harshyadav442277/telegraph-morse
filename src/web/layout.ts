@@ -46,7 +46,7 @@ export function page(title: string, body: string, opts: { description?: string }
 <title>${escapeHtml(title)}</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="description" content="${escapeHtml(opts.description ?? "Ask Telegram, get a receipt from the Telegraph network.")}">
 <style>${CSS}</style></head><body><main>
 <header class="top"><h1><a href="/" style="color:inherit">M<span>·</span>O<span>·</span>R<span>·</span>S<span>·</span>E</a></h1>
-<nav><a href="/#ledger">Ledger</a><a href="/keys">API &amp; MCP</a><a href="https://github.com/Harshyadav442277/telegraph-morse">GitHub</a><a href="https://telegraphprotocol.com">Telegraph</a></nav></header>
+<nav><a href="/#ledger">Ledger</a><a href="/proof">Proof</a><a href="/consensus">Consensus</a><a href="/keys">API &amp; MCP</a><a href="https://github.com/Harshyadav442277/telegraph-morse">GitHub</a><a href="https://telegraphprotocol.com">Telegraph</a></nav></header>
 ${body}
 <footer>Morse is a Telegraph Hackathon Season I Track 3 application. Every answer is a live, paid call to a Telegraph miner. Nothing is mocked or cached. Testnet (Base Sepolia).</footer>
 </main></body></html>`;
