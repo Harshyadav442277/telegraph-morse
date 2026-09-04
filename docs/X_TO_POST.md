@@ -104,9 +104,14 @@ Morse pays the x402 fee, routes through @Telegraphprotoc, and every call lands i
 
 ### 7 · First real numbers
 
-**Do not post until the numbers are strangers'.** Every ledger row right now is our own verification
-traffic (GAPS G20) — publishing "15 people asked" when all 15 were us is the metric inflation rule
-04 forbids. Fill from `npm run x:numbers`, and quote **people answered**, never "who asked".
+**Do not post until the numbers are strangers'.** Publishing "48 people asked" when most were us is
+the metric inflation rule 04 forbids (GAPS G20). Fill from `npm run x:numbers`, and quote **people
+answered**, never "who asked". Only the operator knows how many of the 68 identities are strangers;
+if the honest answer is "a handful", say the handful.
+
+Numbers at 2026-09-04 15:51 UTC: 48 people answered of 68 who asked · 255 answered calls of 318 ·
+20 intents · 44 miners · $2.55 paid. Network-wide user-paid traffic in the same 24 h: 2,142 calls,
+of which Morse is ~200 attempted / 171 answered — **about 8%**.
 
 ```
 Morse, day N on @Telegraphprotoc: [X] people asked [Y] questions across [Z] intents and [W] miners, for $[S] paid to the network.
@@ -132,16 +137,66 @@ https://telegraph-morse.vercel.app/#ledger
 
 Fill this in as you go — the closing thread and the submission both need the links.
 
-| # | Post | Date/time (UTC) | Link | Notes |
+**None of the drafted posts has gone out.** Read from @hyadav42774 on 2026-09-04 15:55 UTC, five
+posts exist, all written ad hoc:
+
+| Posted | Text, in short | Views | Engagement |
+|---|---|---:|---|
+| Aug 26 *(pinned)* | A miner can be pure YAML, zero code — `base_url` points at the upstream | **844** | 13 likes, 11 RT, 13 replies |
+| Sep 3 | "For testing purpose · Project: Morse Burner · Track 3" + video | 93 | 9 |
+| Sep 3 | "Morse Burner is live on versel as well as Telegram bot" | 73 | 4 |
+| Sep 3 ~19:50 | "updated vercel deployment and telegram bot for user-friendly interface" | 63 | 4 |
+| **Sep 4 ~09:50** | **"New UPDATES!!! in Morse ask podium … get a consensus from them"** | 33 | 1 |
+
+**Read the first row against the rest.** The one post that travelled — 844 views against 33–93 —
+was a *finding* someone could use, posted before Morse existed. The four Morse posts are
+announcements: no number, no screenshot, no receipt, and a typo in the product's own deployment
+name. Posts 1–4 and 6 below are findings. They are still unposted. That is the whole gap.
+
+**And the newest post is now wrong.** It advertises the podium — the feature an organizer rejected
+about five hours later, and which was removed the same day. It sits at the top of the timeline the
+judges will read. Post the correction below before anything else.
+
+| # | Draft | Date/time (UTC) | Link | Notes |
 |---|------|-----------------|------|-------|
+| 0 | **Correction — the podium is gone** | | | **post first** |
 | 1 | The gap | | | |
 | 2 | What a receipt is | | | |
 | 3 | Catalogue / risk-vs-confidence | | | |
 | 4 | Endpoint finding | | | |
-| 5 | War story (optional) | | | |
+| 5 | War story | | | rewritten; old text is false |
 | 6 | Developers / MCP | | | |
 | 7 | First real numbers | | | |
 | 8 | Closing thread | | | |
+
+---
+
+### 0 · Correction — the podium is gone · **POST THIS FIRST**
+
+The last thing on the timeline promotes a feature that no longer exists and that the organizers
+explicitly did not want. Leaving it as the newest post is worse than any missed post. This is also
+the strongest post available: it is a finding, it is honest, and it shows the sponsor being
+listened to. Two options — the single post is safer, the pair reads better.
+
+```
+Correction to my last post: Morse's "ask the podium" is gone.
+
+I asked @Telegraphprotoc whether a miner-checking tool was useful. The answer: their leaderboard already ranks miners, once, for everyone — paying N miners per question to re-check it is spam.
+
+Removed it the same day.
+```
+
+Optional second post, quoting the first:
+
+```
+What's left is the part they said was good: Telegraph in Telegram.
+
+Ask a question, their router picks the ranked miner, Morse pays the $0.01, you get the answer and a receipt you can verify on-chain.
+
+No wallet. t.me/MyMorse_Bot
+```
+
+Do not delete the old post. The correction is worth more with the thing it corrects still visible.
 
 ## Assets to have ready
 
