@@ -48,7 +48,7 @@ Three things Morse adds to Telegraph, and nothing else:
 
 2. A receipt on every answer. Which miner answered and its leaderboard rank for that intent, who routed the question, the miner's own confidence or "not reported", the cost, the latency, the USDC settlement transaction on Base Sepolia, and the signal hash. /verify/{hash} fetches the node's own record and checks that the paying wallet is Morse's.
 
-3. Usage you can audit. Every call Morse has ever made, including the developer's own testing, is in a public ledger at /#ledger. /proof reads the payer wallet's USDC transfers from a public block explorer and matches them against the ledger's settlement hashes; any payment on chain with no ledger row is listed, not hidden. Live counters: /api/stats and /api/proof. At 4 Sep 20:00 UTC: 323 calls, 260 answered, 20 intents, 45 miners paid, $2.60, 266 settlements on chain. Read them with the caveat in the repo's GAPS.md: most identities so far are the developer's own, and "users" means salted identity hashes, not verified people.
+3. Usage you can audit. Every call Morse has ever made, including the developer's own testing, is in a public ledger at /#ledger. /proof reads the payer wallet's USDC transfers from a public block explorer and matches them against the ledger's settlement hashes; any payment on chain with no ledger row is listed, not hidden. Live counters: /api/stats and /api/proof. At 4 Sep 20:00 UTC: 323 calls, 260 answered, 20 intents, 45 miners paid, $2.60, 266 settlements on chain. Read them with the caveat in the repo's GAPS.md: most identities so far are the developer's own, and "users" means salted identity hashes, not verified people. Every Morse call is paid from one wallet, 0xfBB3C3bd51EC6E19BDECc786945d83719b6b4c9c, so Morse's calls can be counted on the node and on chain without trusting the ledger.
 
 What Morse deliberately does not do. It does not re-rank miners, does not blend answers, and does not check one miner against another. Telegraph's leaderboard decides that once, for everyone, and the router's pick is the answer. Morse falls back to its own routing only if the router has not answered in 20 seconds, and every receipt says which happened. When you want a specific miner, name it (/miner <slug> in Telegram, a miner field on REST and MCP) and the receipt says routing was bypassed at your request. Two earlier features that paid several miners per question were removed on 4 Sep after an organizer said Telegraph already does that ranking once for everyone; their ledger rows stay, labelled.
 
@@ -77,6 +77,15 @@ Title as pasted: **Morse — Telegraph in Telegram**. Description: the 2026-09-0
 above, verbatim, with one line appended by the operator: `Telegram Bot - https://t.me/MyMorse_Bot`.
 Repo URL shows "✓ verified"; live app URL `https://telegraph-morse.vercel.app/`. The form still
 allowed 2 d 11 h at the time, so a resubmission window exists if anything must change.
+
+**One edit to make before Sep 7 23:59 UTC (2026-09-05 16:05 UTC).** The submitted description
+never names the payer wallet. The rubric counts "actual volume of Telegraph calls made by your
+application", the submissions backend stores nothing that ties Morse's calls to the entry (the
+signing wallet is your own address, not the payer), and the only way a judge can attribute
+Morse's calls on the node or on chain is by the payer wallet. The description above now carries
+one sentence naming it, at the end of the "Usage you can audit" paragraph. On the site: My
+Submissions → Edit → paste the whole description → Sign & Save Changes. The edit keeps the
+verified status and the same entry.
 
 ## The Alexandria apps page
 
