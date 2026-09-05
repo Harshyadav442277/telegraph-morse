@@ -3,6 +3,21 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
+## 2026-09-05 15:45 UTC — Full check green; the network is two-thirds direct calls
+
+Health ok (116.92 USDC, telegram true), every page 200, paid journey **7/7 in 27 s**, `/proof`
+308 chain / 302 ledger rows / 0 ledger-only / 7 chain-only (a transient ledger-only row at 15:41
+was the journey's own call, indexed a minute later).
+
+**Network shape, last 24 h, all 6,550 user-paid Daemon rows:** 4,205 direct (64%), 2,345 routed
+(36%); routed calls fail ~26% of the time network-wide. Even sample of 160 routed calls by payer:
+0x98ec4d72 18% (StormPolicy's agent; its payout tx on their landing page is sent from it),
+0xb94f38fd 11%, 0x39d2bae5 10%, 0xa8ae7def 9%, no wallet on the signal 35%, **Morse 1%** (30
+router asks in 24 h, all answered). Direct calls: one wallet, 0x8220f14e, is ~72% of a 100-row
+sample and settles nothing on chain. So the operator's instinct is right about the network, and
+wrong about being alone: about ten wallets use the router, several heavily; Morse is a small one
+whose calls have a person behind each. X draft 11 says that in one post.
+
 ## 2026-09-05 14:35 UTC — A 56-MINUTE NETWORK-WIDE SETTLEMENT OUTAGE, NOW OVER (G35)
 
 Between **13:30:20 and 14:26:58 UTC** no wallet on the network settled a single x402 payment (24

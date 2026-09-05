@@ -193,6 +193,22 @@ One command adds Morse as an MCP server. I pay the x402 fee; you get a free key 
 @Telegraphprotoc's own MCP needs a funded key. This one doesn't.
 ```
 
+## 11 · Direct calls versus the router — optional, a strong "thing I learned"
+
+Measured 2026-09-05 15:45 UTC over all 6,550 user-paid rows of the previous 24 h on the Daemon
+feed: 4,205 (64%) were direct calls naming the miner (`[direct]` question text or
+`reasoning: user-directed`), 2,345 (36%) went through the router. Of an even sample of 160
+routed calls, the biggest payer was StormPolicy's agent wallet 0x98ec4d72 (its landing-page
+payout tx is sent from that address), 35% carried no wallet on the signal at all, and Morse was 2
+of 160. Morse's own ledger shows 30 router-routed asks in the same 24 h. Re-run
+`node routed2.mjs` (kept in the session's temp folder; recreate from GAPS if needed) before posting.
+
+```
+Two thirds of the paid calls on @Telegraphprotoc in the last 24h named the miner directly. Only a third let the router pick from the leaderboard, and much of that was agents on a timer.
+
+Morse is the other kind: a person types a question, and the ranking decides who answers.
+```
+
 ## 10 · Real numbers — only when they're other people's
 
 **You are the only one who knows how many identities are strangers.** If it's six, post six.
