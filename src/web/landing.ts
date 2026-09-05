@@ -51,9 +51,14 @@ function row(r: CallRow): string {
   return `<tr><td class="mono muted">${h(r.at.replace("T", " ").slice(0, 19))}Z</td><td>${h(r.channel)}</td><td>${h(r.kind)}</td><td>${h(r.intent ?? "—")}</td><td>${h(r.minerSlug ?? "—")}${r.minerRank ? ` <span class="badge">#${r.minerRank}</span>` : ""}</td><td>${routed(r)}</td><td>${conf}</td><td>${r.costUsd !== null ? `$${r.costUsd.toFixed(2)}` : "—"}</td><td>${r.durationMs ?? "—"}</td><td>${status}</td><td>${verify}</td></tr>`;
 }
 
+/**
+ * The newest row of the ledger, expanded. It sat above the ask box until 5 September,
+ * where whatever JSON the last miner returned was the first thing on the page; it lives
+ * inside the ledger now, with the rest of the evidence, and the ask box is the fold.
+ */
 function latestReceipt(r: CallRow): string {
   return `
-<section class="panel hero"><h2>The last question anyone asked <span class="badge">live, not a sample</span></h2>
+<div class="latest hero"><h3>The newest row, in full <span class="badge">live, not a sample</span></h3>
 <p class="q">“${h(r.preview)}”</p>
 <div class="card">${h(r.answer ?? "")}</div>
 <dl class="rcpt">
@@ -62,7 +67,7 @@ function latestReceipt(r: CallRow): string {
 <dt>Confidence</dt><dd>${r.confidence === null ? "not reported by this miner" : `${(r.confidence * 100).toFixed(0)}%`}</dd>
 <dt>Cost</dt><dd>${r.costUsd !== null ? `$${r.costUsd.toFixed(2)}` : "—"} · ${r.durationMs ?? "?"} ms${r.settlementTx ? ` · <a href="https://sepolia.basescan.org/tx/${h(r.settlementTx)}">settled on Base Sepolia</a>` : ""}</dd>
 <dt>Signal hash</dt><dd><a href="/verify/${h(r.signalHash ?? "")}"><code>${h(r.signalHash ?? "")}</code></a> — click to see the node's record and that Morse's wallet paid for it</dd>
-</dl></section>`;
+</dl></div>`;
 }
 
 export function landingPage(d: LandingData): string {
@@ -86,8 +91,6 @@ export function landingPage(d: LandingData): string {
 <p class="sub-lede">No wallet, no key, no sign-up. Type a question, Telegraph's router sends it to the best-ranked miner for that intent, Morse pays the $0.01 fee, and the answer comes back naming who answered, what it cost, and a signal hash you can check on the node and on-chain.</p>
 <div class="cta">${telegram}<span class="muted">or try it right here ↓</span></div>
 ${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The payer wallet or daily budget is not configured, so asking is disabled until the operator funds it. Everything else on this page is live.</div>`}
-
-${d.latest ? latestReceipt(d.latest) : ""}
 
 <section class="panel"><h2>Ask it something yourself</h2>
 <form class="ask" id="ask"><input id="q" name="q" placeholder="Try: Is the SSL certificate for github.com valid, and who issued it?" maxlength="2000" required autocomplete="off"><button id="go" type="submit">Ask</button></form>
@@ -116,6 +119,7 @@ ${d.latest ? latestReceipt(d.latest) : ""}
 </section>
 
 <section class="panel" id="ledger"><h2>Public ledger <span class="badge">${d.ledgerKind === "postgres" ? "durable" : "ephemeral · dev"}</span></h2>
+${d.latest ? latestReceipt(d.latest) : ""}
 <p class="muted">The evidence behind the counters above: every call Morse has made, newest first, including the operator's own testing — nothing is separated out and nothing is manufactured. "Routed" says who chose the miner: Telegraph's router for a normal ask; Morse when you named the miner, or as a fallback when the router did not answer. Rows of kind <code>podium</code> and <code>second-opinion</code> are from two features removed on 4 September, after an organizer said that paying several miners per question to re-check the ranking is what the protocol already does once for everyone; they stay here because the ledger is not rewritten. Payer wallet: ${d.payer ? `<a href="https://sepolia.basescan.org/address/${h(d.payer)}"><code>${h(d.payer)}</code></a>` : "<i>not configured</i>"}. Cross-check any row at its verify link, or on the node with <code>GET /engine/v1/signal/{hash}</code>. JSON: <a href="/api/stats">/api/stats</a> · <a href="/api/recent">/api/recent</a> · <a href="/api/health">/api/health</a>. A check that does not rely on this table: <a href="/proof"><b>on-chain proof</b></a> matches every settlement hash here against the payer wallet's USDC transfers on Base Sepolia.</p>
 <div class="tablewrap"><table><thead><tr><th>time (UTC)</th><th>channel</th><th>kind</th><th>intent</th><th>miner</th><th>routed</th><th>conf.</th><th>cost</th><th>ms</th><th>status</th><th>verify</th></tr></thead>
 <tbody>${d.recent.length ? d.recent.map(row).join("") : `<tr><td colspan="11" class="muted">No calls yet.</td></tr>`}</tbody></table></div></section>

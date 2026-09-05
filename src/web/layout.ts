@@ -34,6 +34,7 @@ td.mono,code,pre{font-family:var(--mono);font-size:12.5px}pre{background:var(--b
 .badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:12px;color:var(--muted)}
 
 .hero{border-color:var(--accent)}.hero .q{font-size:16px;color:var(--muted);margin:0 0 8px;font-style:italic}
+.latest{border:1px solid var(--accent);border-radius:10px;padding:14px 16px;margin:0 0 14px}.latest h3{margin:0 0 8px;font-size:14px;font-weight:600}.latest .card{max-height:8.5em;overflow:auto}
 .rcpt{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:10px 0 0;font-size:13px}.rcpt dt{color:var(--muted)}.rcpt dd{margin:0;word-break:break-word}
 .chips .ex{border-color:var(--accent)}.chips span.muted{align-self:center;font-size:13px}
 .groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 24px;margin-top:10px}.groups h3{font-size:14px;margin:8px 0 4px}.groups ul{margin:0;padding-left:18px}.groups li{margin:3px 0;font-size:14px}
