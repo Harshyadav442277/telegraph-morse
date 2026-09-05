@@ -78,6 +78,30 @@ above, verbatim, with one line appended by the operator: `Telegram Bot - https:/
 Repo URL shows "✓ verified"; live app URL `https://telegraph-morse.vercel.app/`. The form still
 allowed 2 d 11 h at the time, so a resubmission window exists if anything must change.
 
+## The Alexandria apps page
+
+An organiser said in the Discord (2026-09-05) that every Track 3 app will be listed at
+<https://alexandria.telegraphprotocol.com/apps> after submission. On 2026-09-05 the page held only
+Telegraph's six reference apps; there is no public source for it and no self-service form, and the
+submissions backend exposes no public listing, so the organisers build each card by hand. Each
+card carries: name, tagline, a two-sentence description, "Powered by MN <id> <miner>", chain and
+asset, a GitHub link, an "Open App" link, a Live/Coming-soon badge, and a visit counter. No image.
+
+Card-ready copy, in their voice, if they ask or if a form appears:
+
+```
+Morse — Telegraph in Telegram
+Send a question to the Telegram bot, the web page, or from Claude Code — Telegraph's own router picks the ranked miner, Morse pays the x402 fee from its wallet, and the answer comes back with a receipt: miner, rank, confidence, cost, settlement tx and signal hash. Every call ever made is in a public ledger reconciled against the chain at /proof.
+Powered by: whichever miner the leaderboard ranks first; most often MN 117 bedrock-qwen, MN 4433 livecert, MN 9002 txlens
+Base Sepolia · USDC · Live
+GitHub: https://github.com/Harshyadav442277/telegraph-morse · Open App: https://telegraph-morse.vercel.app · Telegram: https://t.me/MyMorse_Bot
+```
+
+One thing worth fixing before they link it anywhere: the site serves a `<title>` and a meta
+description but **no Open Graph or Twitter card tags**, so a link to it on X, Discord or
+Alexandria shows no preview. Two meta lines in `src/web/layout.ts` fix the text card; an image
+needs a 1200×630 PNG in `public/`. It is a deploy, so run the paid journey after it.
+
 ## After you submit
 
 Confirm the submission actually shows in the form's list. Screenshot it. A submission you cannot

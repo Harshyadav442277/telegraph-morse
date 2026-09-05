@@ -213,8 +213,10 @@ telegraph-morse.vercel.app/#ledger
 
 ## Closing thread — Sep 7, before you submit
 
-Six posts, one idea each, as replies to T1. T3 is the one people will remember: almost nobody in
-a hackathon says "I deleted two days of work because you told me to."
+Six posts, one idea each. **Post T1 as a normal post, then T2–T6 as quote posts of T1, not as
+replies** — the organisers' mention checker reads the account's Posts tab, which does not include
+replies (see Rules). T3 is the one people will remember: almost nobody in a hackathon says "I
+deleted two days of work because you told me to."
 
 **T1**
 ```
@@ -279,6 +281,24 @@ The bot: t.me/MyMorse_Bot
   a second opinion, a consensus report, recipes, or the discovery tools.
 - Screenshot or recording on anything that claims something works.
 - Reply to every reply within the day. Replies are the "meaningful engagement" the rubric names.
+
+## How the organisers count, read from their public repo on 2026-09-05
+
+`telegraphprotocol/telegraph-hackathon-submissions` is public. Its `mention-checker-api/app.py`
+takes an X username, pulls that account's timeline with twscrape `user_tweets` (the Posts tab:
+original posts and quote posts, **not replies**), scans the newest **100** posts (`SCAN_LIMIT`),
+and counts the ones whose text contains **"telegraphprotoc"** as a case-insensitive substring.
+`@Telegraphprotoc` satisfies it. Consequences:
+
+- Every post meant to be counted is a top-level post or a quote post. Thread continuations posted
+  as replies are invisible to the checker (a human reading the profile still sees them).
+- Only the newest 100 posts are scanned. Do not push the Telegraph posts out of that window with
+  unrelated posting before Sep 18.
+- The username you typed with an `@` is stored without it (`hyadav42774`); nothing to fix.
+- For Track 3 the backend stores `tweetMentionCount: null` and never calls the checker, and an
+  edit keeps it null, so the admin table shows "—" for every Track 3 entry. The 25% will be judged
+  by a person looking at the account, or by running the checker by hand. Quality and replies
+  matter as much as the count.
 
 ## Assets to have ready
 
