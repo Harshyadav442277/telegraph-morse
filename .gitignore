@@ -12,3 +12,6 @@ playwright-report/
 
 .vercel
 .morse-e2e-key
+
+mcp-publisher.exe
+mcp-publisher.tar.gz

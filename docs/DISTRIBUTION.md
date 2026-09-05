@@ -29,17 +29,23 @@ listed, Morse is not. `server.json` is at the repo root, written against the 202
 as a remote streamable-HTTP server with a bearer header. Publishing needs a GitHub login, which is
 yours:
 
+The publisher is a binary from the registry's GitHub releases (v1.8.1 on 2026-09-05); there is no
+npm package. From the `telegraph-morse` folder, in Git Bash:
+
 ```bash
-npm install -g @modelcontextprotocol/publisher
+curl -L https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_windows_amd64.tar.gz | tar xz
 ```
 
 ```bash
-cd telegraph-morse && mcp-publisher login github
+./mcp-publisher.exe login github
 ```
 
 ```bash
-mcp-publisher publish
+./mcp-publisher.exe publish
 ```
+
+The login opens a GitHub device-code page; approve it in the browser. `publish` reads
+`server.json` from the current folder. Do not commit the extracted `.exe`.
 
 Then confirm it is listed:
 
