@@ -78,7 +78,7 @@ above, verbatim, with one line appended by the operator: `Telegram Bot - https:/
 Repo URL shows "✓ verified"; live app URL `https://telegraph-morse.vercel.app/`. The form still
 allowed 2 d 11 h at the time, so a resubmission window exists if anything must change.
 
-**One edit to make before Sep 7 23:59 UTC (2026-09-05 16:05 UTC).** The submitted description
+**Edited and re-saved by the operator on 2026-09-05 ~18:30 UTC** with the version above (payer wallet named, registry listing mentioned, Sep 5 numbers). The paragraph that asked for it, kept for the record: The submitted description
 never names the payer wallet. The rubric counts "actual volume of Telegraph calls made by your
 application", the submissions backend stores nothing that ties Morse's calls to the entry (the
 signing wallet is your own address, not the payer), and the only way a judge can attribute
