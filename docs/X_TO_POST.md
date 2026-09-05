@@ -5,13 +5,13 @@ Every draft below is under 280 characters with URLs counted at 23, so it posts f
 
 Call it **Morse**. Not "Morse Burner" — the site, the bot and the submission all say Morse.
 
-Numbers in the drafts were re-run **2026-09-04 20:05 UTC**. Before posting any of them:
+Numbers in the drafts were re-run **2026-09-05 13:02 UTC**. Before posting any of them:
 
 ```bash
 npm run x:numbers      # ledger and chain counters
 npm run catalogue      # the 129 / 73 / 4 / 29 / 33 figures in posts 5 and 6
 curl -4 -s "https://devnode.telegraphprotocol.com/daemon/api/questions?source=user&since_hours=24&limit=1" | grep -o '"total":[0-9]*'   # network 24h calls, post 3
-curl -4 -s https://telegraph-morse.vercel.app/api/proof | grep -o '"chainOnly":\[' # then count entries; post 7 and 8 say 6
+curl -4 -s https://telegraph-morse.vercel.app/api/proof | grep -o '"chainOnly":\[' # then count entries; posts 7 and 8 say 7
 ```
 
 ---
@@ -38,23 +38,25 @@ So: **post what you found out, not what you shipped.** Every draft below is some
 
 ---
 
-## Schedule — Sep 4 to Sep 7
+## Schedule — Sep 5 to Sep 7
 
-Two posts a day, morning and evening UTC, so each gets its own day of feed. Post 0 goes first
-whatever the time is; it corrects the post at the top of your profile.
+Nothing went out on Sep 4, so the plan starts now. Three posts a day, spaced a few hours apart,
+so each gets its own stretch of feed. Post 0 goes first whatever the time is; it corrects the post
+at the top of your profile. The submission is already in (2026-09-05 12:59 UTC), so the thread on
+Sep 7 closes the story rather than announcing it.
 
 | When | # | Post | Attach |
 |---|---|---|---|
-| Sep 4, now | 0 | Correction | nothing |
-| Sep 4, right after, quoting 0 | 1 | What's left | landing page screenshot |
-| Sep 5 morning | 2 | The receipt | `/verify` page cropped to the green payer line and the BaseScan link |
-| Sep 5 evening | 5 | The risk-score finding | nothing, or the catalogue script output |
-| Sep 6 morning | 4 | For miner authors | 10 s recording of `/miner txlens …` in Telegram |
-| Sep 6 midday, in the Discord too | 3 | The gap | ledger screenshot |
-| Sep 6 evening | 7 | Proof | `/proof` page with the "on chain, not in the ledger" table |
-| Sep 7 morning | 9 | For developers | 15 s recording: Claude Code tool call, then the row appearing in the ledger |
-| Sep 7 midday | 8 | The timeout lesson | nothing |
-| Sep 7 evening, before the form | T1–T6 | Closing thread | ledger screenshot on T1 |
+| Sep 5, now | 0 | Correction | nothing |
+| Sep 5, right after, quoting 0 | 1 | What's left | landing page screenshot |
+| Sep 5 evening | 2 | The receipt | `/verify` page cropped to the green payer line and the BaseScan link |
+| Sep 6 morning | 5 | The risk-score finding | nothing, or the catalogue script output |
+| Sep 6 midday, and pasted into the Discord | 4 | For miner authors | 10 s recording of `/miner txlens …` in Telegram |
+| Sep 6 evening | 3 | The gap | ledger screenshot |
+| Sep 7 morning | 7 | Proof | `/proof` page with the "on chain, not in the ledger" table |
+| Sep 7 midday | 9 | For developers | 15 s recording: Claude Code tool call, then the row appearing in the ledger |
+| Sep 7 afternoon | 8 | The timeout lesson | nothing |
+| Sep 7 evening, well before 23:59 UTC | T1–T6 | Closing thread | ledger screenshot on T1 |
 | only if the strangers' number is worth saying | 10 | Real numbers | ledger screenshot |
 
 Post 6 (one miner by name) is a spare. Use it on Sep 6 if post 4 gets replies from miner authors.
@@ -89,7 +91,8 @@ No wallet, no sign-up. t.me/MyMorse_Bot @Telegraphprotoc
 ## 2 · The receipt — the one thing Morse should be known for
 
 The hash is a real router-routed call to txlens, #1 for SSL_VERIFICATION, paid by Morse's wallet,
-verified 2026-09-04 20:10 UTC. Not a livecert call, on purpose.
+verified 2026-09-04 20:10 UTC and again by the judge journey on 2026-09-05 13:05 UTC, which checks
+every ledger hash against the node. Not a livecert call, on purpose.
 
 ```
 Every answer Morse gives you comes with a receipt.
@@ -102,14 +105,15 @@ https://telegraph-morse.vercel.app/verify/0xa93d4e871ca5baf89dfb5b5ce62aee0d7010
 
 ## 3 · The gap
 
-The 2,406 is the Daemon's `total` for `source=user&since_hours=24`. The "one wallet paid a third"
-comes from looking up 120 evenly spaced signal hashes from that feed and reading
-`signal.wallet_address`; one payer was 39 of 120. Re-run both before posting; the number moves.
+The 3,572 is the Daemon's `total` for `source=user&since_hours=24`, read 2026-09-05 13:02 UTC.
+The "one wallet paid a quarter" comes from looking up 120 evenly spaced signal hashes from that
+feed and reading `signal.wallet_address`: one payer was 27 of 120, and Morse was 2 of 120. Both
+numbers move fast (on Sep 4 it was 2,406 and a third), so re-run both the minute before posting.
 
 ```
 To ask @Telegraphprotoc anything you need a wallet, faucet money and code that speaks x402.
 
-So its 2,406 paid questions in the last 24h came from scripts. In a sample of 120, one wallet paid a third.
+So its 3,572 paid questions in the last 24h came from scripts. In a sample of 120, one wallet paid a quarter.
 
 Morse is a Telegram bot. You type, I pay the cent. t.me/MyMorse_Bot
 ```
@@ -158,7 +162,7 @@ Hackathon rule 04: no inflated metrics. So I made Morse's usage checkable.
 
 /proof reads my wallet's USDC transfers from a block explorer and matches them, hash for hash, against the public ledger.
 
-The 6 payments my ledger lacks are listed, not hidden. @Telegraphprotoc
+The 7 payments my ledger lacks are listed, not hidden. @Telegraphprotoc
 ```
 
 ## 8 · The timeout lesson
@@ -170,7 +174,7 @@ miner on a 5xx or a refused payment, and never after a timeout.
 ```
 Something I learned paying @Telegraphprotoc miners: a timeout isn't free.
 
-A failed call costs nothing. But if I stop waiting at 20s, the node can still settle afterwards. Six of my payments bought answers nobody received.
+A failed call costs nothing. But if I stop waiting at 20s, the node can still settle afterwards. Seven of my payments bought answers nobody received.
 
 So Morse retries on an error and never on a timeout.
 ```

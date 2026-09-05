@@ -22,6 +22,15 @@ page's "Recipes (several miners at once)" to "one question, several intents". Al
 says "251 of 259 ledger settlements are on chain", which reads as eight missing; in fact rows
 share hashes, every unique ledger hash is on chain, and `ledgerOnly` is empty.
 
+**Checked 2026-09-05 13:05 UTC, after the operator's overnight landing-page change (aa097c6, the
+hero receipt moved into the ledger section):** health ok, payer 117.07 USDC, telegram true;
+`npm run e2e` 6 passed + 1 skipped; `MORSE_E2E_PAID=1 npm run e2e` **7/7 in 28 s**; `/proof` 293
+chain settlements, 286 ledger rows, 0 ledger-only, 7 chain-only; ledger 349 calls / 286 answered,
+53 people answered of 73, 21 intents, 47 miners, $2.86. Network 24 h: 3,572 user-paid calls, and
+Morse was 2 of 120 sampled payers (~2%; the top wallet was 27 of 120). The X drafts were refreshed
+to these numbers and the schedule moved to start Sep 5. Still on the page: the "Recipes (several
+miners at once)" label.
+
 **Operator, in order:** post X draft 0 (the correction) now, then follow the schedule; republish
 the Telegram menu with a valid `ADMIN_TOKEN`; paste draft 4 into the Discord; keep the wallet
 funded through Sep 18; do not redeploy anything you have not re-run the paid journey against.
