@@ -3,6 +3,33 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
+### G35 · The network stopped settling x402 payments at 13:30 UTC on 2026-09-05; every Morse ask is refused — `OPEN, network-side, nothing Morse can fix`
+Since **2026-09-05 14:19:41 UTC** every ask on every channel fails with the node's own settlement
+error, `The node refused the payment: insufficient_credits: facilitator returned 403`. The Vercel
+logs show the router call refused first ("engine router unavailable (unpaid), falling back"), then
+each fallback candidate refused the same way, so the visitor sees "Morse could not pay for this
+call, so nothing was asked and nothing was charged. The last one tried was netwire-ssl." That
+message is correct: the payer holds 117 USDC, the daily budget has 1,469 calls left, and a Base
+Sepolia RPC node shows **no USDC transfer from Morse since 13:11:10 UTC**, so nothing was charged.
+
+**It is not Morse.** Read straight from `sepolia.base.org` at 14:25 UTC: the newest USDC transfer
+into the Diamond from *any* payer is **13:30:20 UTC** (wallet 0x98ec4d72, which had been paying two
+calls every ten seconds until that second and then stopped). The node's 402 challenge is unchanged
+and `npm run preflight` passes every protocol check. The Daemon still logs ~30 "success" rows a
+minute, all from one wallet (0x8220f14e), and none of those signals carries a `tx_hash`, so they
+are not x402 settlements either. A Morse direct call at 14:20:20 reached virustotal and got its
+404 back, so the facilitator's *verify* step still passes; only *settle* returns 403. The
+`insufficient_credits` is therefore the node's own account at `facilitator.payai.network`, not any
+payer's balance.
+
+**What to do:** report it in the Discord with the two timestamps and the RPC evidence (draft in
+MEMORY.md), then wait. Do not deploy, do not retry in a loop (rule 04), do not record the video
+or post X drafts 1 and 2 until one ask settles again. Check with a single ask, or with the RPC
+script: a USDC transfer into the Diamond newer than 13:30:20 UTC means settlement is back.
+
+**Not verified:** whether the organisers know; whether the 0x8220f14e traffic is the escrow
+WebSocket path (which needs no per-call x402) or unsettled answers the node is giving away.
+
 ### G34 · Recipe rows are labelled "Morse (fallback)", and a router failure leaves no reason on the row — `OPEN 2026-09-05, reported to the organisers`
 Recipes pass `skipGuard = true` to `askNetwork`, and the engine router is only tried when that is
 false, so every `safe` / `weather` / `fact` / `wallet` leg goes straight to `/engine/v1/ask/{minerId}`.

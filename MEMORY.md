@@ -3,6 +3,27 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
+## 2026-09-05 14:30 UTC — THE NETWORK STOPPED SETTLING PAYMENTS; MORSE IS DOWN WITH IT (G35)
+
+Every ask since 14:19 UTC fails with `insufficient_credits: facilitator returned 403` from the
+node's settlement step. Not ours: no payer's USDC has reached the Diamond since **13:30:20 UTC**
+(read from a Base Sepolia RPC node, not Blockscout), the 402 challenge and preflight are unchanged,
+and verify still passes while settle fails. Morse's honest-failure message did its job: nothing was
+asked, nothing was charged, the payer still holds 117 USDC. Full evidence in GAPS G35.
+
+**Nothing deployed, nothing to deploy.** Operator: post this in the Discord, then hold the video
+and X drafts 1–2 until a single ask settles again. Draft:
+
+> Since about 13:30 UTC today no x402 payment is settling on devnode. Every paid call I make
+> returns 402 with `payment-response` errorReason `insufficient_credits: facilitator returned 403`,
+> on both the router and direct paths. The last USDC transfer into the Diamond from any wallet is
+> 13:30:20 UTC (block 46423366, wallet 0x98ec4d72…); nothing since, from anyone. The 402 challenge
+> is unchanged and verify passes, so it looks like the node's facilitator credits at payai ran out.
+> Happy to share the RPC query.
+
+**Lesson:** when the site says "could not pay", check the chain for *everyone's* payments before
+touching anything. Ten minutes of reading logs and one RPC call beat a redeploy.
+
 ## 2026-09-05 13:30 UTC — THE "FALLBACK" ROWS SHOWN TO THE ORGANISERS WERE RECIPE LEGS
 
 The operator reported ledger rows labelled "Morse (fallback)" to the organisers as router failures,
