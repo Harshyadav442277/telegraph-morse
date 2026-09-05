@@ -3,26 +3,29 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
-## 2026-09-05 14:30 UTC — THE NETWORK STOPPED SETTLING PAYMENTS; MORSE IS DOWN WITH IT (G35)
+## 2026-09-05 14:35 UTC — A 56-MINUTE NETWORK-WIDE SETTLEMENT OUTAGE, NOW OVER (G35)
 
-Every ask since 14:19 UTC fails with `insufficient_credits: facilitator returned 403` from the
-node's settlement step. Not ours: no payer's USDC has reached the Diamond since **13:30:20 UTC**
-(read from a Base Sepolia RPC node, not Blockscout), the 402 challenge and preflight are unchanged,
-and verify still passes while settle fails. Morse's honest-failure message did its job: nothing was
-asked, nothing was charged, the payer still holds 117 USDC. Full evidence in GAPS G35.
+Between **13:30:20 and 14:26:58 UTC** no wallet on the network settled a single x402 payment (24
+wallets had paid 2,030 in the previous day). Morse's asks at 14:19–14:20 were refused by the
+node's settlement step with `insufficient_credits: facilitator returned 403`; verify still passed.
+Morse changed nothing and answered again at **14:32:51**, settled on chain. The honest-failure
+message did its job: nothing asked, nothing charged, 117.02 USDC still in the wallet.
 
-**Nothing deployed, nothing to deploy.** Operator: post this in the Discord, then hold the video
-and X drafts 1–2 until a single ask settles again. Draft:
+**Correction to the first write-up (14:30):** it read as ongoing; it was a window, and the wallet
+that "kept succeeding" never pays per call, so it was not evidence. Full detail in GAPS G35.
 
-> Since about 13:30 UTC today no x402 payment is settling on devnode. Every paid call I make
-> returns 402 with `payment-response` errorReason `insufficient_credits: facilitator returned 403`,
-> on both the router and direct paths. The last USDC transfer into the Diamond from any wallet is
-> 13:30:20 UTC (block 46423366, wallet 0x98ec4d72…); nothing since, from anyone. The 402 challenge
-> is unchanged and verify passes, so it looks like the node's facilitator credits at payai ran out.
-> Happy to share the RPC query.
+**Operator:** the video and X drafts 1–2 can go ahead; send one question first. Worth a calm
+report in the Discord, past tense:
+
+> Was there a settlement outage on devnode today? Between 13:30:20 and 14:26:58 UTC no USDC
+> reached the Diamond from any wallet (I read it from a Base Sepolia RPC node), and my paid calls
+> in that window came back 402 with `payment-response` errorReason
+> `insufficient_credits: facilitator returned 403`, on both the router and direct paths, with verify
+> passing. It recovered on its own at 14:26:58. Sharing in case it helps; happy to send the query.
 
 **Lesson:** when the site says "could not pay", check the chain for *everyone's* payments before
-touching anything. Ten minutes of reading logs and one RPC call beat a redeploy.
+touching anything, and re-check before calling it ongoing. The first write-up was right about the
+cause and wrong about the tense.
 
 ## 2026-09-05 13:30 UTC — THE "FALLBACK" ROWS SHOWN TO THE ORGANISERS WERE RECIPE LEGS
 

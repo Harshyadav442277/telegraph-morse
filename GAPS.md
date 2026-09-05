@@ -3,7 +3,29 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
-### G35 · The network stopped settling x402 payments at 13:30 UTC on 2026-09-05; every Morse ask is refused — `OPEN, network-side, nothing Morse can fix`
+### G35 · x402 settlement stopped network-wide for 56 minutes on 2026-09-05; Morse refused every ask inside the window — `RESOLVED 14:26:58 UTC, network-side, nothing changed in Morse`
+
+**Re-checked 14:33 UTC, and corrected.** The paragraphs below were written at 14:25 while the
+outage was still on; they said "every ask is refused" as if ongoing. Read from `sepolia.base.org`
+at 14:33: the last settlement before the gap is **13:30:20** (0x98ec4d72, mid-cadence), the first
+after it is **14:26:58** (0x8c6ee344, then a burst), and Morse's own ask at **14:32:51** went
+through the router to livecert #1 and settled as `0x4d332254…`, receipt status 1 at block
+46425247. In the 24 h before, 24 distinct wallets paid 2,030 settlements; in the 56-minute window
+**none of them settled once**, and the biggest payer, with 552 settlements in the day, resumed at
+14:26:58. Morse's three refusals (14:19:41 Telegram, 14:20:24 web, plus a virustotal 404 at
+14:20:20 that proves verify still passed) all sit inside the window. Morse holds 117.02 USDC on
+chain (balanceOf via RPC, not the health endpoint), so `insufficient_credits` cannot be Morse's
+balance.
+
+**How sure, and of what.** Very likely network-side: the error text came from the node's own
+settlement step, named its facilitator, hit every payer at once, and cleared without Morse
+changing anything. Not proven: *why* the facilitator returned 403, and whether the organisers
+noticed. The one wallet that kept "succeeding" through the gap (0x8220f14e, ~30 rows a minute) has
+**one** on-chain settlement in its lifetime and no `tx_hash` on any sampled signal at 12:54,
+13:25, 13:57 or 14:31, so it never pays per call and was never evidence of anything.
+
+**Ledger effect:** three failed rows kept, labelled `unpaid` / `error`; nothing charged, nothing
+to back-fill. The Discord draft in MEMORY.md is now a past-tense report, not an alarm.
 Since **2026-09-05 14:19:41 UTC** every ask on every channel fails with the node's own settlement
 error, `The node refused the payment: insufficient_credits: facilitator returned 403`. The Vercel
 logs show the router call refused first ("engine router unavailable (unpaid), falling back"), then
