@@ -3,6 +3,24 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
+### G34 · Recipe rows are labelled "Morse (fallback)", and a router failure leaves no reason on the row — `OPEN 2026-09-05, reported to the organisers`
+Recipes pass `skipGuard = true` to `askNetwork`, and the engine router is only tried when that is
+false, so every `safe` / `weather` / `fact` / `wallet` leg goes straight to `/engine/v1/ask/{minerId}`.
+`routed()` in `src/web/landing.ts` has no recipe case, so those rows read "Morse (fallback)", and the
+FAQ says the router did not answer within 20 s — false for them. The operator sent a screenshot of
+exactly such rows to the organisers as router failures, and they asked for detail. Measured on the
+200 newest rows (2026-09-04 04:16 → 2026-09-05 13:07 UTC): 15 rows are real fallbacks (kind `ask`,
+routed by Morse); 13 recipe rows carry the same label with no router involvement at all.
+
+Second half: `tryEngineRouter` writes the router's error only to `console.error`, and Vercel keeps
+runtime logs for one hour on this plan (verified 2026-09-05: the 6 h → 1 h window is empty, the
+50 min → 20 min window is populated), so none of the 15 fallbacks has a reason on record anywhere.
+
+Fix, written and **not deployed** under the freeze: label recipe rows "Morse (recipe)", correct the
+FAQ line in `src/web/layout.ts`, and add a `router_error` column filled from `tryEngineRouter`. Deploy
+only after the paid journey is re-run. The full account sent to the organisers is
+[docs/ROUTER_REPORT_2026-09-05.md](docs/ROUTER_REPORT_2026-09-05.md).
+
 ### G33 · Every fact check failed because one miner broke and Morse gave up — `FIXED 2026-09-04 16:50 UTC; retry not reproduced live`
 Measured on the newest 200 ledger rows: 29 failures, but **all 11 failures on kinds that still
 exist were the same one** — `FACT_CHECK` → `qarinah-proofpack`, which answers

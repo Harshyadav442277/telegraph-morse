@@ -3,6 +3,24 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
+## 2026-09-05 13:30 UTC — THE "FALLBACK" ROWS SHOWN TO THE ORGANISERS WERE RECIPE LEGS
+
+The operator reported ledger rows labelled "Morse (fallback)" to the organisers as router failures,
+and they asked for detail. The detail is [docs/ROUTER_REPORT_2026-09-05.md](docs/ROUTER_REPORT_2026-09-05.md).
+What it found: the rows are `/safe` and `/weather` legs, which never call the router (G34); the four
+router calls in the same minute all answered in under a second; real fallbacks are 1 of 19 plain
+questions today and 14 of 82 yesterday, 11 of them inside one 25-request burst; all 28 error rows
+in the 200-row window are on the direct path, on 09-04, verbatim in the report — the 13:50 UTC run
+of `upstream call failed: context canceled` to kriterion-pramagraph is the one worth the organisers'
+eyes, and `batch_send_failed` on two parallel payments the one worth a question. The router's own
+error text for fallbacks is recorded nowhere retrievable: Vercel keeps one hour.
+
+**Nothing was deployed.** Operator: send the report; decide whether to deploy the G34 label fix,
+which needs the paid journey re-run first.
+
+**Lesson:** a label on a public page is a claim. "Fallback" on rows that never tried the router sent
+the operator to the organisers with a bug report about their router that was really about our label.
+
 ## 2026-09-05 13:00 UTC — SUBMITTED. What is left is posting and sharing.
 
 Track 3 submission made **2026-09-05 12:59:54 UTC** and confirmed on "My Submissions" as
