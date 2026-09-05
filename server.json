@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Harshyadav442277/telegraph-morse",
   "title": "Morse — Telegraph in Telegram",
-  "description": "Ask Telegraph's ranked miners from any MCP client, no wallet. Morse pays; every answer has a receipt.",
+  "description": "Ask Telegraph's ranked miners from any MCP client, no wallet. Morse pays; each answer has a receipt.",
   "repository": {
     "url": "https://github.com/Harshyadav442277/telegraph-morse",
     "source": "github"
