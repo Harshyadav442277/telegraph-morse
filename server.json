@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.Harshyadav442277/telegraph-morse",
   "title": "Morse — Telegraph in Telegram",
-  "description": "Ask the Telegraph miner network from any MCP client with no wallet: Morse pays the x402 fee, Telegraph's router picks the ranked miner, every answer returns a receipt with the miner, rank, cost, settlement tx and signal hash.",
+  "description": "Ask Telegraph's ranked miners from any MCP client, no wallet. Morse pays; every answer has a receipt.",
   "repository": {
     "url": "https://github.com/Harshyadav442277/telegraph-morse",
     "source": "github"
@@ -16,7 +16,7 @@
       "headers": [
         {
           "name": "Authorization",
-          "description": "Bearer morse_… — a free key from https://telegraph-morse.vercel.app/keys (three per network per day, 100 calls per key per day). Morse pays every call from its own wallet.",
+          "description": "Bearer morse_… — free key from https://telegraph-morse.vercel.app/keys (100 calls/day)",
           "isRequired": true,
           "isSecret": true,
           "placeholder": "Bearer morse_YOURKEY"
