@@ -69,6 +69,15 @@ Stated limits. Testnet only. Morse reads the chain and writes nothing to it. The
 - [ ] The payer wallet still holds USDC — judging runs Sep 8–18 and a dry wallet mid-judging
       means every demo link fails. Top up at faucet.circle.com before submitting.
 
+## Submitted — 2026-09-05 12:59:54 UTC
+
+Confirmed on the "My Submissions" tab, status **track3 · verified**, from wallet
+`0xdAd201ef02f5C1FBB8f9e931AE9B7c1bF493A39e` (the operator's own address, not the Morse payer).
+Title as pasted: **Morse — Telegraph in Telegram**. Description: the 2026-09-04 20:05 UTC version
+above, verbatim, with one line appended by the operator: `Telegram Bot - https://t.me/MyMorse_Bot`.
+Repo URL shows "✓ verified"; live app URL `https://telegraph-morse.vercel.app/`. The form still
+allowed 2 d 11 h at the time, so a resubmission window exists if anything must change.
+
 ## After you submit
 
 Confirm the submission actually shows in the form's list. Screenshot it. A submission you cannot

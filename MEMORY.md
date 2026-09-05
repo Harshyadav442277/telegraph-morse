@@ -3,7 +3,30 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
-## 2026-09-04 ~15:30 UTC — ORGANIZER FEEDBACK: THE PIVOT (read this first)
+## 2026-09-05 13:00 UTC — SUBMITTED. What is left is posting and sharing.
+
+Track 3 submission made **2026-09-05 12:59:54 UTC** and confirmed on "My Submissions" as
+*track3 · verified* from the operator's own wallet (details in SUBMISSION.md). The description is
+the one rebuilt on 2026-09-04 around the three things Morse adds (wallet-free way in, the receipt,
+auditable usage); nothing in it names the retired features, recipes or the discovery tools. The
+same evening the X drafts were rewritten (docs/X_TO_POST.md): correction first, the receipt as the
+one capability, a miner-author post for the Discord, a dated schedule, all 17 under 280.
+
+**A pre-mortem written the same day (in the session, summarised here) ranked the loss risks:**
+1) adoption is self-generated, 6% of network volume, seventh of ten payer wallets in a 120-signal
+sample; 2) the X quarter is near zero and is the cheapest to move; 3) the wrapper reading, since
+the discovery tools and seven-tool MCP duplicate the explorer and Telegraph's own MCP; 4) rule 04
+optics; 5) the Telegram menu still advertising two dead commands. Freeze-safe deletions it
+recommended, not done: drop the three discovery MCP tools and `/hot`, and relabel the landing
+page's "Recipes (several miners at once)" to "one question, several intents". Also found: `/proof`
+says "251 of 259 ledger settlements are on chain", which reads as eight missing; in fact rows
+share hashes, every unique ledger hash is on chain, and `ledgerOnly` is empty.
+
+**Operator, in order:** post X draft 0 (the correction) now, then follow the schedule; republish
+the Telegram menu with a valid `ADMIN_TOKEN`; paste draft 4 into the Discord; keep the wallet
+funded through Sep 18; do not redeploy anything you have not re-run the paid journey against.
+
+## 2026-09-04 ~15:30 UTC — ORGANIZER FEEDBACK: THE PIVOT
 
 An organizer (Ahmed Ali, Discord, ~14:50 UTC) answered two questions at once — a proposed
 miner-check tool, and "how does the podium reach all top-3 miners when routing is 70/20/10" — with
