@@ -139,20 +139,17 @@ test.describe("judge journey", () => {
     const tools = await mcp(request, key!, 2, "tools/list", {});
     const names = (tools.result?.tools ?? []).map((t: { name: string }) => t.name);
     expect(names).toEqual(
-      expect.arrayContaining([
-        "telegraph_ask",
-        "telegraph_ask_miner",
-        "telegraph_recipe",
-        "telegraph_verify_signal",
-        "telegraph_intents",
-        "telegraph_leaderboard",
-        "telegraph_hot_signals",
-      ]),
+      expect.arrayContaining(["telegraph_ask", "telegraph_ask_miner", "telegraph_recipe", "telegraph_verify_signal"]),
     );
     // Retired on 2026-09-04: re-ranking Telegraph's own leaderboard, at N paid calls
     // per question, is what the organizers asked us not to build (GAPS G32).
     expect(names).not.toContain("telegraph_podium");
     expect(names).not.toContain("telegraph_second_opinion");
+    // Retired on 2026-09-05: the three discovery tools duplicated Telegraph's explorer
+    // and Daemon feed. The data stays free over REST (step 5).
+    expect(names).not.toContain("telegraph_intents");
+    expect(names).not.toContain("telegraph_leaderboard");
+    expect(names).not.toContain("telegraph_hot_signals");
   });
 
   test("5 · the free discovery endpoints answer from the live network", async ({ request }) => {

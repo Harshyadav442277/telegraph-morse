@@ -95,7 +95,7 @@ ${d.paid ? "" : `<div class="panel warn"><b>Morse is not funded yet.</b> The pay
 <section class="panel"><h2>Ask it something yourself</h2>
 <form class="ask" id="ask"><input id="q" name="q" placeholder="Try: Is the SSL certificate for github.com valid, and who issued it?" maxlength="2000" required autocomplete="off"><button id="go" type="submit">Ask</button></form>
 <div class="chips"><span class="muted">Try one:</span>${quick}</div>
-<div class="chips"><span class="muted">Recipes (several miners at once):</span>${recipeChips}</div>
+<div class="chips"><span class="muted">Recipes (one question, several intents):</span>${recipeChips}</div>
 <div id="out"></div></section>
 
 <section class="grid">

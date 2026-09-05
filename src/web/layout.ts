@@ -1,4 +1,6 @@
 /** Shared HTML shell. One inline stylesheet, no build step, readable in both themes. */
+import { config } from "../config.js";
+
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
@@ -109,8 +111,15 @@ document.querySelectorAll('button.q').forEach(function(b){b.addEventListener('cl
 </script>`;
 
 export function page(title: string, body: string, opts: { description?: string } = {}): string {
+  // Open Graph and Twitter card tags, so a link to any page shows a preview on
+  // X, Discord and Telegram. Absent until 2026-09-05; the image is public/og.png.
+  const base = (config().MORSE_PUBLIC_URL ?? "https://telegraph-morse.vercel.app").replace(/\/$/, "");
+  const desc = escapeHtml(opts.description ?? "Telegraph in Telegram. Ask, get an answer from a ranked miner, with a receipt.");
+  const t = escapeHtml(title);
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escapeHtml(title)}</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="description" content="${escapeHtml(opts.description ?? "Telegraph in Telegram. Ask, get an answer from a ranked miner, with a receipt.")}">
+<title>${t}</title><link rel="icon" href="/favicon.svg" type="image/svg+xml"><meta name="description" content="${desc}">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Morse"><meta property="og:title" content="${t}"><meta property="og:description" content="${desc}"><meta property="og:url" content="${base}/"><meta property="og:image" content="${base}/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${t}"><meta name="twitter:description" content="${desc}"><meta name="twitter:image" content="${base}/og.png">
 <style>${CSS}</style></head><body><main>
 <header class="top"><h1><a href="/" style="color:inherit">M<span>·</span>O<span>·</span>R<span>·</span>S<span>·</span>E</a></h1>
 <nav>${navItem("/#ledger", "Ledger", "ledger")}${navItem("/proof", "Proof", "proof")}${navItem("/keys", "API &amp; MCP", "keys")}${navItem("https://github.com/Harshyadav442277/telegraph-morse", "GitHub", "github")}${navItem("https://telegraphprotocol.com", "Telegraph", "telegraph")}</nav></header>

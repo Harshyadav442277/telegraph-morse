@@ -9,7 +9,7 @@ import { cardHtml, esc, recipeHtml } from "../core/format.js";
 import { hashId } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
-import { hotSignals, verifySignal } from "../core/telegraph.js";
+import { verifySignal } from "../core/telegraph.js";
 
 /**
  * Telegram channel. The webhook is acknowledged at once; the paid work runs in the
@@ -60,11 +60,10 @@ const HELP = [
   "Type a question in plain language. Examples:",
   ...QUICK.map((e) => `• ${esc(e.q)}`),
   "",
-  "<b>Recipes</b> (several miners at once):",
+  "<b>Recipes</b> (one question, several intents):",
   ...Object.values(RECIPES).map((r) => `${esc(r.usage)} — ${esc(r.description)}`),
   "",
   "/miner &lt;slug&gt; &lt;question&gt; — ask one named miner directly, the same dispatch Telegraph's reference apps use",
-  "/hot — what the network is asking itself right now",
   "/verify &lt;signal hash&gt; — check any receipt on the node",
   "/stats — public usage numbers",
   "",
@@ -78,7 +77,6 @@ export const COMMANDS = [
   { command: "weather", description: "Current weather + 48h storm risk for a place" },
   { command: "wallet", description: "Balance + fraud risk for an address" },
   { command: "fact", description: "Fact check + latest news for a claim" },
-  { command: "hot", description: "What the network is asking itself" },
   { command: "verify", description: "Check a signal hash on the node" },
   { command: "stats", description: "Public usage numbers" },
   { command: "help", description: "All commands" },
@@ -137,17 +135,6 @@ export function getBot(): Bot {
       );
     } catch (e) {
       await ctx.reply(`Could not verify: ${(e as Error).message}`);
-    }
-  });
-
-  b.command("hot", async (ctx) => {
-    try {
-      const rows = await hotSignals(5);
-      if (rows.length === 0) return ctx.reply("The Daemon feed is quiet right now.");
-      const lines = rows.map((r) => `• ${esc(r.question?.text ?? "?")} <i>(${esc(r.routing?.intent ?? r.question?.category ?? "?")})</i>`);
-      await ctx.reply(`<b>What the network is asking itself</b>\n${lines.join("\n")}`, OPTS);
-    } catch (e) {
-      await ctx.reply(`Feed unavailable: ${(e as Error).message}`);
     }
   });
 

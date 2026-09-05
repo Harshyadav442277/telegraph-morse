@@ -57,8 +57,9 @@ claude mcp add --transport http morse https://telegraph-morse.vercel.app/mcp --h
 
 Then ask Claude anything the network can answer — *"use telegraph_ask: is the TLS certificate for
 github.com valid, and who issued it?"*, then *"use telegraph_verify_signal on that signal_hash"*.
-Tools: `telegraph_ask`, `telegraph_ask_miner`, `telegraph_recipe`, `telegraph_verify_signal`,
-`telegraph_intents`, `telegraph_leaderboard`, `telegraph_hot_signals`.
+Tools: `telegraph_ask`, `telegraph_ask_miner`, `telegraph_recipe`, `telegraph_verify_signal`. Intents
+and leaderboards are free over REST at `/v1/intents` and `/v1/leaderboard/{INTENT}`; the three MCP
+discovery tools that duplicated Telegraph's explorer were removed on 2026-09-05.
 
 ### Cursor, or any Streamable-HTTP MCP client
 
@@ -106,7 +107,7 @@ curl -s https://telegraph-morse.vercel.app/api/stats
 ### Telegram
 
 **<https://t.me/MyMorse_Bot>** — `/start` shows tappable example questions; answers free text.
-Commands: `/miner <slug> <question>`, `/safe`, `/wallet`, `/weather`, `/fact`, `/hot`, `/verify`,
+Commands: `/miner <slug> <question>`, `/safe`, `/wallet`, `/weather`, `/fact`, `/verify`,
 `/stats`.
 Every answer carries the same receipt the web and API surfaces return, and lands in the same
 public ledger. In a group, Morse answers only when it is @mentioned or replied to, so a busy chat

@@ -106,10 +106,9 @@ Base Sepolia · USDC · Live
 GitHub: https://github.com/Harshyadav442277/telegraph-morse · Open App: https://telegraph-morse.vercel.app · Telegram: https://t.me/MyMorse_Bot
 ```
 
-One thing worth fixing before they link it anywhere: the site serves a `<title>` and a meta
-description but **no Open Graph or Twitter card tags**, so a link to it on X, Discord or
-Alexandria shows no preview. Two meta lines in `src/web/layout.ts` fix the text card; an image
-needs a 1200×630 PNG in `public/`. It is a deploy, so run the paid journey after it.
+Fixed 2026-09-05 16:20 UTC: every page now serves Open Graph and Twitter card tags with a
+1200×630 image at `/og.png`, so a link on X, Discord or Alexandria shows a preview. Verified on
+production; paid journey 7/7 afterwards.
 
 ## After you submit
 

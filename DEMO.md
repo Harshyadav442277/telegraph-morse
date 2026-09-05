@@ -149,8 +149,10 @@ event: message
 data: {"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"morse","version":"0.1.0"}},"jsonrpc":"2.0","id":1}
 ```
 
-`tools/list` returns seven tools: `telegraph_ask`, `telegraph_ask_miner`, `telegraph_recipe`,
-`telegraph_verify_signal`, `telegraph_intents`, `telegraph_leaderboard`, `telegraph_hot_signals`.
+`tools/list` returns four tools: `telegraph_ask`, `telegraph_ask_miner`, `telegraph_recipe`,
+`telegraph_verify_signal`. The three discovery tools (intents, leaderboard, hot signals) were removed
+on 2026-09-05 because they duplicated Telegraph's explorer; the data stays free at `/v1/intents` and
+`/v1/leaderboard/{INTENT}`, which step 5 checks.
 `telegraph_podium` and `telegraph_second_opinion` were removed on 2026-09-04 and the judge journey
 asserts they are absent. Without a key, `/mcp` returns **401** with a
 `WWW-Authenticate: Bearer realm="morse"` header — ✅ verified.
@@ -166,7 +168,7 @@ Telegram channel had 52 calls in the ledger.
 
 `/safe https://example.com` returns "Asking the network (safe)…" edited in place into a combined
 verdict over three receipted calls. `/miner <slug> <question>` dispatches straight at one named
-miner. `/hot` shows the Daemon's top signals. `/stats` prints the same numbers as `/api/stats`.
+miner. `/stats` prints the same numbers as `/api/stats`.
 
 ### 8 · Ask the podium — REMOVED 2026-09-04
 

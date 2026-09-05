@@ -3,6 +3,14 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
+### G36 · The Telegram command menu lags the deployment by three commands — `OPEN, operator only`
+`setMyCommands` runs only when the webhook is installed through the admin endpoint, and the local
+`ADMIN_TOKEN` answers 401 (2026-09-04). The deployed `COMMANDS` list no longer has `/podium`,
+`/second` (removed 2026-09-04) or `/hot` (removed 2026-09-05), but the menu Telegram shows still
+lists all three; tapping any of them does nothing. Fix is one call with the current token:
+`curl -X POST https://telegraph-morse.vercel.app/admin/telegram/webhook -H "Authorization: Bearer <ADMIN_TOKEN>"`.
+While there, set the bot's description and about text in BotFather (copy in docs/DISTRIBUTION.md).
+
 ### G35 · x402 settlement stopped network-wide for 56 minutes on 2026-09-05; Morse refused every ask inside the window — `RESOLVED 14:26:58 UTC, network-side, nothing changed in Morse`
 
 **Re-checked 14:33 UTC, and corrected.** The paragraphs below were written at 14:25 while the

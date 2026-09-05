@@ -5,7 +5,7 @@ import { z } from "zod";
 import { config } from "../config.js";
 import { askNamedMiner, askNetwork, type AskContext } from "../core/ask.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
-import { getIntents, hotSignals, leaderboard, verifySignal } from "../core/telegraph.js";
+import { verifySignal } from "../core/telegraph.js";
 import { authenticateKey, type AppEnv } from "./rest.js";
 
 /**
@@ -39,7 +39,7 @@ export function buildServer(ctx: AskContext): McpServer {
     {
       title: "Ask one named miner directly",
       description:
-        "Bypass routing and ask a specific miner by slug or catalogue id — the same direct dispatch Telegraph's own reference apps use. Costs one paid call; the receipt says routing was bypassed at your request. Find slugs with telegraph_leaderboard.",
+        "Bypass routing and ask a specific miner by slug or catalogue id — the same direct dispatch Telegraph's own reference apps use. Costs one paid call; the receipt says routing was bypassed at your request. Find slugs at GET /v1/leaderboard/{INTENT} on this host (free), or on Telegraph's explorer.",
       inputSchema: { miner: z.string().min(1).max(64), question: z.string().min(3).max(2000) },
     },
     async ({ miner, question }) => text(await askNamedMiner(ctx, miner, question)),
@@ -69,34 +69,10 @@ export function buildServer(ctx: AskContext): McpServer {
     async ({ signal_hash }) => text(await verifySignal(signal_hash)),
   );
 
-  server.registerTool(
-    "telegraph_intents",
-    { title: "List canonical intents", description: "The live canonical intent set with how many miners serve each. Free.", inputSchema: {} },
-    async () => text(await getIntents()),
-  );
-
-  server.registerTool(
-    "telegraph_leaderboard",
-    {
-      title: "Leaderboard for an intent",
-      description: "Active miners serving an intent, best rank first, with their latest epoch score. Shows where routing sends traffic. Free.",
-      inputSchema: { intent: z.string().min(3).max(64) },
-    },
-    async ({ intent }) => {
-      const board = await leaderboard(intent.toUpperCase());
-      return text(board.map((e) => ({ slug: e.miner.slug, id: e.miner.id, rank: e.rank, score: e.score })));
-    },
-  );
-
-  server.registerTool(
-    "telegraph_hot_signals",
-    {
-      title: "What the network is asking itself",
-      description: "Top signals from Telegraph's autonomous Daemon feed in the last 24 hours, by interest score. Free.",
-      inputSchema: { limit: z.number().int().min(1).max(20).default(5) },
-    },
-    async ({ limit }) => text(await hotSignals(limit)),
-  );
+  // telegraph_intents, telegraph_leaderboard and telegraph_hot_signals were removed on
+  // 2026-09-05: they duplicated Telegraph's own explorer and Daemon feed, which is the
+  // kind of tooling the organizers said not to rebuild. The same data stays free over
+  // REST at /v1/intents and /v1/leaderboard/{INTENT}.
 
   return server;
 }

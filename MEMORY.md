@@ -3,6 +3,33 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
+## 2026-09-05 16:25 UTC — The pre-mortem's fixes shipped; livecert was never failing
+
+**"Livecert is not answering news headlines or translation."** Measured before touching anything:
+in the previous 24 h the network sent livecert 136 calls, 4 headline and 4 translation among them,
+and all 136 succeeded; two paid direct calls through Morse answered in 1.4 s and 0.3 s. What the
+operator saw was the router's spread: the same two questions asked through the router went to
+newswire-headlines #2 and langwire-translation #4, and every translation miner scores in the
+1e-11 band. Two real livecert defects did surface and were fixed in the miner repo (its MEMORY has
+the record): "What" parsed as a news region, and "How do you say X in Y?" refused as no text.
+
+**Morse, one deploy (`telegraph-morse-a17blnnw8`), verified on production, paid journey 7/7 in 31 s:**
+- Open Graph and Twitter card tags on every page, image `public/og.png` (1200×630, rendered with
+  Playwright from a scratch HTML card). Links on X, Discord and Telegram now show a preview.
+- The three MCP discovery tools (`telegraph_intents`, `telegraph_leaderboard`,
+  `telegraph_hot_signals`) and the Telegram `/hot` command are gone: they duplicated the explorer
+  and the Daemon feed. REST `/v1/intents` and `/v1/leaderboard/{INTENT}` stay free; the journey now
+  asserts the three tools are absent. README, DEMO, TRY_THESE and the keys page updated.
+- "Recipes (several miners at once)" is now "Recipes (one question, several intents)" on the
+  landing page and in the Telegram help.
+- `/proof` says "All N distinct settlement hashes in the ledger are on chain — M ledger rows carry
+  a hash, and a few rows share one settlement", instead of "N of M", which read as rows missing.
+
+**Still the operator's:** the Telegram menu is published by `setMyCommands` and now lags by three
+commands (`/hot`, `/podium`, `/second`) until the webhook install is re-run with a valid
+`ADMIN_TOKEN`; BotFather description and about text; `mcp-publisher login github` + `publish`
+for the registry entry in `server.json`.
+
 ## 2026-09-05 15:45 UTC — Full check green; the network is two-thirds direct calls
 
 Health ok (116.92 USDC, telegram true), every page 200, paid journey **7/7 in 27 s**, `/proof`

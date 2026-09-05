@@ -102,7 +102,6 @@ receipt list makes the network visible.
 
 ```
 /second   ask the next-ranked miner the same question, and compare
-/hot      what the network is asking itself right now
 /verify   <signal hash> — check any receipt on the node
 /stats    the public numbers
 /help     everything
