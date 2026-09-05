@@ -27,8 +27,8 @@ the record): "What" parsed as a news region, and "How do you say X in Y?" refuse
 
 **Still the operator's:** the Telegram menu is published by `setMyCommands` and now lags by three
 commands (`/hot`, `/podium`, `/second`) until the webhook install is re-run with a valid
-`ADMIN_TOKEN`; BotFather description and about text; `mcp-publisher login github` + `publish`
-for the registry entry in `server.json`.
+`ADMIN_TOKEN`; BotFather description and about text. The MCP registry entry is **published**
+(2026-09-05 18:10 UTC, `io.github.Harshyadav442277/telegraph-morse` 0.1.0, active).
 
 ## 2026-09-05 15:45 UTC — Full check green; the network is two-thirds direct calls
 

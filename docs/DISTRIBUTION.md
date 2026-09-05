@@ -22,7 +22,12 @@ as adoption.
 
 ## What one person can do alone, ranked by real calls per hour of effort
 
-### 1 · Publish the MCP server on the official registry — 20 minutes, done once
+### 1 · Publish the MCP server on the official registry — DONE 2026-09-05 18:10 UTC
+
+Published as `io.github.Harshyadav442277/telegraph-morse` v0.1.0, status active, listed by
+`GET https://registry.modelcontextprotocol.io/v0/servers?search=morse`. Two things bit on the way:
+the description is capped at 100 characters, and the login token expires within minutes, so log in
+and publish back to back. To republish, bump `version` in `server.json` first.
 
 Agents and their owners find servers there; Telegraph itself and the rival `amanat` are already
 listed, Morse is not. `server.json` is at the repo root, written against the 2025-12-11 schema
