@@ -3,6 +3,35 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
+## 2026-09-09 21:30 UTC — Asking beat guessing: the CTO ruled standing watches organic
+
+No code changed. Recorded because it reverses a decision, and the reversal is not derivable from
+anything in this repo.
+
+**Decision reversed.** The capped-watch stretch item had been parked since the 2026-09-04 pivot,
+because after podium and second opinion were called re-ranking and spam (G32), repeated automated
+calls looked like the same mistake in a new shape. On 2026-09-07 the operator put the question
+directly to the CTO with a bounded design attached and asked for a ruling. Answer: **"Yes, it will
+count."** The line is not automation versus human, it is whether a *human started it, it ends, and
+the ledger says who subscribed*. Details and the full contract are in **G37**; the organizer's words
+are transcribed as items 8–9 of the miner repo's `docs/TELEGRAPH_FACTS.md`.
+
+**Lesson, and it is the second time this pattern paid.** The 2026-09-04 feedback cost three features
+because they were built before anyone asked whether they were wanted. This time the question came
+first and cost nothing, and the answer arrived in twelve hours. Ask the organizers before building
+in a grey area, with a concrete design in hand so the answer is usable.
+
+**Also learned, from the same exchange.** Their WebSocket subscription is the macro version of the
+watch and is worth reading before writing any of it, but it does not drop in: per-intent not
+per-subject, one subscription per wallet, 3-hour push cadence. The part worth copying is the billing
+shape. Separately, the docs describe an unpaid `ask` at the WebSocket layer while the same call over
+HTTP is x402-gated; that reads as an oversight and nothing should depend on it.
+
+**Next action, dated.** Judging closes 2026-09-18. After that, test the bots in real Telegram and
+WhatsApp groups and report back to the CTO, as promised on 2026-09-09. The fan-out question — one
+bot wallet holding many named watches, or a wallet each — is held until there is a test result to
+attach to it. Nothing ships before that date.
+
 ## 2026-09-05 16:25 UTC — The pre-mortem's fixes shipped; livecert was never failing
 
 **"Livecert is not answering news headlines or translation."** Measured before touching anything:

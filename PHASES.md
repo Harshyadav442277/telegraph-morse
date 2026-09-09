@@ -143,4 +143,6 @@ four unreferenced functions were deleted; nothing was added.
   callback contract that stores the result hash [D]
 - Discord bot sharing the core, if the organizers welcome it in their server [A]
 - Capped, labelled watches (`/watch storm <place>`), max 3 per user, 6-hourly, visible in the
-  ledger as `channel=watch` [D] — dropped first if usage patterns ever look manufactured
+  ledger as `channel=watch` [D] — dropped first if usage patterns ever look manufactured.
+  **Unblocked 2026-09-09:** the CTO ruled a human-subscribed, bounded watch organic. The design
+  this now has to honour, and what is still missing, are in GAPS **G37**. Not before 2026-09-18.

@@ -3,6 +3,43 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
+### G37 · The standing watch is ruled organic, designed, and not built — `OPEN, decide after 2026-09-18`
+
+**The blocker was permission, and it is gone.** "Real-time streaming & persistent intelligence" is a
+named high-value area, and the capped-watch line in [PHASES.md](PHASES.md) has sat in Stretch since
+the pivot because repeated automated calls looked like exactly what the organizers called spam on
+2026-09-04 (G32). Asked directly on 2026-09-07 whether a watch a human explicitly subscribed to
+counts as organic, the CTO answered **"Yes, it will count."** Transcribed with its full context as
+item 8 of the miner repo's `docs/TELEGRAPH_FACTS.md`. The distinction that matters: repetition is not
+spam when a human started it, it ends, and the ledger names who subscribed.
+
+**The design that was ruled on, which is now a contract.** Deviating from it forfeits the ruling.
+
+- A person starts each watch explicitly. Nothing subscribes itself.
+- Every watch has an end. No unbounded subscriptions.
+- One routed call per check, on a slow cadence.
+- A cap per person.
+- Every call in the public ledger with the subscriber attached.
+- An `/unwatch` that works.
+
+**Why their WebSocket subscription does not simply give us this.** The CTO pointed at it as the macro
+version, and it is the right pointer, but three things do not fit a group chat. You subscribe to an
+*intent*, not a subject, so watching one cricket match means consuming every `GAME_RESULT` signal and
+filtering client-side. There is **one subscription per wallet**, and chat users hold no wallets. The
+daemon pushes on a **3-hour cycle**, which is not a live score; polling the miner directly beats it.
+What does transfer is the billing shape — escrow, a per-session spend limit, an hourly cap, and
+automatic cancellation on exhaustion — and that is worth copying rather than reinventing.
+
+**What still has to be true before this can ship**, unchanged from G28: a small always-on worker,
+because a Vercel function cannot hold a socket or a timer, and an escrow deposit through
+`EscrowFacet.depositUSDC()`, which is a wallet action and therefore the operator's. Neither is done.
+
+**Open question, deliberately not yet asked.** Whether many named watches fanned out under one
+bot-held wallet is acceptable, or whether each watch must resolve to its own wallet and escrow. It is
+a better question with a test result attached. **Commitment made to the CTO on 2026-09-09:** test the
+bots in real Telegram and WhatsApp groups once the judging window closes on 2026-09-18, and report
+back what comes out of it. Nothing here is built or promised before that date.
+
 ### G36 · The Telegram command menu lags the deployment by three commands — `OPEN, operator only`
 `setMyCommands` runs only when the webhook is installed through the admin endpoint, and the local
 `ADMIN_TOKEN` answers 401 (2026-09-04). The deployed `COMMANDS` list no longer has `/podium`,
@@ -493,7 +530,9 @@ docs/TELEGRAPH_FACTS.md, "Consumer surfaces"), but a subscription needs `persona
 plus at least $1 USDC deposited in escrow through `EscrowFacet.depositUSDC()` — a wallet action —
 and a socket held open, which a Vercel function cannot do. A "Morse Wire" Telegram channel fed by
 Daemon signals would need a small always-on worker and the operator's escrow deposit. Not built;
-decide after the hackathon, not inside the judging window.
+decide after the hackathon, not inside the judging window. **Amended 2026-09-09:** the CTO pointed at
+this same subscription as the macro version of the standing-watch idea, and its per-intent scope, its
+one-subscription-per-wallet limit and its 3-hour cadence are now written up against that use in G37.
 
 ### G29 · Four on-chain settlements have no ledger row — `RE-MEASURED 2026-09-04, shown on /proof`
 Blockscout lists 120 USDC transfers from the payer to the Diamond; the ledger holds 118 settlement
