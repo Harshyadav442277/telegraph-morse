@@ -9,7 +9,10 @@ Free endpoints, health and wallet (162 USDC) were fine. The defect was answer ex
 the last ~175 answered asks showed `tls`, `coingecko`, `ok`, `success` or `rejected` as the answer.
 That includes the 2026-10-27 17:45 UTC SSL ask, which the MCPRush setup record counts as a passing
 live ask; its answer was "rejected", a miner refusal. Fixed in source with tests, 77/77, and replayed against 120 real
-payloads. **Not committed or deployed; both wait on the operator's yes.**
+payloads. Committed `a0e2156` (local main, **not pushed**) and deployed to production as
+`telegraph-morse-e9tdxm6ai` from a clean checkout. The working tree held other sessions'
+uncommitted edits, so deploying it as it stood would have shipped them. A paid production ask
+returned chainsight-oracle's full sentence. The refusal fallback is unit-tested only.
 **Lesson:** "returned a paid receipt" is not "answered". Read the answer text before calling a live
 ask a pass.
 

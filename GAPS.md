@@ -3,7 +3,7 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
-### G38 · Morse showed a source word or a miner's refusal as the answer — `FIXED IN SOURCE 2026-10-28, NOT DEPLOYED`
+### G38 · Morse showed a source word or a miner's refusal as the answer — `FIXED, DEPLOYED 2026-10-27 18:34 UTC; refusal path unit-tested only`
 
 **Observed.** In the 200 newest ledger rows (2026-09-07 → 2026-10-27), 11 answered asks showed a
 non-answer: `tls`, `open-meteo`, `coingecko`, `rpc` (chainsight-oracle declares
@@ -16,7 +16,7 @@ github.com valid?". Its payload was `verdict: "rejected"` with
 (tx `0xd9040b26…23d599`). The catalogue now lists 1,922 miners, and a declared `reason_field` cannot
 be trusted to name the answer.
 
-**Fix (uncommitted in `src/core/receipt.ts` and `ask.ts`).** `extractAnswer` prefers a sentence
+**Fix (commit `a0e2156`, `src/core/receipt.ts` and `ask.ts`).** `extractAnswer` prefers a sentence
 from any known field over a single word in the declared field, and never returns a bare
 `status`/`source` value. `minerRefusal` detects `error` (string or `.message`, preferring a prose
 `reason`) and a `rejected`/`error` verdict that carries `uncertainty` messages. A refusal clears the
@@ -29,7 +29,17 @@ Morse's own route is reported and not retried. Worst case per question: two paid
 `test/refusal.test.ts` and `test/receipt.test.ts` use those payloads; 77/77 tests pass and
 typecheck is clean.
 
-**Not verified.** No deploy has happened, so production still shows the old behaviour. A user's own
+**Deployed.** `a0e2156` was deployed from a clean checkout at `C:\Users\hyada\tg-deploy\morse-a0e2156`.
+The preview `telegraph-morse-2wi3105qa` served every page with 200; health was 503 there, as expected,
+because all env vars are Production-only. Production is `telegraph-morse-e9tdxm6ai`, aliased to
+telegraph-morse.vercel.app; the previous production deployment was `qht70cs18`, which is the rollback
+target. The health probe passed (162.11 USDC). One paid production ask of the same SSL question,
+routed to chainsight-oracle (the miner that used to show `tls`), returned its full sentence
+("…valid and trusted, issued by Sectigo Limited…"), signal `0x5095d94a…376a9c`, tx
+`0x33356865…0e11dd`.
+
+**Not verified.** The refusal fallback has not run in production. The router did not pick a refusing
+miner, and a named-miner ask needs an API key, which I did not issue. A user's own
 bad input (e.g. `CVE-2025`) now also triggers the fallback and costs a second cent for the same
 refusal. Separately, four asks on 2026-10-05 07:15–07:17 UTC failed `terminated` before any miner
 was chosen (the catalogue/leaderboard fetch). That cause was not investigated; asks succeeded again
