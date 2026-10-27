@@ -3,6 +3,38 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
+### G38 · Morse showed a source word or a miner's refusal as the answer — `FIXED IN SOURCE 2026-10-28, NOT DEPLOYED`
+
+**Observed.** In the 200 newest ledger rows (2026-09-07 → 2026-10-27), 11 answered asks showed a
+non-answer: `tls`, `open-meteo`, `coingecko`, `rpc` (chainsight-oracle declares
+`reason_field: "source"`), `success` (bittensor-sn32-itsai declares `status`;
+microlink-url-extraction's text is under `data.description`), `ok` (newsapi, chat-crossref), and on
+2026-10-27 17:45 UTC `rejected` at **confidence 100%**. That last one came from
+telegraph-verity-intelligence, which Telegraph's router picked for "Is the SSL certificate for
+github.com valid?". Its payload was `verdict: "rejected"` with
+`uncertainty: [{message: "A hostname is required."}]`, signal `0xa2fd2723…128efa`, and it was paid
+(tx `0xd9040b26…23d599`). The catalogue now lists 1,922 miners, and a declared `reason_field` cannot
+be trusted to name the answer.
+
+**Fix (uncommitted in `src/core/receipt.ts` and `ask.ts`).** `extractAnswer` prefers a sentence
+from any known field over a single word in the declared field, and never returns a bare
+`status`/`source` value. `minerRefusal` detects `error` (string or `.message`, preferring a prose
+`reason`) and a `rejected`/`error` verdict that carries `uncertainty` messages. A refusal clears the
+confidence. When the router's pick refuses, the row is kept as `error` with its settlement, so
+/proof still reconciles, and Morse routes the question itself, skipping that miner. A refusal on
+Morse's own route is reported and not retried. Worst case per question: two paid calls, $0.02.
+
+**Evidence.** I replayed the 120 newest answered rows' real node payloads through the new code:
+109 unchanged, 11 changed, all 11 better or equal (`scratchpad/replay.mts`, run 2026-10-28).
+`test/refusal.test.ts` and `test/receipt.test.ts` use those payloads; 77/77 tests pass and
+typecheck is clean.
+
+**Not verified.** No deploy has happened, so production still shows the old behaviour. A user's own
+bad input (e.g. `CVE-2025`) now also triggers the fallback and costs a second cent for the same
+refusal. Separately, four asks on 2026-10-05 07:15–07:17 UTC failed `terminated` before any miner
+was chosen (the catalogue/leaderboard fetch). That cause was not investigated; asks succeeded again
+on 10-07.
+
 ### G37 · The standing watch is ruled organic, designed, and not built — `OPEN, decide after 2026-09-18`
 
 **The blocker was permission, and it is gone.** "Real-time streaming & persistent intelligence" is a

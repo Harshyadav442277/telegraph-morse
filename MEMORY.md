@@ -3,6 +3,16 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
+## 2026-10-28 — Answers were source words; a refusal read as 100% sure (G38)
+
+Free endpoints, health and wallet (162 USDC) were fine. The defect was answer extraction: 11 of
+the last ~175 answered asks showed `tls`, `coingecko`, `ok`, `success` or `rejected` as the answer.
+That includes the 2026-10-27 17:45 UTC SSL ask, which the MCPRush setup record counts as a passing
+live ask; its answer was "rejected", a miner refusal. Fixed in source with tests, 77/77, and replayed against 120 real
+payloads. **Not committed or deployed; both wait on the operator's yes.**
+**Lesson:** "returned a paid receipt" is not "answered". Read the answer text before calling a live
+ask a pass.
+
 ## 2026-09-09 21:30 UTC — Asking beat guessing: the CTO ruled standing watches organic
 
 No code changed. Recorded because it reverses a decision, and the reversal is not derivable from

@@ -43,6 +43,8 @@ export interface Receipt {
   label: string | null;
   /** Human-readable answer text extracted from the miner's result. */
   answer: string;
+  /** The miner's own reason it could not answer; the call was still paid. */
+  refusal: string | null;
   costUsd: number | null;
   durationMs: number | null;
   signalHash: string | null;
@@ -84,38 +86,75 @@ export function toConfidence(v: unknown): number | null {
 }
 
 const TEXT_CANDIDATES = [
-  "answer", "reason", "reasoning", "summary", "text", "message", "content", "response",
-  "response_text", "translation", "translated_text", "result", "verdict", "status", "output",
+  "answer", "signal", "reason", "reasoning", "summary", "text", "message", "content", "response",
+  "response_text", "translation", "translated_text", "description", "result", "verdict", "status", "output",
 ];
 
-/** Best-effort answer text. Never returns an empty string. */
+/**
+ * Keys that say where or how an answer came, never what it is. A miner's declared
+ * `reason_field` cannot be trusted to avoid them: chainsight-oracle declares `source`
+ * and Morse showed "tls", "coingecko" and "rpc" as answers; bittensor-sn32-itsai
+ * declares `status` and Morse showed "success" (12 of 175 answered asks, Sep 7 – Oct 27).
+ */
+const META_KEYS = new Set(["status", "source", "provider", "type", "kind"]);
+
+const isProse = (s: string) => /\S\s+\S/.test(s);
+
+/** Verdicts that mean the miner did not do the job, not that it judged the subject. */
+const REFUSED_VERDICT = /^(rejected|error|invalid[_ ]?input|bad[_ ]?request)$/i;
+
+/**
+ * The miner's own statement that it could not answer, or null. On 2026-10-27
+ * telegraph-verity-intelligence answered "Is the SSL certificate for github.com valid?"
+ * with verdict "rejected", confidence 1 and `uncertainty: [{ message: "A hostname is
+ * required." }]`, and Morse showed "rejected" at 100% confidence.
+ */
+export function minerRefusal(result: unknown): string | null {
+  if (!result || typeof result !== "object") return null;
+  const r = result as Record<string, unknown>;
+  const err = typeof r.error === "string" ? r.error : getPath(r, "error.message");
+  if (typeof err === "string" && err.trim()) {
+    // livecert sends `error: "invalid_cve_id"` with the explanation in `reason`.
+    const why = [r.reason, r.message, r.detail].find((v): v is string => typeof v === "string" && isProse(v));
+    return isProse(err) || !why ? err.trim() : why.trim();
+  }
+  const notes = Array.isArray(r.uncertainty)
+    ? r.uncertainty.map((u) => getPath(u, "message")).filter((m): m is string => typeof m === "string" && m.trim() !== "")
+    : [];
+  if (typeof r.verdict === "string" && REFUSED_VERDICT.test(r.verdict) && notes.length > 0) return notes.join(" ");
+  return null;
+}
+
+/**
+ * Best-effort answer text. Never returns an empty string. A sentence anywhere beats a
+ * single word in the declared field, and a bare source or status word is never the answer.
+ */
 export function extractAnswer(result: unknown, mapping?: SignalMapping | null): string {
   if (result === null || result === undefined) return "The miner returned an empty result.";
   if (typeof result === "string") return result.trim() || "The miner returned an empty result.";
   if (typeof result !== "object") return String(result);
   const r = result as Record<string, unknown>;
 
-  const mapped = getPath(r, mapping?.reason_field);
-  if (typeof mapped === "string" && mapped.trim()) return mapped.trim();
+  const refusal = minerRefusal(r);
+  if (refusal) return `The miner could not answer: ${refusal}`;
 
+  const found: Array<[key: string, text: string]> = [];
+  const add = (key: string, v: unknown) => {
+    if (typeof v === "string" && v.trim()) found.push([key, v.trim()]);
+  };
+  if (mapping?.reason_field) add(mapping.reason_field.split(".").pop()!, getPath(r, mapping.reason_field));
   // OpenAI-style chat completion
-  const choice = getPath(r, "choices.0.message.content");
-  if (typeof choice === "string" && choice.trim()) return choice.trim();
-
-  for (const key of TEXT_CANDIDATES) {
-    const v = r[key];
-    if (typeof v === "string" && v.trim()) return v.trim();
-  }
+  add("content", getPath(r, "choices.0.message.content"));
+  for (const key of TEXT_CANDIDATES) add(key, r[key]);
   // One level down: { data: { answer } }, { result: { reason } }
   for (const outer of ["data", "result", "output"]) {
     const inner = r[outer];
     if (inner && typeof inner === "object") {
-      for (const key of TEXT_CANDIDATES) {
-        const v = (inner as Record<string, unknown>)[key];
-        if (typeof v === "string" && v.trim()) return v.trim();
-      }
+      for (const key of TEXT_CANDIDATES) add(key, (inner as Record<string, unknown>)[key]);
     }
   }
+  const pick = found.find(([, v]) => isProse(v)) ?? found.find(([k]) => !META_KEYS.has(k));
+  if (pick) return pick[1];
   const json = JSON.stringify(result);
   return json.length > 600 ? `${json.slice(0, 600)}…` : json;
 }
@@ -126,6 +165,7 @@ export function buildReceipt(
   minerRank: number | null = null,
 ): Receipt {
   const r = ask.result;
+  const refusal = minerRefusal(r);
   const mapped = toConfidence(getPath(r, mapping?.confidence_field));
   // A few miners map a risk/severity score into confidence_field. Reading that as
   // confidence inverts its meaning, so it is kept but labelled for what it is.
@@ -141,10 +181,12 @@ export function buildReceipt(
     minerId: ask.miner_id !== undefined ? String(ask.miner_id) : null,
     intent: ask.intent ?? null,
     minerRank,
-    confidence,
+    // A refusal at "confidence 1" is sure only that it did nothing.
+    confidence: refusal ? null : confidence,
     confidenceIsRisk,
     label: typeof labelRaw === "string" || typeof labelRaw === "number" ? String(labelRaw) : null,
     answer: extractAnswer(r, mapping),
+    refusal,
     costUsd: typeof ask.cost_usd === "number" ? ask.cost_usd : null,
     durationMs: typeof ask.duration_ms === "number" ? ask.duration_ms : null,
     signalHash: ask.signal_hash ?? null,

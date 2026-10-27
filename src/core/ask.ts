@@ -67,9 +67,18 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
     // (settlement timing out at ~47s) and healthy at 6.5s the next day, and a 60s
     // function has no room for a slow failure plus a fallback (GAPS G17).
     const cfg = config();
+    let engineRefused: Receipt | null = null;
     if (cfg.USE_ENGINE_ROUTER && !skipGuard) {
       const viaEngine = await tryEngineRouter(question);
-      if (viaEngine) {
+      if (viaEngine?.refusal) {
+        // Paid and settled, but the router's pick said it could not do the job. Its row
+        // keeps the settlement so /proof still reconciles, and Morse routes it instead.
+        const refused = baseRow(ctx, kind, question);
+        markRefused(refused, viaEngine);
+        refused.routedBy = "engine";
+        await ledger.recordCall(refused);
+        engineRefused = viaEngine;
+      } else if (viaEngine) {
         fillRow(row, viaEngine, "ok");
         row.routedBy = "engine";
         await ledger.recordCall(row);
@@ -77,10 +86,13 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
       }
     }
 
-    const candidates = await routeCandidates(question, subject);
+    const candidates = (await routeCandidates(question, subject)).filter((c) => c.miner.slug !== engineRefused?.minerSlug);
     if (candidates.length === 0) {
       throw new TelegraphError("No active miner serves a question like this right now.", "engine");
     }
+    const lead = engineRefused
+      ? `Telegraph's router picked ${engineRefused.minerSlug ?? "a miner"}, which could not answer ("${engineRefused.refusal}"), so Morse routed this itself`
+      : "Telegraph's own router did not answer, so Morse routed this itself";
     let lastError: TelegraphError | null = null;
     for (const [i, cand] of candidates.entries()) {
       chosen = cand;
@@ -90,8 +102,15 @@ export async function askNetwork(ctx: AskContext, question: string, kind = "ask"
         raw.intent ??= cand.intent;
         const receipt = buildReceipt(raw, cand.miner.signal_mapping ?? null, cand.rank);
         receipt.minerSlug = cand.miner.slug;
+        if (receipt.refusal) {
+          // Not retried: the call was paid, and the next miner would be paid too.
+          markRefused(row, receipt);
+          row.routedBy = "morse";
+          await ledger.recordCall(row);
+          return { ok: false, kind, question, receipt: null, error: refusalText(receipt), remaining, rowId: row.id, routedBy: "morse" };
+        }
         const after = i === 0 ? "" : ` The ${i} better-ranked miner${i > 1 ? "s" : ""} could not be paid or could not take the request.`;
-        receipt.routerReasoning = `Telegraph's own router did not answer, so Morse routed this itself: ${cand.why}, then called the #${cand.rank ?? "?"} miner for ${cand.intent}.${after}`;
+        receipt.routerReasoning = `${lead}: ${cand.why}, then called the #${cand.rank ?? "?"} miner for ${cand.intent}.${after}`;
         fillRow(row, receipt, "ok");
         row.routedBy = "morse";
         await ledger.recordCall(row);
@@ -137,6 +156,12 @@ export function humanError(err: TelegraphError, chosen: Route | null): string {
     return `Every miner serving this kind of question is failing right now.${who} That is the miner's error, not yours, and failed calls are not charged.`;
   }
   return err.message;
+}
+
+/** What a person reads when the miner answered only to say it could not. */
+export function refusalText(r: Receipt): string {
+  const paid = r.settlementTx ? " The call was settled on chain, so it was charged." : "";
+  return `${r.minerSlug ?? "The miner"} could not answer: ${r.refusal}${paid}`;
 }
 
 /**
@@ -215,6 +240,11 @@ export async function callMinerDirect(
     raw.intent = intent;
     const receipt = buildReceipt(raw, miner.signal_mapping ?? null, rank);
     receipt.minerSlug = miner.slug;
+    if (receipt.refusal) {
+      markRefused(row, receipt);
+      await ledger.recordCall(row);
+      return { receipt: null, error: refusalText(receipt), row };
+    }
     receipt.routerReasoning = `Morse called ${miner.slug} (#${rank ?? "?"} for ${intent}) directly, at your request.`;
     fillRow(row, receipt, "ok");
     await ledger.recordCall(row);
@@ -360,4 +390,10 @@ function fillRow(row: CallRow, r: Receipt, status: CallRow["status"]): void {
   row.label = r.label ? r.label.replace(/\s+/g, " ").slice(0, 200) : null;
   row.answer = answerExcerpt(r.answer);
   row.status = status;
+}
+
+/** A paid call whose miner said it could not answer: an error row that keeps its settlement. */
+function markRefused(row: CallRow, r: Receipt): void {
+  fillRow(row, r, "error");
+  row.error = `miner could not answer: ${r.refusal}`.slice(0, 300);
 }
