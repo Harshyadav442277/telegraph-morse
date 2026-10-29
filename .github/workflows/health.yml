@@ -1,10 +1,8 @@
 name: health
 
-# Reads /api/health, /api/stats and / every 30 minutes. All three are free: the probe
-# never asks the Telegraph network, so this schedule cannot inflate call volume (rule 04).
+# Manual only at the owner's request on 2026-10-01. Reads /api/health,
+# /api/stats and / without making paid calls to the Telegraph network.
 on:
-  schedule:
-    - cron: "*/30 * * * *"
   workflow_dispatch:
     inputs:
       url:

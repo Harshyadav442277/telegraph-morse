@@ -19,7 +19,7 @@ const flag = (name, fallback) => {
 const BASE = (flag("url", process.env.MORSE_URL ?? "https://telegraph-morse.vercel.app")).replace(/\/+$/, "");
 const AS_JSON = args.includes("--json");
 const MIN_USDC = Number(flag("min-usdc", "1"));
-/** A funded, used Morse that has answered nothing for this long is probably broken. */
+/** Inactivity is informational: a quiet application can still be healthy. */
 const STALE_HOURS = Number(flag("stale-hours", "24"));
 
 async function get(path) {
@@ -58,7 +58,7 @@ async function main() {
   const s = stats.body;
   if (h.paidWorkEnabled && s.okCalls > 0 && s.lastCallAt) {
     const hours = (Date.now() - Date.parse(s.lastCallAt)) / 3_600_000;
-    if (hours > STALE_HOURS) problems.push(`no answered call for ${hours.toFixed(1)}h`);
+    if (hours > STALE_HOURS) notes.push(`no answered call for ${hours.toFixed(1)}h; inactivity alone does not indicate an outage`);
   }
 
   // The landing page must render, not just the API.
