@@ -1,6 +1,6 @@
 import { createPublicClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { baseSepolia } from "viem/chains";
+import { sepolia } from "viem/chains";
 import { ExactEvmScheme, toClientEvmSigner } from "@x402/evm";
 import { wrapFetchWithPayment, x402Client } from "@x402/fetch";
 import { config } from "../config.js";
@@ -24,8 +24,19 @@ export class TelegraphError extends Error {
   }
 }
 
-const BASE_SEPOLIA = "eip155:84532" as const;
-export const USDC_BASE_SEPOLIA = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as const;
+/**
+ * Telegraph V2 settles on Ethereum Sepolia in its own mintable test USDC. Until the V2
+ * cutover (between 2026-10-27 18:35 and 2026-10-29) it was Base Sepolia and Circle's
+ * USDC `0x036CbD53…dCF7e`; the node's 402 now offers only this network (GAPS G39).
+ */
+export const PAY_NETWORK = "eip155:11155111" as const;
+export const USDC = "0xcc194e1a843B658526D0D5C431f670028582Ae17" as const;
+/** Telegraph's V2 Diamond on Ethereum Sepolia: the 402's `payTo`, and where prefixes are read. */
+export const DIAMOND = "0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b" as const;
+/** Per-payment ceiling for that token, in atomic units: $1. */
+export const SPEND_CAP_ATOMIC = "1000000";
+/** The RPC Telegraph's own docs use; viem's default for sepolia is rate-limited. */
+export const SEPOLIA_RPC = "https://ethereum-sepolia-rpc.publicnode.com";
 
 let paying: ((input: RequestInfo | URL, init?: RequestInit) => Promise<Response>) | null = null;
 
@@ -54,7 +65,11 @@ function payingFetch() {
   // like comes back as a bare 402, indistinguishable from sending nothing (GAPS G17).
   const signer = toClientEvmSigner(account);
   const client = x402Client.fromConfig({
-    schemes: [{ network: BASE_SEPOLIA, client: new ExactEvmScheme(signer) }],
+    schemes: [{ network: PAY_NETWORK, client: new ExactEvmScheme(signer) }],
+    // Telegraph's mintable USDC is not in the client's default-asset table, so the
+    // default spend controls refuse every V2 challenge. Allow that one token, capped at
+    // the same $1 a payment the default would have applied (1_000_000 = 6 decimals).
+    spendControls: { allowedAssets: [{ network: PAY_NETWORK, asset: USDC, maxAmountPerPayment: SPEND_CAP_ATOMIC }] },
   });
   // Materialise the Request before the payment wrapper sees it. Handing it a
   // (url, init) pair works locally but not on Vercel, where the retry went out
@@ -299,6 +314,50 @@ export async function getIntents(): Promise<IntentInfo[]> {
   return intentsCache.intents;
 }
 
+/**
+ * V2 intents are a registered prefix, `_`, then a suffix: `SSL_VERIFICATION_CERT`,
+ * `STOCK_PRICE_US_EQUITY`. Miners register only the suffixed names, and an intent
+ * belongs to its longest matching prefix — `WEATHER_FORECAST_VERIFY_GENERAL` is not in
+ * `WEATHER_FORECAST`. Morse classifies into prefixes and resolves them here (GAPS G39).
+ * Without the prefix list (RPC down), the last `_word` is taken as the suffix.
+ */
+export function familyOf(intent: string, prefixes: readonly string[] = prefixCache?.prefixes ?? []): string {
+  let best = "";
+  for (const p of prefixes) if (p.length > best.length && intent.startsWith(`${p}_`)) best = p;
+  if (best) return best;
+  const i = intent.lastIndexOf("_");
+  return i > 0 ? intent.slice(0, i) : intent;
+}
+
+let prefixCache: { at: number; prefixes: string[] } | null = null;
+
+/** The protocol's intent prefixes, read from the Diamond. Free; cached an hour; [] on failure. */
+export async function getPrefixes(): Promise<string[]> {
+  if (prefixCache && Date.now() - prefixCache.at < 3_600_000) return prefixCache.prefixes;
+  try {
+    const client = createPublicClient({ chain: sepolia, transport: http(SEPOLIA_RPC, { timeout: 8_000 }) });
+    const [names] = (await client.readContract({
+      address: DIAMOND,
+      abi: [{ name: "getPrefixes", type: "function", stateMutability: "view", inputs: [], outputs: [{ type: "string[]" }, { type: "uint8[]" }] }],
+      functionName: "getPrefixes",
+    })) as readonly [readonly string[], readonly number[]];
+    prefixCache = { at: Date.now(), prefixes: [...names] };
+  } catch (e) {
+    console.error("getPrefixes failed, using the last-word rule:", (e as Error).message.slice(0, 200));
+    return prefixCache?.prefixes ?? [];
+  }
+  return prefixCache.prefixes;
+}
+
+/** Live intents in a family, most-served first. A name that is itself live resolves to itself. */
+export async function intentsInFamily(family: string): Promise<string[]> {
+  const prefixes = await getPrefixes();
+  return (await getIntents())
+    .filter((i) => i.miner_count > 0 && (i.intent_id === family || familyOf(i.intent_id, prefixes) === family))
+    .sort((a, b) => b.miner_count - a.miner_count)
+    .map((i) => i.intent_id);
+}
+
 export async function minerById(id: string | number | null | undefined): Promise<Miner | null> {
   if (id === null || id === undefined) return null;
   const s = String(id);
@@ -334,8 +393,17 @@ export async function leaderboard(intent: string): Promise<Array<{ miner: Miner;
       const s = m.scores?.find((x) => x.intent_id === intent);
       return { miner: m, rank: s?.rank ?? null, score: s?.score ?? null };
     })
-    .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
+    .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999) || ownLast(a.miner) - ownLast(b.miner));
 }
+
+/**
+ * Miners the Morse operator also runs. Under V2 most intents are not ranked yet (70 of
+ * 1,872 miners scored on 2026-10-29), and catalogue order put livecert first for SSL,
+ * crypto price and fact check. Morse's own routing must not favour the operator's
+ * miner: a rank still wins, but among unranked miners these go last (GAPS G39).
+ */
+const OPERATOR_MINERS = new Set(["livecert"]);
+const ownLast = (m: Miner) => (OPERATOR_MINERS.has(m.slug) ? 1 : 0);
 
 export interface HotSignal {
   question?: { text?: string; category?: string; interest_score?: number };
@@ -356,9 +424,9 @@ export async function payerUsdcBalance(): Promise<number | null> {
   const addr = payerAddress();
   if (!addr) return null;
   try {
-    const client = createPublicClient({ chain: baseSepolia, transport: http() });
+    const client = createPublicClient({ chain: sepolia, transport: http(SEPOLIA_RPC) });
     const raw = (await client.readContract({
-      address: USDC_BASE_SEPOLIA,
+      address: USDC,
       abi: [{ name: "balanceOf", type: "function", stateMutability: "view", inputs: [{ name: "a", type: "address" }], outputs: [{ type: "uint256" }] }],
       functionName: "balanceOf",
       args: [addr],

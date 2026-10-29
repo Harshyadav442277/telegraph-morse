@@ -3,6 +3,59 @@
 Honesty ledger. Anything unverified lives here rather than being rounded to "fine". Feeds the
 README's limitations section.
 
+### G39 · Telegraph V2 broke every paid ask: new chain, new token, suffixed intents — `PORTED IN SOURCE 2026-10-29; NOT DEPLOYED; WALLET UNFUNDED`
+
+**Observed 2026-10-29, all free reads.** The node's 402 for `/engine/v1/ask` now offers only
+`eip155:11155111` (Ethereum Sepolia), with `exact` USDC
+`0xcc194e1a843B658526D0D5C431f670028582Ae17` or an `escrow` scheme, paid to
+`0x3624EB012B5E998BB57B6bE6C9Cfc9c4bc5eb99b`. That address is a contract and answers
+`getPrefixes()` with 134 prefixes. Morse paid on Base Sepolia (`eip155:84532`), so after the cutover
+every paid call would fail. The cutover came between Morse's last Base settlement, 2026-10-27
+18:35:20 UTC, and this check. No Morse call has been made since then, so no failure is in the
+ledger yet. Also changed:
+- all 136 live intents are suffixed (`SSL_VERIFICATION_CERT`, `STOCK_PRICE_US_EQUITY`), so Morse's
+  own router, recipes and REST leaderboard found nothing under the V1 names;
+- only 70 of 1,872 catalogue miners carry a score, so ranks are mostly empty, and catalogue order put
+  the operator's livecert first for SSL, crypto price and fact check.
+
+Docs: docs.telegraphprotocol.com/docs/using/x402-inference.md and /using/intents.md, read 2026-10-29.
+
+**Fix (commit "Port Morse to Telegraph V2").**
+- `telegraph.ts`: pays on `eip155:11155111` and allows exactly that USDC through the x402 client's
+  spend controls, capped at $1 a payment. Without the allowance the client refused every V2
+  challenge: "All payment requirements were rejected by spendControls".
+- `familyOf`/`intentsInFamily` resolve Morse's family names to live V2 intents by longest on-chain
+  prefix, cached an hour, with a last-word fallback.
+- `endpointFor` also matches a V1-era manifest by family (livecert's manifest still says
+  `CRYPTO_PRICE`).
+- Unranked operator miners sort last in Morse's own routing.
+- `chains.ts` picks Base or Ethereum Sepolia by row time for every explorer link, and `/proof` reads
+  both chains' transfers and names a chain it could not read.
+- `preflight` is ported to the new network and token.
+
+**Evidence.**
+- 82/82 tests pass and typecheck is clean.
+- `npm run preflight` against the live node: scheme, network, asset, price and timeout all ok.
+- Morse's client signed the live challenge with a throwaway unfunded key, nothing sent:
+  `exact`/`eip155:11155111`/`0xcc19…Ae17`, $0.01 to `0x3624…b99b`.
+- Morse's router on 7 example questions resolved every family, put no operator miner in the top 4,
+  and gave livecert the right endpoint per family (unit test).
+
+**Blocking, operator only (Claude never touches the wallet).** Payer `0xfBB3C3bd…4b4c9c` holds 0
+USDC and 0 ETH on Ethereum Sepolia; its 162 USDC is on Base Sepolia, where V2 no longer settles.
+The docs say the token is minted with
+`cast send 0xcc194e1a843B658526D0D5C431f670028582Ae17 "mint(address,uint256)" 0xfBB3C3bd51EC6E19BDECc786945d83719b6b4c9c 100000000 --rpc-url https://ethereum-sepolia-rpc.publicnode.com --private-key <key of any wallet holding Sepolia ETH>`
+(100 USDC; the docs' own example mints 10). Unverified:
+- whether `mint` has a cap, or must be sent by the recipient;
+- whether the payer needs ETH under EIP-3009 (it did not on Base).
+
+**Not verified.**
+- No paid V2 call has been made, so settlement, `signal_hash` and `/verify` on V2 are unproven.
+- V2 rank data may live somewhere other than the catalogue's `scores`; not investigated.
+- The `escrow` scheme is not supported.
+- README, DEMO and SUBMISSION still say Base Sepolia. README has other uncommitted edits, so it was
+  left alone.
+
 ### G38 · Morse showed a source word or a miner's refusal as the answer — `FIXED, DEPLOYED 2026-10-27 18:34 UTC; refusal path unit-tested only`
 
 **Observed.** In the 200 newest ledger rows (2026-09-07 → 2026-10-27), 11 answered asks showed a

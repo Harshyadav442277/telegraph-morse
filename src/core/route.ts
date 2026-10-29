@@ -1,5 +1,5 @@
 import type { Miner } from "./telegraph.js";
-import { getIntents, leaderboard } from "./telegraph.js";
+import { intentsInFamily, leaderboard } from "./telegraph.js";
 
 /**
  * Morse's own router.
@@ -134,13 +134,10 @@ export function classifyIntent(question: string): { intent: string; why: string 
  */
 export async function routeCandidates(question: string, subject?: string, limit = 4): Promise<Route[]> {
   const guess = classifyIntent(question);
-  const candidates = guess ? [guess.intent, ...FALLBACKS] : FALLBACKS;
-  const live = new Set((await getIntents()).filter((i) => i.miner_count > 0).map((i) => i.intent_id));
   const out: Route[] = [];
   const seen = new Set<string>();
 
-  for (const intent of candidates) {
-    if (!live.has(intent)) continue;
+  for (const { family, intent } of await liveCandidates(guess)) {
     const board = await leaderboard(intent);
     for (const e of board) {
       if (out.length >= limit) return out;
@@ -151,34 +148,42 @@ export async function routeCandidates(question: string, subject?: string, limit 
         intent,
         miner: e.miner,
         rank: e.rank,
-        why:
-          guess && intent === guess.intent
-            ? guess.why
-            : `no rule matched, so it went to ${intent}, a general-purpose intent`,
+        why: whyRouted(guess, family, intent),
       });
     }
   }
   return out;
 }
 
+/**
+ * The classified family and then the fallbacks, each expanded to its live V2 intents.
+ * A family with no live intent is skipped, as a dead V1 intent was.
+ */
+async function liveCandidates(guess: { intent: string } | null): Promise<Array<{ family: string; intent: string }>> {
+  const families = guess ? [guess.intent, ...FALLBACKS] : FALLBACKS;
+  const out: Array<{ family: string; intent: string }> = [];
+  for (const family of families) {
+    for (const intent of await intentsInFamily(family)) out.push({ family, intent });
+  }
+  return out;
+}
+
+function whyRouted(guess: { intent: string; why: string } | null, family: string, intent: string): string {
+  return guess && family === guess.intent
+    ? `${guess.why}, served as ${intent}`
+    : `no rule matched, so it went to ${intent}, a general-purpose intent`;
+}
+
 export async function route(question: string, subject?: string): Promise<Route | null> {
   const guess = classifyIntent(question);
-  const candidates = guess ? [guess.intent, ...FALLBACKS] : FALLBACKS;
-
-  const live = new Set((await getIntents()).filter((i) => i.miner_count > 0).map((i) => i.intent_id));
-  for (const intent of candidates) {
-    if (!live.has(intent)) continue;
+  for (const { family, intent } of await liveCandidates(guess)) {
     const board = await leaderboard(intent);
     // Best-ranked miner we can actually address. Skipping a higher-ranked miner whose
     // required fields we cannot fill costs a rank but buys an answer: the #1
     // CHAT_COMPLETION miner requires `model`, and calling it only ever returned 400.
     const best = board.find((e) => (e.miner.endpoints?.length ?? 0) > 0 && canAddress(e.miner, subject));
     if (!best) continue;
-    const why =
-      guess && intent === guess.intent
-        ? guess.why
-        : `no rule matched, so it went to ${intent}, a general-purpose intent`;
-    return { intent, miner: best.miner, rank: best.rank, why };
+    return { intent, miner: best.miner, rank: best.rank, why: whyRouted(guess, family, intent) };
   }
   return null;
 }

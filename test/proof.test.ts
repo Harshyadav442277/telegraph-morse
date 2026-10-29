@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { CallRow } from "../src/core/ledger/types.js";
-import { DIAMOND, fetchPayerTransfers, reconcile, type ChainTransfer } from "../src/core/proof.js";
+import { BASE_SEPOLIA, ETH_SEPOLIA } from "../src/core/chains.js";
+import { fetchPayerTransfers, reconcile, type ChainTransfer } from "../src/core/proof.js";
+
+const DIAMOND = BASE_SEPOLIA.diamond;
 
 const PAYER = "0xfbb3c3bd51ec6e19bdecc786945d83719b6b4c9c";
 
@@ -14,7 +17,7 @@ function row(over: Partial<CallRow> = {}): CallRow {
 }
 
 function transfer(txHash: string, over: Partial<ChainTransfer> = {}): ChainTransfer {
-  return { txHash, to: DIAMOND.toLowerCase(), usdc: 0.01, at: "2026-09-03T10:00:05.000Z", block: 1, ...over };
+  return { chain: BASE_SEPOLIA.name, txHash, to: DIAMOND.toLowerCase(), usdc: 0.01, at: "2026-09-03T10:00:05.000Z", block: 1, ...over };
 }
 
 describe("reconcile", () => {
@@ -75,6 +78,19 @@ describe("fetchPayerTransfers", () => {
     expect(seen[1]).toContain("block_number=9");
     expect(seen[1]).toContain("index=3");
     expect(out.map((t) => [t.txHash, t.usdc])).toEqual([["0xa1", 0.01], ["0xa2", 0.015]]);
+  });
+
+  it("reads the chain it is given and labels each transfer with it", async () => {
+    const seen: string[] = [];
+    const fake = (async (url: string | URL | Request) => {
+      seen.push(String(url));
+      return new Response(JSON.stringify({ items: [{ from: { hash: PAYER }, to: { hash: ETH_SEPOLIA.diamond }, total: { value: "10000", decimals: "6" }, transaction_hash: "0xe1", timestamp: "2026-10-30T10:00:00Z", block_number: 1 }], next_page_params: null }), { status: 200 });
+    }) as typeof fetch;
+    const out = await fetchPayerTransfers(PAYER, fake, ETH_SEPOLIA);
+    expect(seen[0]?.startsWith("https://eth-sepolia.blockscout.com/api/v2/")).toBe(true);
+    expect(out[0]?.chain).toBe("Ethereum Sepolia");
+    // A V2 settlement goes to the V2 Diamond and still counts as one.
+    expect(reconcile([], out, PAYER).chain.toDiamond).toBe(1);
   });
 
   it("fails loudly on a non-200 instead of reporting zero usage", async () => {

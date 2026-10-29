@@ -4,7 +4,7 @@ import { guardPaid } from "./guards.js";
 import { getLedger } from "./ledger/index.js";
 import type { CallRow, Channel } from "./ledger/types.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
-import { askMiner, askRouted, getMiners, rankOf, resolveMiner, TelegraphError, withEndpointIntents, type Miner, type MinerEndpoint } from "./telegraph.js";
+import { askMiner, askRouted, familyOf, getMiners, rankOf, resolveMiner, TelegraphError, withEndpointIntents, type Miner, type MinerEndpoint } from "./telegraph.js";
 import { CHAT_INTENTS, classifyIntent, MESSAGES_KEY, PROSE_KEYS, routeCandidates, SUBJECT_KEYS, type Route } from "./route.js";
 
 /**
@@ -311,11 +311,16 @@ export function endpointFor(miner: Miner, intent: string | null): MinerEndpoint 
     // The manifest's own endpoint → intents map, when `withEndpointIntents` has read it.
     // The catalogue drops that list, and matching the description below guessed
     // /ssl-check for every livecert intent (GAPS G30).
+    // Under V2 the miner serves `CRYPTO_PRICE_USD` while a manifest written for V1 still
+    // maps the endpoint to `CRYPTO_PRICE`, so the exact name is tried first, then its
+    // family (GAPS G39).
     const declared = miner.endpoint_intents;
-    const byManifest = declared && eps.find((e) => declared[e.path]?.includes(intent));
-    if (byManifest) return byManifest;
-    const named = eps.find((e) => new RegExp(`(^|[^A-Z_])${intent}([^A-Z_]|$)`).test(e.description ?? ""));
-    if (named) return named;
+    for (const name of [intent, familyOf(intent)]) {
+      const byManifest = declared && eps.find((e) => declared[e.path]?.some((d) => d === name || familyOf(d) === name));
+      if (byManifest) return byManifest;
+      const named = eps.find((e) => new RegExp(`(^|[^A-Z_])${name}([^A-Z_]|$)`).test(e.description ?? ""));
+      if (named) return named;
+    }
   }
   return eps[0];
 }
@@ -337,7 +342,7 @@ export function directRequest(
   // miner declares it, and also for the chat-shaped intents whether or not they do —
   // telegraph-chatbot declares an empty schema and then rejects the call for a
   // missing `messages` body.
-  if (props.includes(MESSAGES_KEY) || (intent && CHAT_INTENTS.has(intent))) {
+  if (props.includes(MESSAGES_KEY) || (intent && (CHAT_INTENTS.has(intent) || CHAT_INTENTS.has(familyOf(intent))))) {
     payload[MESSAGES_KEY] = [{ role: "user", content: question }];
   }
   // Subject keys are a fallback for miners that take no prose at all, like

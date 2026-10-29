@@ -1,5 +1,6 @@
 import type { CallRow } from "../core/ledger/types.js";
 import type { SignalRecord } from "../core/telegraph.js";
+import { addressUrl, chainAt, txUrl } from "../core/chains.js";
 import { escapeHtml as h, page } from "./layout.js";
 
 export interface VerifyData {
@@ -21,11 +22,11 @@ export function verifyPage(d: VerifyData): string {
 <tr><th>Found on the node</th><td class="ok">yes — <a href="https://devnode.telegraphprotocol.com/engine/v1/signal/${h(d.hash)}">GET /engine/v1/signal/${h(d.hash.slice(0, 12))}…</a></td></tr>
 <tr><th>Kind</th><td>${h(d.record.kind ?? "?")}</td></tr>
 <tr><th>Miner</th><td>${h(s.miner_slug ?? "?")}${s.subnet_id ? ` <span class="badge">id ${h(s.subnet_id)}</span>` : ""}</td></tr>
-<tr><th>Paid by</th><td class="mono">${s.wallet_address ? `<a href="https://sepolia.basescan.org/address/${h(s.wallet_address)}">${h(s.wallet_address)}</a>` : "?"} ${d.paidByMorse ? `<span class="ok">= Morse's payer wallet</span>` : d.payer ? `<span class="warn">not Morse's wallet (${h(d.payer.slice(0, 10))}…)</span>` : ""}</td></tr>
+<tr><th>Paid by</th><td class="mono">${s.wallet_address ? `<a href="${h(addressUrl(s.wallet_address, chainAt(s.created_at ?? d.row?.at)))}">${h(s.wallet_address)}</a>` : "?"} ${d.paidByMorse ? `<span class="ok">= Morse's payer wallet</span>` : d.payer ? `<span class="warn">not Morse's wallet (${h(d.payer.slice(0, 10))}…)</span>` : ""}</td></tr>
 <tr><th>Node's own check</th><td>${d.record.verification?.verified === true ? `<span class="ok">verified</span> — the node confirms this hash commits to the payload below (${h(d.record.verification.algorithm ?? "?")} over ${h(d.record.verification.commitment ?? "?")})` : `<span class="muted">${h(JSON.stringify(d.record.verification ?? "not reported"))}</span>`}</td></tr>
 <tr><th>Settlement tx</th><td class="mono">${
       s.tx_hash || d.row?.settlementTx
-        ? `<a href="https://sepolia.basescan.org/tx/${h((s.tx_hash ?? d.row?.settlementTx)!)}">${h((s.tx_hash ?? d.row?.settlementTx)!)}</a>`
+        ? `<a href="${h(txUrl((s.tx_hash ?? d.row?.settlementTx)!, s.created_at ?? d.row?.at))}">${h((s.tx_hash ?? d.row?.settlementTx)!)}</a>`
         : "<span class='muted'>the node's signal record carries none; Morse stores the one from the payment-response header when it has it</span>"
     }</td></tr>
 <tr><th>Recorded</th><td>${h(s.created_at ?? "?")}</td></tr>

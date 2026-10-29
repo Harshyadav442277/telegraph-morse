@@ -3,6 +3,21 @@
 Read first every session. Update at session end. Keep it short: decisions and why, lessons and
 what they cost. Current state lives in PHASES.md; risks in GAPS.md.
 
+## 2026-10-29 — Telegraph V2 moved payment to Ethereum Sepolia; Morse ported, not live (G39)
+
+V2 settles in Telegraph's own mintable USDC on Ethereum Sepolia and suffixes every intent. Morse
+paid on Base Sepolia and routed by V1 names, so after the cutover no paid ask could succeed. It is
+ported in source and verified as far as free checks go: preflight passes against the live node,
+and the client signs the live challenge. **It goes live only after the operator mints USDC to the
+payer on Ethereum Sepolia** (command in G39), then a deploy and one paid ask.
+**Lessons:**
+- The x402 client's default spend controls silently refuse any token not in its table. A network
+  change needs the token allowed too, or every call fails as "unpaid".
+- With most V2 intents unranked, catalogue order favoured the operator's own miner. Morse's
+  fallback now puts it last; keep it that way.
+- The preflight check passed the network and asset only after both fixes. Run it after any
+  protocol change.
+
 ## 2026-10-28 — Answers were source words; a refusal read as 100% sure (G38)
 
 Free endpoints, health and wallet (162 USDC) were fine. The defect was answer extraction: 11 of

@@ -9,6 +9,7 @@ import { cardHtml, esc, recipeHtml } from "../core/format.js";
 import { hashId } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
+import { txUrl } from "../core/chains.js";
 import { verifySignal } from "../core/telegraph.js";
 
 /**
@@ -130,7 +131,7 @@ export function getBot(): Bot {
       const rec = await verifySignal(hash);
       const s = rec.signal ?? {};
       await ctx.reply(
-        `<b>Signal found on the node</b>\nminer: ${esc(s.miner_slug ?? "?")}\npaid by: <code>${esc(s.wallet_address ?? "?")}</code>\nsettlement tx: ${s.tx_hash ? `<a href="https://sepolia.basescan.org/tx/${s.tx_hash}">${esc(s.tx_hash.slice(0, 14))}…</a>` : "n/a"}\nrecorded: ${esc(s.created_at ?? "?")}`,
+        `<b>Signal found on the node</b>\nminer: ${esc(s.miner_slug ?? "?")}\npaid by: <code>${esc(s.wallet_address ?? "?")}</code>\nsettlement tx: ${s.tx_hash ? `<a href="${txUrl(s.tx_hash, s.created_at)}">${esc(s.tx_hash.slice(0, 14))}…</a>` : "n/a"}\nrecorded: ${esc(s.created_at ?? "?")}`,
         OPTS,
       );
     } catch (e) {

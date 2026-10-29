@@ -1,11 +1,12 @@
 import type { CallRow } from "./ledger/types.js";
+import { CHAINS, ETH_SEPOLIA, type Chain } from "./chains.js";
 import { payerAddress } from "./telegraph.js";
 
 /**
  * On-chain proof of usage.
  *
  * Every paid Morse call settles as one USDC transfer from the payer wallet to
- * Telegraph's Diamond on Base Sepolia, and the node hands the transaction hash back in
+ * Telegraph's Diamond — on Base Sepolia under V1, Ethereum Sepolia under V2 — and the node hands the transaction hash back in
  * the payment-response header, which the ledger stores as `settlementTx`. So the ledger
  * can be checked against the chain without trusting Morse's database at all: read the
  * payer's outbound transfers from a public indexer and match them hash for hash.
@@ -13,11 +14,13 @@ import { payerAddress } from "./telegraph.js";
  * Judges are asked to score "actual volume of Telegraph calls". This is that number,
  * read from somewhere Morse does not control.
  */
-export const DIAMOND = "0x5a2324aA18613FAD4e44bDF0d6c73Ec1f6D87ff8";
-const BLOCKSCOUT = "https://base-sepolia.blockscout.com/api/v2";
 const MAX_PAGES = 60;
+const DIAMONDS = new Set(CHAINS.map((c) => c.diamond.toLowerCase()));
+const api = (c: Chain) => `${c.blockscout}/api/v2`;
 
 export interface ChainTransfer {
+  /** Which chain the transfer is on: V1 settled on Base Sepolia, V2 on Ethereum Sepolia. */
+  chain: string;
   txHash: string;
   to: string;
   usdc: number;
@@ -66,9 +69,9 @@ interface BlockscoutPage {
 }
 
 /** Every outbound ERC-20 transfer from `payer`, newest first, paged until the indexer runs out. */
-export async function fetchPayerTransfers(payer: string, fetchImpl: typeof fetch = fetch): Promise<ChainTransfer[]> {
+export async function fetchPayerTransfers(payer: string, fetchImpl: typeof fetch = fetch, chain: Chain = ETH_SEPOLIA): Promise<ChainTransfer[]> {
   const out: ChainTransfer[] = [];
-  let url: string | null = `${BLOCKSCOUT}/addresses/${payer}/token-transfers?type=ERC-20`;
+  let url: string | null = `${api(chain)}/addresses/${payer}/token-transfers?type=ERC-20`;
   for (let page = 0; url && page < MAX_PAGES; page++) {
     const res = await fetchImpl(url, { signal: AbortSignal.timeout(20_000), headers: { accept: "application/json" } });
     if (!res.ok) throw new Error(`Blockscout returned ${res.status}`);
@@ -77,6 +80,7 @@ export async function fetchPayerTransfers(payer: string, fetchImpl: typeof fetch
       if ((t.from?.hash ?? "").toLowerCase() !== payer.toLowerCase()) continue;
       const decimals = Number(t.total?.decimals ?? "6");
       out.push({
+        chain: chain.name,
         txHash: (t.transaction_hash ?? "").toLowerCase(),
         to: (t.to?.hash ?? "").toLowerCase(),
         usdc: Number(t.total?.value ?? "0") / 10 ** decimals,
@@ -86,7 +90,7 @@ export async function fetchPayerTransfers(payer: string, fetchImpl: typeof fetch
     }
     const np = body.next_page_params;
     url = np
-      ? `${BLOCKSCOUT}/addresses/${payer}/token-transfers?type=ERC-20&${new URLSearchParams(
+      ? `${api(chain)}/addresses/${payer}/token-transfers?type=ERC-20&${new URLSearchParams(
           Object.fromEntries(Object.entries(np).map(([k, v]) => [k, String(v)])),
         )}`
       : null;
@@ -100,7 +104,7 @@ export function reconcile(rows: CallRow[], transfers: ChainTransfer[], payer: st
   const withTx = rows.filter((r) => r.settlementTx);
   const chainHashes = new Set(transfers.map((t) => t.txHash));
   const ledgerHashes = new Set(withTx.map((r) => r.settlementTx!.toLowerCase()));
-  const toDiamond = transfers.filter((t) => t.to === DIAMOND.toLowerCase());
+  const toDiamond = transfers.filter((t) => DIAMONDS.has(t.to));
   const matched = [...ledgerHashes].filter((h) => chainHashes.has(h)).length;
   const ledgerOnly = withTx
     .filter((r) => !chainHashes.has(r.settlementTx!.toLowerCase()))
@@ -120,7 +124,7 @@ export function reconcile(rows: CallRow[], transfers: ChainTransfer[], payer: st
     matched,
     ledgerOnly,
     chainOnly,
-    source: BLOCKSCOUT,
+    source: CHAINS.map(api).join(" and "),
     fetchedAt,
     error: null,
   };
@@ -133,11 +137,13 @@ export async function getReconciliation(rows: CallRow[]): Promise<Reconciliation
   const payer = payerAddress();
   if (!payer) return { ...reconcile(rows, [], null), error: "No payer wallet is configured, so there is nothing on chain to reconcile." };
   if (cache && Date.now() - cache.at < 60_000) return reconcile(rows, cache.transfers, payer, cache.fetchedAt);
-  try {
-    const transfers = await fetchPayerTransfers(payer);
+  const reads = await Promise.allSettled(CHAINS.map((c) => fetchPayerTransfers(payer, fetch, c)));
+  const transfers = reads.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+  const failures = reads.flatMap((r, i) => (r.status === "rejected" ? [`${CHAINS[i]!.name}: ${(r.reason as Error).message}`] : []));
+  if (failures.length === 0) {
     cache = { at: Date.now(), fetchedAt: new Date().toISOString(), transfers };
     return reconcile(rows, transfers, payer, cache.fetchedAt);
-  } catch (e) {
-    return { ...reconcile(rows, [], payer), error: `Could not read the chain via Blockscout: ${(e as Error).message}` };
   }
+  // Report what was read; a chain that could not be read is named, never treated as empty.
+  return { ...reconcile(rows, transfers, payer), error: `Could not read every chain via Blockscout (${failures.join("; ")}).` };
 }

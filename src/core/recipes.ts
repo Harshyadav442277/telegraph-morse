@@ -1,6 +1,10 @@
 import { promises as dns } from "node:dns";
 import type { AnswerCard, AskContext } from "./ask.js";
 import { askNetwork, guard } from "./ask.js";
+import { familyOf } from "./telegraph.js";
+
+/** Whether a V2 intent (`FACT_CHECK_GENERAL`) or a V1 one (`FACT_CHECK`) is in this family. */
+const inFamily = (intent: string | null | undefined, family: string) => intent === family || (intent ? familyOf(intent) === family : false);
 
 /**
  * Recipes combine several intents into one answer (ARCHITECTURE A8). Each sub-question
@@ -89,7 +93,7 @@ export const wallet: Recipe = {
   verdict(cards) {
     const ok = cards.filter((c) => c.ok && c.receipt);
     if (ok.length === 0) return "No miner could assess this wallet right now.";
-    const risk = ok.find((c) => c.receipt?.intent === "FRAUD_DETECTION");
+    const risk = ok.find((c) => inFamily(c.receipt?.intent, "FRAUD_DETECTION"));
     const flagged = risk && RED_FLAGS.test(`${risk.receipt?.label ?? ""} ${risk.receipt?.answer ?? ""}`);
     return flagged ? "Caution: the fraud check raised a red flag." : `${ok.length} checks completed; no fraud red flag reported.`;
   },
@@ -113,7 +117,7 @@ export const weather: Recipe = {
   verdict(cards) {
     const ok = cards.filter((c) => c.ok && c.receipt);
     if (ok.length === 0) return "No weather miner answered right now.";
-    const storm = ok.find((c) => c.receipt?.intent === "STORM_ALERT");
+    const storm = ok.find((c) => inFamily(c.receipt?.intent, "STORM_ALERT"));
     return storm ? "Current conditions and a 48-hour storm outlook, from two independent intents." : "Current conditions reported; the storm outlook did not come back.";
   },
 };
@@ -133,7 +137,7 @@ export const fact: Recipe = {
   verdict(cards) {
     const ok = cards.filter((c) => c.ok && c.receipt);
     if (ok.length === 0) return "No miner could check this right now.";
-    const fc = ok.find((c) => c.receipt?.intent === "FACT_CHECK");
+    const fc = ok.find((c) => inFamily(c.receipt?.intent, "FACT_CHECK"));
     return fc?.receipt?.label ? `Fact check verdict: ${fc.receipt.label}.` : `${ok.length} sources consulted; read the receipts below.`;
   },
 };

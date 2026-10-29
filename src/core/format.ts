@@ -1,4 +1,5 @@
 import type { AnswerCard } from "./ask.js";
+import { txUrl } from "./chains.js";
 import type { Receipt } from "./receipt.js";
 import type { RecipeResult } from "./recipes.js";
 
@@ -37,7 +38,7 @@ export function receiptLine(r: Receipt, publicUrl: string | undefined, routedBy?
       ? `\n<a href="${publicUrl}/verify/${r.signalHash}">verify ${shortHash(r.signalHash)}</a>`
       : `\nsignal ${shortHash(r.signalHash)}`
     : "";
-  const tx = r.settlementTx ? ` · <a href="https://sepolia.basescan.org/tx/${r.settlementTx}">paid on-chain</a>` : "";
+  const tx = r.settlementTx ? ` · <a href="${txUrl(r.settlementTx)}">paid on-chain</a>` : "";
   return `<i>served by <b>${esc(who)}</b>${esc(rank)} · ${confidenceText(r.confidence, r.confidenceIsRisk)} · ${cost}${ms ? ` · ${ms}` : ""}${routed}</i>${verify}${tx}`;
 }
 

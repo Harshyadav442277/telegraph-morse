@@ -7,14 +7,14 @@
  * It spends nothing: it reads the payer's balances over a public RPC, asks the node
  * for its 402 challenge without paying it, and checks that challenge field by field
  * against what our own x402 client is configured to satisfy. It imports the real
- * modules — `payerAddress`, `USDC_BASE_SEPOLIA`, `config` — so it verifies the code
+ * modules — `payerAddress`, `USDC`, `config` — so it verifies the code
  * path Morse actually uses, not a copy of it.
  *
  * Exit 0 = everything checkable is green and the one real call is worth making.
  * Exit 1 = something would have failed. Fix it before spending.
  */
 import { createPublicClient, http, formatEther } from "viem";
-import { baseSepolia } from "viem/chains";
+import { sepolia } from "viem/chains";
 import * as x402evm from "@x402/evm";
 
 /** 2.11.0 does not export DEFAULT_ASSETS; 2.24.0 does. Treat it as optional. */
@@ -22,9 +22,8 @@ const DEFAULT_ASSETS = (x402evm as unknown as {
   DEFAULT_ASSETS?: Record<string, ReadonlyArray<{ asset: string; version?: string }>>;
 }).DEFAULT_ASSETS;
 import { config, paidWorkEnabled } from "../src/config.js";
-import { payerAddress, payerUsdcBalance, USDC_BASE_SEPOLIA } from "../src/core/telegraph.js";
+import { PAY_NETWORK, payerAddress, payerUsdcBalance, SEPOLIA_RPC, USDC } from "../src/core/telegraph.js";
 
-const BASE_SEPOLIA_CAIP2 = "eip155:84532";
 /** @x402/core's DEFAULT_MAX_AMOUNT_PER_PAYMENT, as a number of dollars. */
 const CLIENT_CAP_USD = 1;
 
@@ -91,25 +90,25 @@ async function main(): Promise<void> {
   );
 
   if (payer) {
-    const client = createPublicClient({ chain: baseSepolia, transport: http() });
+    const client = createPublicClient({ chain: sepolia, transport: http(SEPOLIA_RPC) });
     const [usdc, wei] = await Promise.all([payerUsdcBalance(), client.getBalance({ address: payer })]);
-    check((usdc ?? 0) > 0, "USDC on Base Sepolia", `${usdc ?? "unreadable"} USDC — top up at faucet.circle.com`);
+    check((usdc ?? 0) > 0, "USDC on Ethereum Sepolia", `${usdc ?? "unreadable"} USDC — Telegraph test USDC is minted with mint(address,uint256) on ${USDC}`);
     const eth = Number(formatEther(wei));
     // EIP-3009 means the facilitator should submit the transfer, so the payer needs no
     // gas. That is the one thing preflight cannot prove; report it either way.
     console.log(`  note   ${"payer ETH".padEnd(30)}${eth} ETH — expected to be unnecessary (facilitator pays gas)`);
-    if (eth === 0) unproven.push("the payer holds no Base Sepolia ETH, so the first call also tests the gasless (EIP-3009) assumption");
+    if (eth === 0) unproven.push("the payer holds no Ethereum Sepolia ETH, so the first call also tests the gasless (EIP-3009) assumption");
   }
 
   console.log("\nTHE NODE'S 402 CHALLENGE (fetched, not paid)");
   const accept = await challenge();
   if (accept) {
-    const dflt = DEFAULT_ASSETS?.[BASE_SEPOLIA_CAIP2]?.[0];
+    const dflt = DEFAULT_ASSETS?.[PAY_NETWORK]?.[0];
     const priceUsd = Number(accept.amount) / 1e6;
     check(accept.scheme === "exact", "scheme", `${accept.scheme} — we register ExactEvmScheme`);
-    check(accept.network === BASE_SEPOLIA_CAIP2, "network", `${accept.network} — we register ${BASE_SEPOLIA_CAIP2}`);
+    check(accept.network === PAY_NETWORK, "network", `${accept.network} — we register ${PAY_NETWORK}`);
     check(
-      accept.asset.toLowerCase() === USDC_BASE_SEPOLIA.toLowerCase(),
+      accept.asset.toLowerCase() === USDC.toLowerCase(),
       "asset vs our constant",
       `${accept.asset}`,
     );

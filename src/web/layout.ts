@@ -61,7 +61,7 @@ const HELP: Record<string, { title: string; qa: Array<[string, string]> }> = {
   proof: {
     title: "On-chain proof",
     qa: [
-      ["What does it prove?", "That the calls in the ledger happened and were paid: every settlement hash the ledger holds is matched against the payer wallet's USDC transfers on Base Sepolia, read from a public block explorer, not from Morse."],
+      ["What does it prove?", "That the calls in the ledger happened and were paid: every settlement hash the ledger holds is matched against the payer wallet's USDC transfers on chain, read from a public block explorer, not from Morse."],
       ["What is a chain-only settlement?", "A payment the chain shows but the ledger does not: usually a call Morse recorded as timed out that the node settled anyway. They are listed, not hidden, and not counted as answered calls."],
       ["Why does this matter?", "Because \"people used it\" is otherwise a claim. Here it is a number anyone can recompute from the chain."],
     ],
@@ -85,7 +85,7 @@ const HELP: Record<string, { title: string; qa: Array<[string, string]> }> = {
     title: "Telegraph",
     qa: [
       ["What is Telegraph?", "A marketplace where independently run APIs, called miners, answer questions; validators score and rank them per intent; and every answer is paid for per call over x402, about $0.01 in USDC."],
-      ["Is this real money?", "No. Everything here runs on the Base Sepolia testnet with faucet USDC. The mechanics are real; the money is not."],
+      ["Is this real money?", "No. Everything here runs on testnets with test USDC: Ethereum Sepolia since Telegraph V2, Base Sepolia before it. The mechanics are real; the money is not."],
       ["Where does the $0.01 go?", "To the protocol's Diamond contract, and only when the miner actually answers. Failed calls are not charged, and every paid call gets a signal hash you can look up on the node."],
     ],
   },
@@ -126,6 +126,6 @@ export function page(title: string, body: string, opts: { description?: string }
 ${helpPanels()}
 ${body}
 ${HELP_SCRIPT}
-<footer>Morse is a Telegraph Hackathon Season I Track 3 application. Every answer is a live, paid call to a Telegraph miner. Nothing is mocked or cached. Testnet (Base Sepolia).</footer>
+<footer>Morse is a Telegraph Hackathon Season I Track 3 application. Every answer is a live, paid call to a Telegraph miner. Nothing is mocked or cached. Testnet (Ethereum Sepolia).</footer>
 </main></body></html>`;
 }

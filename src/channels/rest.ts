@@ -5,7 +5,7 @@ import { bearer, hashId, hashKey, newApiKey } from "../core/ids.js";
 import { getLedger } from "../core/ledger/index.js";
 import type { ApiKeyRow } from "../core/ledger/types.js";
 import { RECIPES, runRecipe } from "../core/recipes.js";
-import { getIntents, leaderboard } from "../core/telegraph.js";
+import { getIntents, intentsInFamily, leaderboard } from "../core/telegraph.js";
 
 /**
  * Developer surface: self-issued keys, `POST /v1/ask`, and free discovery. The same
@@ -57,8 +57,11 @@ export function restRoutes(app: Hono<AppEnv>): void {
   app.get("/v1/intents", async (c) => c.json({ intents: await getIntents() }));
 
   app.get("/v1/leaderboard/:intent", async (c) => {
-    const board = await leaderboard(c.req.param("intent").toUpperCase());
-    return c.json({ intent: c.req.param("intent").toUpperCase(), miners: board.map((e) => ({ slug: e.miner.slug, id: e.miner.id, rank: e.rank, score: e.score })) });
+    // A V1 name (SSL_VERIFICATION) is now a V2 family; answer for its most-served intent.
+    const asked = c.req.param("intent").toUpperCase();
+    const intent = (await intentsInFamily(asked))[0] ?? asked;
+    const board = await leaderboard(intent);
+    return c.json({ intent, miners: board.map((e) => ({ slug: e.miner.slug, id: e.miner.id, rank: e.rank, score: e.score })) });
   });
 
   app.post("/v1/ask", requireKey, async (c) => {
